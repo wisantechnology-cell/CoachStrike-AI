@@ -1,0 +1,262 @@
+{
+  "entities": {
+    "UserProfile": {
+      "title": "UserProfile",
+      "description": "User account profile information and subscription status",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "The unique user ID matching auth.uid"
+        },
+        "displayName": {
+          "type": "string",
+          "description": "User display name"
+        },
+        "email": {
+          "type": "string",
+          "description": "User email address"
+        },
+        "photoURL": {
+          "type": "string",
+          "description": "User profile picture avatar"
+        },
+        "plan": {
+          "type": "string",
+          "enum": ["free", "pro", "academy", "academy_basic", "academy_elite"],
+          "description": "User subscription tier"
+        },
+        "planUpdatedAt": {
+          "type": "string",
+          "description": "Timestamp of plan update"
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "Timestamp of profile creation"
+        },
+        "updatedAt": {
+          "type": "string",
+          "description": "Timestamp of profile modification"
+        }
+      },
+      "required": ["id", "createdAt"]
+    },
+    "PlayerEvaluation": {
+      "title": "PlayerEvaluation",
+      "description": "Scouting and tactical ADN evaluation record for a player",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique evaluation ID"
+        },
+        "userId": {
+          "type": "string",
+          "description": "UID of the user who owns this evaluation"
+        },
+        "playerName": {
+          "type": "string",
+          "description": "Name of the player assessed"
+        },
+        "preferredFoot": {
+          "type": "string",
+          "enum": ["Diestro", "Zurdo", "Ambidestro"]
+        },
+        "primaryPositionTitle": {
+          "type": "string",
+          "description": "Title of the primary position"
+        },
+        "primaryPositionCode": {
+          "type": "string",
+          "description": "Short code of the primary position"
+        },
+        "matchPercentage": {
+          "type": "number",
+          "description": "Match percentage score"
+        },
+        "proPlayerName": {
+          "type": "string",
+          "description": "Name of the pro player matched"
+        },
+        "dataJson": {
+          "type": "string",
+          "description": "Full serialized assessment details (skills, drills, tactical zones)"
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "Creation ISO date or string"
+        }
+      },
+      "required": ["id", "userId", "playerName", "primaryPositionTitle", "createdAt"]
+    },
+    "PaymentRecord": {
+      "title": "PaymentRecord",
+      "description": "Record of a subscription payment processed via Stripe or PayPal",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique payment record ID"
+        },
+        "userId": {
+          "type": "string",
+          "description": "UID of the user who made the payment"
+        },
+        "transactionId": {
+          "type": "string",
+          "description": "Gateway transaction or order identifier"
+        },
+        "provider": {
+          "type": "string",
+          "enum": ["stripe", "paypal"],
+          "description": "Payment gateway provider"
+        },
+        "plan": {
+          "type": "string",
+          "enum": ["pro", "academy", "academy_basic", "academy_elite"],
+          "description": "Subscription tier purchased"
+        },
+        "billingCycle": {
+          "type": "string",
+          "enum": ["monthly", "annual"],
+          "description": "Billing cadence"
+        },
+        "amount": {
+          "type": "number",
+          "description": "Amount billed in USD"
+        },
+        "currency": {
+          "type": "string",
+          "description": "ISO currency code, e.g. USD"
+        },
+        "status": {
+          "type": "string",
+          "description": "Payment status, e.g. paid or completed"
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "Payment timestamp"
+        }
+      },
+      "required": ["id", "userId", "transactionId", "provider", "plan", "amount", "createdAt"]
+    },
+    "AcademyStudent": {
+      "title": "AcademyStudent",
+      "description": "Profile and evaluation details of an academy student/player",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique student identifier"
+        },
+        "userId": {
+          "type": "string",
+          "description": "UID of the coach or academy owner"
+        },
+        "name": {
+          "type": "string",
+          "description": "Student full name"
+        },
+        "age": {
+          "type": "number",
+          "description": "Age of the student"
+        },
+        "category": {
+          "type": "string",
+          "description": "Category (Sub-12, Sub-14, Sub-16, Sub-18, Senior)"
+        },
+        "dorsal": {
+          "type": "number",
+          "description": "Jersey squad number"
+        },
+        "preferredFoot": {
+          "type": "string",
+          "enum": ["Diestro", "Zurdo", "Ambidestro"]
+        },
+        "primaryPosition": {
+          "type": "string",
+          "description": "Primary football position category code"
+        },
+        "secondaryPosition": {
+          "type": "string",
+          "description": "Secondary football position category code"
+        },
+        "matchPercentage": {
+          "type": "number",
+          "description": "Overall tactical match score"
+        },
+        "coachNotes": {
+          "type": "string",
+          "description": "Observations and notes by the coach"
+        },
+        "lastExamDate": {
+          "type": "string",
+          "description": "Date of latest tactical ADN exam"
+        },
+        "dataJson": {
+          "type": "string",
+          "description": "Serialized skills scores and assigned training tasks"
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "Record creation date"
+        },
+        "updatedAt": {
+          "type": "string",
+          "description": "Record modification date"
+        }
+      },
+      "required": ["id", "userId", "name", "category", "dorsal", "createdAt"]
+    },
+    "AcademyLineup": {
+      "title": "AcademyLineup",
+      "description": "Saved tactical formation and lineup squad slots for the academy Once Ideal",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Lineup identifier (e.g. main)"
+        },
+        "userId": {
+          "type": "string",
+          "description": "UID of the coach or academy owner"
+        },
+        "formation": {
+          "type": "string",
+          "description": "Tactical formation code (4-3-3, 4-2-3-1, 3-5-2, 4-4-2)"
+        },
+        "slotsJson": {
+          "type": "string",
+          "description": "Serialized slot assignments with student IDs and position codes"
+        },
+        "updatedAt": {
+          "type": "string",
+          "description": "Last updated timestamp"
+        }
+      },
+      "required": ["id", "userId", "formation", "slotsJson", "updatedAt"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "UserProfile",
+      "description": "Stores user profile information and subscription tier"
+    },
+    "/users/{userId}/evaluations/{evaluationId}": {
+      "schema": "PlayerEvaluation",
+      "description": "Stores tactical assessments belonging to a specific user"
+    },
+    "/users/{userId}/payments/{paymentId}": {
+      "schema": "PaymentRecord",
+      "description": "Stores subscription transaction receipts processed with Stripe or PayPal"
+    },
+    "/users/{userId}/academy_students/{studentId}": {
+      "schema": "AcademyStudent",
+      "description": "Stores academy student profiles, skills, tasks, and exam history"
+    },
+    "/users/{userId}/academy_lineups/{lineupId}": {
+      "schema": "AcademyLineup",
+      "description": "Stores academy Once Ideal tactical pitch formation and slot assignments"
+    }
+  }
+}

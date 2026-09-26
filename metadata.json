@@ -1,0 +1,6 @@
+{
+  "name": "CoachStrike AI - Evaluador de Posición y Rendimiento Futbolístico",
+  "description": "Descubre tu posición ideal en el campo, perfil de ADN futbolístico, comparativa con futbolistas profesionales, mapa táctico y plan de entrenamiento personalizado con IA.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

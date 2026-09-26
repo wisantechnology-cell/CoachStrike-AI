@@ -1,0 +1,48 @@
+@import "tailwindcss";
+
+:root {
+  --accent-color: #ccff00;
+  --accent-rgb: 204, 255, 0;
+  --accent-hover: #e5ff66;
+  --accent-shadow: 204, 255, 0;
+  --app-bg: #05070a;
+}
+
+body {
+  background-color: var(--app-bg);
+  color: #f1f5f9;
+  transition: background-color 0.3s ease;
+}
+
+@layer utilities {
+  .bg-volt {
+    background-color: var(--accent-color);
+  }
+  .bg-volt-10 {
+    background-color: rgba(var(--accent-rgb), 0.1);
+  }
+  .bg-volt-20 {
+    background-color: rgba(var(--accent-rgb), 0.2);
+  }
+  .text-volt {
+    color: var(--accent-color);
+  }
+  .border-volt {
+    border-color: var(--accent-color);
+  }
+  .border-volt-30 {
+    border-color: rgba(var(--accent-rgb), 0.3);
+  }
+  .ring-volt {
+    --tw-ring-color: var(--accent-color);
+  }
+  .shadow-volt {
+    box-shadow: 0 4px 20px -2px rgba(var(--accent-rgb), 0.25);
+  }
+  .font-display {
+    font-family: 'Barlow Condensed', sans-serif;
+  }
+  .font-mono-code {
+    font-family: 'JetBrains Mono', monospace;
+  }
+}

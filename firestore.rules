@@ -1,0 +1,147 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Default deny all
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function isValidUser(data) {
+      return data.keys().hasAll(['id', 'createdAt']) &&
+        data.id is string &&
+        data.id == request.auth.uid &&
+        data.createdAt is string &&
+        (!('displayName' in data) || (data.displayName is string && data.displayName.size() <= 100)) &&
+        (!('email' in data) || (data.email is string && data.email.size() <= 150)) &&
+        (!('photoURL' in data) || (data.photoURL is string && data.photoURL.size() <= 500)) &&
+        (!('plan' in data) || (data.plan is string && (data.plan == 'free' || data.plan == 'pro' || data.plan == 'academy' || data.plan == 'academy_basic' || data.plan == 'academy_elite'))) &&
+        (!('planUpdatedAt' in data) || (data.planUpdatedAt is string && data.planUpdatedAt.size() <= 50)) &&
+        (!('updatedAt' in data) || (data.updatedAt is string && data.updatedAt.size() <= 50));
+    }
+
+    function isValidEvaluation(data) {
+      return data.keys().hasAll(['id', 'userId', 'playerName', 'primaryPositionTitle', 'createdAt']) &&
+        data.id is string && isValidId(data.id) &&
+        data.userId is string && data.userId == request.auth.uid &&
+        data.playerName is string && data.playerName.size() >= 1 && data.playerName.size() <= 80 &&
+        data.primaryPositionTitle is string && data.primaryPositionTitle.size() <= 100 &&
+        data.createdAt is string &&
+        (!('preferredFoot' in data) || (data.preferredFoot is string && data.preferredFoot.size() <= 20)) &&
+        (!('primaryPositionCode' in data) || (data.primaryPositionCode is string && data.primaryPositionCode.size() <= 20)) &&
+        (!('matchPercentage' in data) || (data.matchPercentage is number && data.matchPercentage >= 0 && data.matchPercentage <= 100)) &&
+        (!('proPlayerName' in data) || (data.proPlayerName is string && data.proPlayerName.size() <= 100)) &&
+        (!('dataJson' in data) || (data.dataJson is string && data.dataJson.size() <= 100000));
+    }
+
+    function isValidPayment(data) {
+      return data.keys().hasAll(['id', 'userId', 'transactionId', 'provider', 'plan', 'amount', 'createdAt']) &&
+        data.id is string && isValidId(data.id) &&
+        data.userId is string && data.userId == request.auth.uid &&
+        data.transactionId is string && data.transactionId.size() <= 120 &&
+        data.provider is string && (data.provider == 'stripe' || data.provider == 'paypal') &&
+        data.plan is string && (data.plan == 'pro' || data.plan == 'academy' || data.plan == 'academy_basic' || data.plan == 'academy_elite') &&
+        data.amount is number && data.amount >= 0 &&
+        data.createdAt is string &&
+        (!('billingCycle' in data) || (data.billingCycle is string && (data.billingCycle == 'monthly' || data.billingCycle == 'annual'))) &&
+        (!('currency' in data) || (data.currency is string && data.currency.size() <= 10)) &&
+        (!('status' in data) || (data.status is string && data.status.size() <= 50)) &&
+        (!('hasTrial' in data) || data.hasTrial is bool) &&
+        (!('trialDays' in data) || data.trialDays is number) &&
+        (!('trialEndsAt' in data) || (data.trialEndsAt is string && data.trialEndsAt.size() <= 50)) &&
+        (!('amountDueToday' in data) || data.amountDueToday is number);
+    }
+
+    function isValidStudent(data) {
+      return data.keys().hasAll(['id', 'userId', 'name', 'category', 'dorsal', 'createdAt']) &&
+        data.id is string && isValidId(data.id) &&
+        data.userId is string && data.userId == request.auth.uid &&
+        data.name is string && data.name.size() >= 1 && data.name.size() <= 100 &&
+        data.category is string && data.category.size() <= 30 &&
+        data.dorsal is number && data.dorsal >= 1 && data.dorsal <= 99 &&
+        data.createdAt is string &&
+        (!('age' in data) || (data.age is number && data.age >= 5 && data.age <= 60)) &&
+        (!('preferredFoot' in data) || (data.preferredFoot is string && data.preferredFoot.size() <= 20)) &&
+        (!('primaryPosition' in data) || (data.primaryPosition is string && data.primaryPosition.size() <= 20)) &&
+        (!('secondaryPosition' in data) || (data.secondaryPosition is string && data.secondaryPosition.size() <= 20)) &&
+        (!('matchPercentage' in data) || (data.matchPercentage is number && data.matchPercentage >= 0 && data.matchPercentage <= 100)) &&
+        (!('coachNotes' in data) || (data.coachNotes is string && data.coachNotes.size() <= 5000)) &&
+        (!('lastExamDate' in data) || (data.lastExamDate is string && data.lastExamDate.size() <= 50)) &&
+        (!('dataJson' in data) || (data.dataJson is string && data.dataJson.size() <= 200000)) &&
+        (!('updatedAt' in data) || (data.updatedAt is string && data.updatedAt.size() <= 50));
+    }
+
+    function isValidLineup(data) {
+      return data.keys().hasAll(['id', 'userId', 'formation', 'slotsJson', 'updatedAt']) &&
+        data.id is string && isValidId(data.id) &&
+        data.userId is string && data.userId == request.auth.uid &&
+        data.formation is string && data.formation.size() <= 30 &&
+        data.slotsJson is string && data.slotsJson.size() <= 50000 &&
+        data.updatedAt is string;
+    }
+
+    function isValidTactic(data) {
+      return data.keys().hasAll(['id', 'userId', 'title', 'dataJson', 'updatedAt']) &&
+        data.id is string && isValidId(data.id) &&
+        data.userId is string && data.userId == request.auth.uid &&
+        data.title is string && data.title.size() >= 1 && data.title.size() <= 120 &&
+        data.dataJson is string && data.dataJson.size() <= 200000 &&
+        data.updatedAt is string;
+    }
+
+    // User Profile
+    match /users/{userId} {
+      allow get: if isSignedIn() && request.auth.uid == userId;
+      allow create, update: if isSignedIn() && request.auth.uid == userId && isValidUser(request.resource.data);
+      allow delete: if isSignedIn() && request.auth.uid == userId;
+
+      // User's Tactical Evaluations
+      match /evaluations/{evaluationId} {
+        allow get, list: if isSignedIn() && request.auth.uid == userId;
+        allow create: if isSignedIn() && request.auth.uid == userId && isValidId(evaluationId) && isValidEvaluation(request.resource.data);
+        allow update: if isSignedIn() && request.auth.uid == userId && isValidId(evaluationId) && isValidEvaluation(request.resource.data) && request.resource.data.userId == resource.data.userId;
+        allow delete: if isSignedIn() && request.auth.uid == userId && isValidId(evaluationId);
+      }
+
+      // User's Payment Transaction Receipts
+      match /payments/{paymentId} {
+        allow get, list: if isSignedIn() && request.auth.uid == userId;
+        allow create: if isSignedIn() && request.auth.uid == userId && isValidId(paymentId) && isValidPayment(request.resource.data);
+        allow update: if false; // Receipts are immutable
+        allow delete: if isSignedIn() && request.auth.uid == userId && isValidId(paymentId);
+      }
+
+      // User's Academy Students
+      match /academy_students/{studentId} {
+        allow get, list: if isSignedIn() && request.auth.uid == userId;
+        allow create: if isSignedIn() && request.auth.uid == userId && isValidId(studentId) && isValidStudent(request.resource.data);
+        allow update: if isSignedIn() && request.auth.uid == userId && isValidId(studentId) && isValidStudent(request.resource.data) && request.resource.data.userId == resource.data.userId;
+        allow delete: if isSignedIn() && request.auth.uid == userId && isValidId(studentId);
+      }
+
+      // User's Academy Lineup
+      match /academy_lineups/{lineupId} {
+        allow get, list: if isSignedIn() && request.auth.uid == userId;
+        allow create: if isSignedIn() && request.auth.uid == userId && isValidId(lineupId) && isValidLineup(request.resource.data);
+        allow update: if isSignedIn() && request.auth.uid == userId && isValidId(lineupId) && isValidLineup(request.resource.data) && request.resource.data.userId == resource.data.userId;
+        allow delete: if isSignedIn() && request.auth.uid == userId && isValidId(lineupId);
+      }
+
+      // User's Academy Tactics / Pizarra Táctica
+      match /academy_tactics/{tacticId} {
+        allow get, list: if isSignedIn() && request.auth.uid == userId;
+        allow create: if isSignedIn() && request.auth.uid == userId && isValidId(tacticId) && isValidTactic(request.resource.data);
+        allow update: if isSignedIn() && request.auth.uid == userId && isValidId(tacticId) && isValidTactic(request.resource.data) && request.resource.data.userId == resource.data.userId;
+        allow delete: if isSignedIn() && request.auth.uid == userId && isValidId(tacticId);
+      }
+    }
+  }
+}
