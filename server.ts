@@ -1,13 +1,9 @@
 import express from 'express';
 import path from 'path';
-import { fileURLToPath } from 'url';
 import { GoogleGenAI } from '@google/genai';
 import dotenv from 'dotenv';
 
 dotenv.config();
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
 
 const app = express();
 const PORT = 3000;
@@ -276,9 +272,9 @@ app.post('/api/checkout/stripe', (req, res) => {
 
     const pricingMap: Record<string, { monthly: number; annual: number; maxStudents?: number }> = {
       pro: { monthly: 4.99, annual: 39.99 },
-      academy: { monthly: 39.99, annual: 319.99, maxStudents: 30 },
-      academy_basic: { monthly: 39.99, annual: 319.99, maxStudents: 30 },
-      academy_elite: { monthly: 59.99, annual: 479.99, maxStudents: 200 }
+      academy: { monthly: 70, annual: 560, maxStudents: 30 },
+      academy_basic: { monthly: 70, annual: 560, maxStudents: 30 },
+      academy_elite: { monthly: 150, annual: 1200, maxStudents: 200 }
     };
 
     const planConfig = pricingMap[plan] || pricingMap.pro;
@@ -322,9 +318,9 @@ app.post('/api/checkout/paypal', (req, res) => {
 
     const pricingMap: Record<string, { monthly: number; annual: number; maxStudents?: number }> = {
       pro: { monthly: 4.99, annual: 39.99 },
-      academy: { monthly: 39.99, annual: 319.99, maxStudents: 30 },
-      academy_basic: { monthly: 39.99, annual: 319.99, maxStudents: 30 },
-      academy_elite: { monthly: 59.99, annual: 479.99, maxStudents: 200 }
+      academy: { monthly: 70, annual: 560, maxStudents: 30 },
+      academy_basic: { monthly: 70, annual: 560, maxStudents: 30 },
+      academy_elite: { monthly: 150, annual: 1200, maxStudents: 200 }
     };
 
     const planConfig = pricingMap[plan] || pricingMap.pro;

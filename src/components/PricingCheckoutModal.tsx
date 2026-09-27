@@ -16,11 +16,15 @@ import {
   ArrowRight,
   Crown,
   CalendarClock,
-  Flame
+  Flame,
+  LogIn,
+  AlertCircle,
+  User as UserIcon
 } from 'lucide-react';
 import { PlanType, PaymentProvider, PaymentRecord } from '../types';
 import { useAuth } from '../context/AuthContext';
 import { savePaymentToCloud } from '../lib/firebase';
+import { AuthModal } from './AuthModal';
 
 interface PricingCheckoutModalProps {
   isOpen: boolean;
@@ -39,6 +43,7 @@ export const PricingCheckoutModal: React.FC<PricingCheckoutModalProps> = ({
   const [selectedPlan, setSelectedPlan] = useState<PlanType>('pro');
   const [billingCycle, setBillingCycle] = useState<'monthly' | 'annual'>('monthly');
   const [provider, setProvider] = useState<PaymentProvider>('stripe');
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
 
   // Automatically select the most relevant plan on modal open
   useEffect(() => {
@@ -87,9 +92,9 @@ export const PricingCheckoutModal: React.FC<PricingCheckoutModalProps> = ({
   const prices: Record<PlanType, { monthly: number; annual: number; maxStudents?: number }> = {
     free: { monthly: 0, annual: 0 },
     pro: { monthly: 4.99, annual: 39.99 },
-    academy: { monthly: 39.99, annual: 319.99, maxStudents: 30 },
-    academy_basic: { monthly: 39.99, annual: 319.99, maxStudents: 30 },
-    academy_elite: { monthly: 59.99, annual: 479.99, maxStudents: 200 }
+    academy: { monthly: 70, annual: 560, maxStudents: 30 },
+    academy_basic: { monthly: 70, annual: 560, maxStudents: 30 },
+    academy_elite: { monthly: 150, annual: 1200, maxStudents: 200 }
   };
 
   const currentPriceConfig = prices[selectedPlan] || prices.pro;
@@ -116,6 +121,11 @@ export const PricingCheckoutModal: React.FC<PricingCheckoutModalProps> = ({
   };
 
   const handleProcessPayment = async () => {
+    if (!user && selectedPlan !== 'free') {
+      setIsAuthModalOpen(true);
+      return;
+    }
+
     if (selectedPlan === 'free') {
       await updatePlan('free');
       if (onPlanActivated) onPlanActivated('free');
@@ -613,6 +623,53 @@ export const PricingCheckoutModal: React.FC<PricingCheckoutModalProps> = ({
                   </span>
                 </div>
 
+                {/* Authentication status banner */}
+                {!user && selectedPlan !== 'free' ? (
+                  <div className="mb-4 p-4 rounded-xl bg-gradient-to-br from-amber-500/15 via-slate-900 to-black border-2 border-amber-400/40 space-y-3 text-left">
+                    <div className="flex items-center gap-2">
+                      <div className="w-8 h-8 rounded-lg bg-amber-400/20 border border-amber-400/30 flex items-center justify-center text-amber-300">
+                        <Lock className="w-4 h-4" />
+                      </div>
+                      <div>
+                        <span className="text-xs font-black text-amber-300 uppercase tracking-wide block">
+                          Requisito Obligatorio
+                        </span>
+                        <p className="text-[11px] text-slate-300">
+                          Inicia sesión para vincular tu membresía y activar los 3 días de prueba.
+                        </p>
+                      </div>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={() => setIsAuthModalOpen(true)}
+                      className="w-full py-2.5 rounded-lg bg-amber-400 hover:bg-white text-black text-xs font-black uppercase tracking-wider flex items-center justify-center gap-2 shadow-md shadow-amber-400/20 cursor-pointer transition-all hover:scale-[1.02]"
+                    >
+                      <LogIn className="w-4 h-4" />
+                      <span>Iniciar Sesión para Continuar</span>
+                    </button>
+                  </div>
+                ) : user && selectedPlan !== 'free' ? (
+                  <div className="mb-4 p-2.5 rounded-xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-between gap-2">
+                    <div className="flex items-center gap-2 min-w-0">
+                      <div className="w-7 h-7 rounded-full bg-emerald-500/20 border border-emerald-400/40 flex items-center justify-center text-emerald-300 shrink-0">
+                        <UserIcon className="w-3.5 h-3.5" />
+                      </div>
+                      <div className="min-w-0">
+                        <span className="text-xs font-bold text-white block truncate leading-tight">
+                          {user.displayName || 'Usuario Registrado'}
+                        </span>
+                        <span className="text-[10px] text-emerald-400 font-mono block truncate leading-tight">
+                          {user.email || 'Cuenta Activa'}
+                        </span>
+                      </div>
+                    </div>
+                    <span className="px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 text-[9px] font-mono font-bold uppercase shrink-0">
+                      ✓ Verificado
+                    </span>
+                  </div>
+                ) : null}
+
                 {/* Gateway Tabs: Stripe vs PayPal */}
                 <div className="grid grid-cols-2 gap-2 mb-4">
                   <button
@@ -767,39 +824,50 @@ export const PricingCheckoutModal: React.FC<PricingCheckoutModalProps> = ({
                   </div>
                 )}
 
-                <button
-                  type="button"
-                  disabled={isProcessing || (isCurrentActivePlan(selectedPlan) && selectedPlan !== 'free')}
-                  onClick={handleProcessPayment}
-                  className={`w-full py-3 rounded-xl font-black uppercase italic tracking-wider text-xs flex items-center justify-center gap-2 transition-all ${
-                    isCurrentActivePlan(selectedPlan) && selectedPlan !== 'free'
-                      ? 'bg-slate-800 text-slate-400 cursor-not-allowed border border-white/10'
-                      : selectedPlan === 'academy_elite'
-                      ? 'bg-amber-400 hover:bg-white text-black shadow-lg shadow-amber-500/20 cursor-pointer'
-                      : selectedPlan === 'academy_basic' || selectedPlan === 'academy'
-                      ? 'bg-emerald-400 hover:bg-white text-black shadow-lg shadow-emerald-500/20 cursor-pointer'
-                      : 'bg-volt hover:bg-white text-black shadow-lg shadow-volt/20 cursor-pointer'
-                  }`}
-                >
-                  {isProcessing ? (
-                    <>
-                      <Loader2 className="w-4 h-4 animate-spin text-black" />
-                      <span>Activando prueba gratuita...</span>
-                    </>
-                  ) : isCurrentActivePlan(selectedPlan) && selectedPlan !== 'free' ? (
-                    <>
-                      <CheckCircle2 className="w-4 h-4 text-emerald-400" />
-                      <span>{getPlanDisplayName(selectedPlan)} ya activo</span>
-                    </>
-                  ) : selectedPlan === 'free' ? (
-                    <span>Confirmar Plan Básico</span>
-                  ) : (
-                    <>
-                      <Lock className="w-3.5 h-3.5" />
-                      <span>Iniciar Prueba Gratuita de 3 Días ($0 hoy)</span>
-                    </>
-                  )}
-                </button>
+                {!user && selectedPlan !== 'free' ? (
+                  <button
+                    type="button"
+                    onClick={() => setIsAuthModalOpen(true)}
+                    className="w-full py-3 rounded-xl bg-amber-400 hover:bg-white text-black font-black uppercase italic tracking-wider text-xs flex items-center justify-center gap-2 shadow-lg shadow-amber-400/20 cursor-pointer transition-all"
+                  >
+                    <LogIn className="w-4 h-4" />
+                    <span>Inicia Sesión para Activar Plan</span>
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    disabled={isProcessing || (isCurrentActivePlan(selectedPlan) && selectedPlan !== 'free')}
+                    onClick={handleProcessPayment}
+                    className={`w-full py-3 rounded-xl font-black uppercase italic tracking-wider text-xs flex items-center justify-center gap-2 transition-all ${
+                      isCurrentActivePlan(selectedPlan) && selectedPlan !== 'free'
+                        ? 'bg-slate-800 text-slate-400 cursor-not-allowed border border-white/10'
+                        : selectedPlan === 'academy_elite'
+                        ? 'bg-amber-400 hover:bg-white text-black shadow-lg shadow-amber-500/20 cursor-pointer'
+                        : selectedPlan === 'academy_basic' || selectedPlan === 'academy'
+                        ? 'bg-emerald-400 hover:bg-white text-black shadow-lg shadow-emerald-500/20 cursor-pointer'
+                        : 'bg-volt hover:bg-white text-black shadow-lg shadow-volt/20 cursor-pointer'
+                    }`}
+                  >
+                    {isProcessing ? (
+                      <>
+                        <Loader2 className="w-4 h-4 animate-spin text-black" />
+                        <span>Activando prueba gratuita...</span>
+                      </>
+                    ) : isCurrentActivePlan(selectedPlan) && selectedPlan !== 'free' ? (
+                      <>
+                        <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+                        <span>{getPlanDisplayName(selectedPlan)} ya activo</span>
+                      </>
+                    ) : selectedPlan === 'free' ? (
+                      <span>Confirmar Plan Básico</span>
+                    ) : (
+                      <>
+                        <Lock className="w-3.5 h-3.5" />
+                        <span>Iniciar Prueba Gratuita de 3 Días ($0 hoy)</span>
+                      </>
+                    )}
+                  </button>
+                )}
 
                 {selectedPlan !== 'free' ? (
                   <p className="text-[10px] text-slate-400 text-center leading-relaxed">
@@ -815,6 +883,12 @@ export const PricingCheckoutModal: React.FC<PricingCheckoutModalProps> = ({
           </div>
         )}
       </motion.div>
+
+      {/* Auth Modal required before payment */}
+      <AuthModal
+        isOpen={isAuthModalOpen}
+        onClose={() => setIsAuthModalOpen(false)}
+      />
     </div>
   );
 };

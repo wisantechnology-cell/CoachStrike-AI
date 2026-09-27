@@ -16,13 +16,15 @@ import {
   CheckCircle2,
   Users,
   CreditCard,
-  Crown
+  Crown,
+  Lock
 } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
 import { useAuth } from '../context/AuthContext';
 import { GlossaryModal } from './GlossaryModal';
 import { SettingsModal } from './SettingsModal';
 import { PositionDeepDiveModal } from './PositionDeepDiveModal';
+import { AuthModal } from './AuthModal';
 import { AssessmentResult } from '../types';
 
 export type HeaderTab = 'hero' | 'test' | 'drills' | 'tactics' | 'chat' | 'history' | 'academy';
@@ -47,11 +49,12 @@ export const Header: React.FC<HeaderProps> = ({
   onOpenPricing
 }) => {
   const { lang, t } = useLanguage();
-  const { user, login, logout, isCloudActive, plan, isPro, isAcademy } = useAuth();
+  const { user, logout, isCloudActive, plan, isPro, isAcademy } = useAuth();
   const [isGlossaryOpen, setIsGlossaryOpen] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
   const [isDeepDiveOpen, setIsDeepDiveOpen] = useState(false);
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const profileMenuRef = useRef<HTMLDivElement>(null);
 
   // Close profile dropdown when clicking outside
@@ -190,8 +193,10 @@ export const Header: React.FC<HeaderProps> = ({
             >
               <Users className="w-3.5 h-3.5" />
               <span>Academia</span>
-              {isAcademy && (
+              {isAcademy ? (
                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+              ) : (
+                <Lock className="w-3 h-3 text-slate-500" />
               )}
             </button>
 
@@ -314,7 +319,10 @@ export const Header: React.FC<HeaderProps> = ({
                           </span>
                         ) : (
                           <button
-                            onClick={login}
+                            onClick={() => {
+                              setIsAuthModalOpen(true);
+                              setIsProfileMenuOpen(false);
+                            }}
                             className="px-2 py-0.5 rounded bg-volt text-black text-[9px] font-black uppercase tracking-wider hover:bg-white transition-colors cursor-pointer"
                           >
                             Acceder
@@ -466,7 +474,7 @@ export const Header: React.FC<HeaderProps> = ({
                     ) : (
                       <button
                         onClick={() => {
-                          login();
+                          setIsAuthModalOpen(true);
                           setIsProfileMenuOpen(false);
                         }}
                         className="text-xs font-bold text-volt hover:text-white bg-volt/10 hover:bg-volt/20 px-3 py-1.5 rounded-lg border border-volt/30 flex items-center gap-1.5 transition-all cursor-pointer"
@@ -520,9 +528,10 @@ export const Header: React.FC<HeaderProps> = ({
           </button>
           <button
             onClick={() => setActiveTab('academy')}
-            className={`py-1 ${activeTab === 'academy' ? 'text-emerald-400' : ''}`}
+            className={`py-1 flex items-center gap-0.5 ${activeTab === 'academy' ? 'text-emerald-400' : ''}`}
           >
-            Academia
+            <span>Academia</span>
+            {!isAcademy && <Lock className="w-2.5 h-2.5 text-slate-500" />}
           </button>
           <button
             onClick={() => setActiveTab('chat')}
@@ -540,6 +549,10 @@ export const Header: React.FC<HeaderProps> = ({
       </header>
 
       {/* Modals */}
+      <AuthModal
+        isOpen={isAuthModalOpen}
+        onClose={() => setIsAuthModalOpen(false)}
+      />
       <GlossaryModal
         isOpen={isGlossaryOpen}
         onClose={() => setIsGlossaryOpen(false)}

@@ -654,6 +654,187 @@ export const AcademyDashboard: React.FC<AcademyDashboardProps> = ({
     }
   };
 
+  // Paywall lock screen for non-paying users without an active trial
+  if (!isAcademy) {
+    return (
+      <div className="max-w-6xl mx-auto px-4 lg:px-8 py-10 space-y-8">
+        {/* Main Paywall Card */}
+        <div className="relative rounded-3xl bg-gradient-to-b from-slate-900 via-slate-950 to-black border-2 border-emerald-500/30 p-6 sm:p-10 overflow-hidden shadow-2xl shadow-emerald-950/40 text-center">
+          {/* Background subtle radial glow */}
+          <div className="absolute top-0 left-1/2 -translate-x-1/2 w-96 h-96 bg-emerald-500/10 blur-3xl pointer-events-none rounded-full" />
+
+          {/* Locked Badge */}
+          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-amber-400/10 border border-amber-400/30 text-amber-300 text-xs font-mono font-bold tracking-widest uppercase mb-6">
+            <Lock className="w-3.5 h-3.5 text-amber-400" />
+            <span>Función Exclusiva para Directores Técnicos & Clubes</span>
+          </div>
+
+          <h1 className="text-3xl sm:text-5xl font-black text-white uppercase italic tracking-tight font-display max-w-3xl mx-auto leading-tight">
+            Desbloquea el <span className="text-emerald-400">Modo Academia</span> UEFA Pro
+          </h1>
+
+          <p className="mt-4 text-sm sm:text-base text-slate-300 max-w-2xl mx-auto font-normal leading-relaxed">
+            El Modo Academia está diseñado para directores técnicos, formadores y escuelas de fútbol que necesitan gestionar su plantilla, realizar exámenes de ADN táctico a cada futbolista, armar el Once Ideal y asignar tareas personalizadas con seguimiento profesional.
+          </p>
+
+          {/* Plan Comparison Cards */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-5 max-w-3xl mx-auto my-8 text-left">
+            {/* Academia Básico Card */}
+            <div className="p-6 rounded-2xl bg-black/60 border-2 border-emerald-500/40 hover:border-emerald-400 transition-all flex flex-col justify-between relative group shadow-lg shadow-emerald-950/20">
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <div className="w-8 h-8 rounded-lg bg-emerald-500/20 border border-emerald-500/30 flex items-center justify-center text-emerald-400">
+                      <Users className="w-4 h-4" />
+                    </div>
+                    <div>
+                      <h3 className="text-lg font-black text-white uppercase italic">Academia Básico</h3>
+                      <span className="text-[11px] text-slate-400">Para entrenadores y clubes base</span>
+                    </div>
+                  </div>
+                  <span className="px-2 py-0.5 rounded-full bg-amber-400 text-black text-[10px] font-black uppercase">
+                    3 Días Gratis
+                  </span>
+                </div>
+
+                <div className="py-2">
+                  <div className="flex items-baseline gap-1">
+                    <span className="text-3xl font-black text-emerald-400 font-mono">$70</span>
+                    <span className="text-xs text-slate-400 font-mono">USD / mes</span>
+                  </div>
+                  <span className="text-[11px] text-emerald-400 font-bold block mt-0.5">
+                    $0 hoy durante la prueba de 3 días
+                  </span>
+                </div>
+
+                <ul className="space-y-2 text-xs text-slate-300 border-t border-white/10 pt-3">
+                  <li className="flex items-center gap-2">
+                    <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+                    <span><strong>Hasta 30 alumnos</strong> en plantilla</span>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+                    <span>Examen directo y test de ADN a futbolistas</span>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+                    <span>Armador de Once Ideal con pizarra interactiva</span>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+                    <span>Asignador de tareas y deberes técnicos</span>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+                    <span>Sincronización en la nube Firestore</span>
+                  </li>
+                </ul>
+              </div>
+
+              <button
+                onClick={() => onOpenPricing('academy_basic')}
+                className="mt-6 w-full py-3 rounded-xl bg-emerald-400 hover:bg-white text-black font-black uppercase italic tracking-wider text-xs shadow-lg shadow-emerald-500/20 flex items-center justify-center gap-2 transition-all cursor-pointer hover:scale-[1.02]"
+              >
+                <Zap className="w-4 h-4 fill-black" />
+                <span>Activar Prueba (Básico - $70 USD)</span>
+              </button>
+            </div>
+
+            {/* Academia Élite Card */}
+            <div className="p-6 rounded-2xl bg-gradient-to-b from-amber-950/20 to-black/60 border-2 border-amber-400/40 hover:border-amber-400 transition-all flex flex-col justify-between relative group shadow-lg shadow-amber-950/20">
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <div className="w-8 h-8 rounded-lg bg-amber-400/20 border border-amber-400/30 flex items-center justify-center text-amber-300">
+                      <Crown className="w-4 h-4" />
+                    </div>
+                    <div>
+                      <h3 className="text-lg font-black text-white uppercase italic">Academia Élite</h3>
+                      <span className="text-[11px] text-slate-400">Para grandes canteras y federaciones</span>
+                    </div>
+                  </div>
+                  <span className="px-2 py-0.5 rounded-full bg-gradient-to-r from-amber-400 to-volt text-black text-[10px] font-black uppercase">
+                    3 Días Gratis
+                  </span>
+                </div>
+
+                <div className="py-2">
+                  <div className="flex items-baseline gap-1">
+                    <span className="text-3xl font-black text-amber-400 font-mono">$150</span>
+                    <span className="text-xs text-slate-400 font-mono">USD / mes</span>
+                  </div>
+                  <span className="text-[11px] text-amber-300 font-bold block mt-0.5">
+                    $0 hoy durante la prueba de 3 días
+                  </span>
+                </div>
+
+                <ul className="space-y-2 text-xs text-slate-300 border-t border-white/10 pt-3">
+                  <li className="flex items-center gap-2">
+                    <CheckCircle2 className="w-4 h-4 text-amber-400 shrink-0" />
+                    <span><strong>Hasta 200 alumnos</strong> en plantilla</span>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <CheckCircle2 className="w-4 h-4 text-amber-400 shrink-0" />
+                    <span>Múltiples categorías y aulas (Sub-12 a Senior)</span>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <CheckCircle2 className="w-4 h-4 text-amber-400 shrink-0" />
+                    <span>Once Ideal + Banco completo de suplentes</span>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <CheckCircle2 className="w-4 h-4 text-amber-400 shrink-0" />
+                    <span>Exportación de informes Scouting oficiales PDF</span>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <CheckCircle2 className="w-4 h-4 text-amber-400 shrink-0" />
+                    <span>Pizarra táctica ilimitada con guardado cloud</span>
+                  </li>
+                </ul>
+              </div>
+
+              <button
+                onClick={() => onOpenPricing('academy_elite')}
+                className="mt-6 w-full py-3 rounded-xl bg-amber-400 hover:bg-white text-black font-black uppercase italic tracking-wider text-xs shadow-lg shadow-amber-400/20 flex items-center justify-center gap-2 transition-all cursor-pointer hover:scale-[1.02]"
+              >
+                <Crown className="w-4 h-4 fill-black" />
+                <span>Activar Prueba (Élite - $150 USD)</span>
+              </button>
+            </div>
+          </div>
+
+          <div className="pt-2 flex flex-wrap items-center justify-center gap-4 text-xs text-slate-400">
+            <span className="flex items-center gap-1.5">
+              <ShieldCheck className="w-4 h-4 text-emerald-400" />
+              Prueba gratuita de 3 días
+            </span>
+            <span>•</span>
+            <span>Pagos seguros con Stripe y PayPal</span>
+            <span>•</span>
+            <span>Cancela cuando quieras sin compromiso</span>
+          </div>
+        </div>
+
+        {/* Locked Teaser Preview Cards */}
+        <div className="relative opacity-35 filter blur-[1px] select-none pointer-events-none space-y-4">
+          <div className="p-6 rounded-2xl bg-black/40 border border-white/10 grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="p-4 rounded-xl bg-slate-900 border border-white/5 space-y-2">
+              <div className="h-4 w-28 bg-emerald-500/30 rounded" />
+              <div className="h-8 w-16 bg-white/20 rounded" />
+            </div>
+            <div className="p-4 rounded-xl bg-slate-900 border border-white/5 space-y-2">
+              <div className="h-4 w-36 bg-emerald-500/30 rounded" />
+              <div className="h-8 w-20 bg-white/20 rounded" />
+            </div>
+            <div className="p-4 rounded-xl bg-slate-900 border border-white/5 space-y-2">
+              <div className="h-4 w-24 bg-emerald-500/30 rounded" />
+              <div className="h-8 w-14 bg-white/20 rounded" />
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="max-w-7xl mx-auto px-4 lg:px-8 py-6 space-y-6">
       {/* Academy Top Banner */}
