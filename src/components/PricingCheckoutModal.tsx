@@ -23,8 +23,261 @@ import {
 } from 'lucide-react';
 import { PlanType, PaymentProvider, PaymentRecord } from '../types';
 import { useAuth } from '../context/AuthContext';
+import { useLanguage } from '../context/LanguageContext';
 import { savePaymentToCloud } from '../lib/firebase';
 import { AuthModal } from './AuthModal';
+
+const PRICING_TEXTS = {
+  en: {
+    headerTitle: 'Memberships & Plans',
+    headerSub: '3-Day free trial on all plans • Risk-free • Cancel anytime',
+    monthly: 'Monthly',
+    annual: 'Annual',
+    saveDiscount: '-33% Savings',
+    trialIncluded: '3-Day Free Trial Included',
+    proPlan: 'Pro Plan',
+    proBadge: '3 Days Free',
+    proSub: 'For individual players seeking maximum tactical performance',
+    proFeatures: [
+      'Unlimited DNA assessments',
+      'In-depth dribbling analysis',
+      'UEFA PDF Scouting Report',
+      '24/7 AI Tactical Coach'
+    ],
+    academyBasic: 'Academy Basic',
+    academyBasicLimit: 'Limit 30 Players',
+    academyBasicSub: 'For coaches, youth trainers and grassroots clubs',
+    academyBasicFeatures: [
+      'Up to 30 registered student profiles',
+      'Direct player DNA testing & progress',
+      'Interactive Starting XI line-up builder',
+      'Tactical task & drill assignment'
+    ],
+    academyElite: 'Academy Elite',
+    academyEliteLimit: 'Limit 200 Players',
+    academyEliteSub: 'For large youth academies, pro clubs & federations',
+    academyEliteFeatures: [
+      'Up to 200 player roster files',
+      'Multiple youth categories & squads',
+      'Full Starting XI and bench management',
+      'Multi-device real-time Cloud sync'
+    ],
+    freePlan: 'Basic Plan (Free)',
+    freePlanSub: '1 saved evaluation, 2 dribbles per position',
+    securePayment: 'Secure Payment Method',
+    sslEncrypted: 'SSL Encrypted',
+    authRequiredTitle: 'Account Required',
+    authRequiredSub: 'Sign in to link your membership and activate your 3-day trial.',
+    loginToContinue: 'Sign In to Continue',
+    verified: 'Verified',
+    stripeTab: 'Credit Card / Stripe',
+    paypalTab: 'PayPal',
+    freeNoPayment: 'No payment information required for Free Basic Plan.',
+    cardNumber: 'Card Number',
+    useTestCard: 'Use test card',
+    expiry: 'Expiry',
+    cvc: 'CVC / CVV',
+    cardholder: 'Cardholder Name',
+    fullNamePlaceholder: 'Full Name',
+    paypalExpress: 'PayPal Express Checkout',
+    useDemoAccount: 'Use demo account',
+    paypalNotice: 'You will be redirected to authorize your 3-day free trial with buyer protection.',
+    paypalEmail: 'PayPal Email',
+    regularFee: 'Regular fee:',
+    freeTrial: 'Free trial (3 Days):',
+    firstCharge: 'First charge:',
+    dueToday: 'Total due today:',
+    month: 'month',
+    year: 'year',
+    startTrialBtn: 'Start 3-Day Free Trial ($0 today)',
+    activatingTrial: 'Activating free trial...',
+    confirmFreeBtn: 'Confirm Free Basic Plan',
+    planActive: 'already active',
+    yourPlan: '✓ Your Plan',
+    disclaimer: 'You will not be charged today. After 3 trial days, ${price} USD /{cycle} applies according to chosen plan. Cancel anytime.',
+    freeForever: 'Free plan forever.',
+    successTag: '🎉 3-Day Free Trial Activated',
+    welcomeTo: 'Welcome to {plan}!',
+    successSub: 'Your 3-day free trial is active from today. You have full, unlimited access to all features.',
+    txId: 'Transaction ID:',
+    selectedPlanLbl: 'Selected Plan:',
+    chargedToday: 'Charged Today:',
+    chargedZero: '$0.00 USD (3-Day Trial)',
+    regularCharge: 'First Regular Charge:',
+    trialEndLbl: 'Trial End Date:',
+    gatewayLbl: 'Secure Gateway:',
+    startUsingBtn: 'Start Using Now',
+    upgradeToAcademy: 'Upgrade to Academy Mode',
+    upgradeToAcademyDesc: 'You are Pro. Upgrade to Academy Basic (30 students) or Elite (200 students) with 3 days free.',
+    viewAcademy: 'View Academy'
+  },
+  es: {
+    headerTitle: 'Membresías & Planes',
+    headerSub: 'Prueba gratuita de 3 días en todos los planes • Sin riesgo • Cancela cuando quieras',
+    monthly: 'Mensual',
+    annual: 'Anual',
+    saveDiscount: '-33% Ahorro',
+    trialIncluded: '3 Días de Prueba Gratuita incluidos',
+    proPlan: 'Plan Pro',
+    proBadge: '3 Días Gratis',
+    proSub: 'Para jugadores individuales que buscan el máximo rendimiento',
+    proFeatures: [
+      'Evaluaciones ilimitadas',
+      'Análisis profundo de regates',
+      'Ficha Scouting PDF UEFA',
+      'Coach AI Táctico 24/7'
+    ],
+    academyBasic: 'Academia Básico',
+    academyBasicLimit: 'Límite 30 Alumnos',
+    academyBasicSub: 'Para entrenadores, formadores y clubes base',
+    academyBasicFeatures: [
+      'Hasta 30 alumnos en plantilla',
+      'Examen directo y test a alumnos',
+      'Armador de Once Ideal interactivo',
+      'Asignación de tareas técnicas'
+    ],
+    academyElite: 'Academia Élite',
+    academyEliteLimit: 'Límite 200 Alumnos',
+    academyEliteSub: 'Para grandes canteras, clubes de alto rendimiento y federaciones',
+    academyEliteFeatures: [
+      'Hasta 200 alumnos en plantilla',
+      'Múltiples categorías y canteras',
+      'Once Ideal y banco de suplentes',
+      'Sincronización multi-dispositivo Cloud'
+    ],
+    freePlan: 'Plan Básico (Gratis)',
+    freePlanSub: '1 evaluación guardada, 2 regates por posición',
+    securePayment: 'Método de Pago Seguro',
+    sslEncrypted: 'SSL Encriptado',
+    authRequiredTitle: 'Requisito Obligatorio',
+    authRequiredSub: 'Inicia sesión para vincular tu membresía y activar los 3 días de prueba.',
+    loginToContinue: 'Iniciar Sesión para Continuar',
+    verified: 'Verificado',
+    stripeTab: 'Tarjeta / Stripe',
+    paypalTab: 'PayPal',
+    freeNoPayment: 'No se requiere información de pago para el Plan Básico Gratuito.',
+    cardNumber: 'Número de Tarjeta',
+    useTestCard: 'Usar tarjeta de prueba',
+    expiry: 'Caducidad',
+    cvc: 'CVC / CVV',
+    cardholder: 'Titular de la Tarjeta',
+    fullNamePlaceholder: 'Nombre y Apellidos',
+    paypalExpress: 'PayPal Express Checkout',
+    useDemoAccount: 'Usar cuenta demo',
+    paypalNotice: 'Serás redirigido para autorizar tu prueba gratuita de 3 días con protección al comprador.',
+    paypalEmail: 'Correo de PayPal',
+    regularFee: 'Tarifa regular:',
+    freeTrial: 'Prueba gratuita (3 Días):',
+    firstCharge: 'Primer cobro:',
+    dueToday: 'Total a pagar hoy:',
+    month: 'mes',
+    year: 'año',
+    startTrialBtn: 'Iniciar Prueba Gratuita de 3 Días ($0 hoy)',
+    activatingTrial: 'Activando prueba gratuita...',
+    confirmFreeBtn: 'Confirmar Plan Básico',
+    planActive: 'ya activo',
+    yourPlan: '✓ Tu Plan',
+    disclaimer: 'No se te cobrará nada hoy. Tras los 3 días de prueba, se aplicará ${price} USD /{cycle} según el plan elegido. Puedes cancelar en cualquier momento sin compromiso.',
+    freeForever: 'Plan gratuito para siempre.',
+    successTag: '🎉 3 Días de Prueba Activados',
+    welcomeTo: '¡Bienvenido a {plan}!',
+    successSub: 'Tu prueba gratuita de 3 días está activa desde hoy. Tienes acceso total e ilimitado a todas las herramientas.',
+    txId: 'Transacción ID:',
+    selectedPlanLbl: 'Plan Seleccionado:',
+    chargedToday: 'Cargo Realizado Hoy:',
+    chargedZero: '$0.00 USD (Prueba 3 Días)',
+    regularCharge: 'Primer Cobro Regular:',
+    trialEndLbl: 'Fecha Fin de Prueba:',
+    gatewayLbl: 'Pasarela Segura:',
+    startUsingBtn: 'Comenzar a Usar Ahora',
+    upgradeToAcademy: 'Upgrade a Modo Academia',
+    upgradeToAcademyDesc: 'Ya eres Pro. Pasa a Academia Básico (30 alumnos) o Élite (200 alumnos) con 3 días gratis.',
+    viewAcademy: 'Ver Academia'
+  },
+  pt: {
+    headerTitle: 'Membros & Planos',
+    headerSub: 'Teste grátis de 3 dias em todos os planos • Sem risco • Cancele quando quiser',
+    monthly: 'Mensal',
+    annual: 'Anual',
+    saveDiscount: '-33% Poupança',
+    trialIncluded: '3 Dias de Teste Gratuito incluídos',
+    proPlan: 'Plano Pro',
+    proBadge: '3 Dias Grátis',
+    proSub: 'Para jogadores individuais em busca do máximo rendimento tático',
+    proFeatures: [
+      'Avaliações ilimitadas',
+      'Análise aprofundada de dribles',
+      'Relatório Scouting PDF UEFA',
+      'Treinador AI Tático 24/7'
+    ],
+    academyBasic: 'Academia Básico',
+    academyBasicLimit: 'Limite 30 Alunos',
+    academyBasicSub: 'Para treinadores, formadores e clubes de base',
+    academyBasicFeatures: [
+      'Até 30 alunos no plantel',
+      'Avaliação direta e testes de alunos',
+      'Montador de Onze Ideal interativo',
+      'Atribuição de tarefas técnicas'
+    ],
+    academyElite: 'Academia Elite',
+    academyEliteLimit: 'Limite 200 Alunos',
+    academyEliteSub: 'Para grandes centros de formação, clubes e federações',
+    academyEliteFeatures: [
+      'Até 200 alunos no plantel',
+      'Múltiplos escalões e equipas',
+      'Onze Ideal e banco de suplentes',
+      'Sincronização Cloud multi-dispositivo'
+    ],
+    freePlan: 'Plano Básico (Grátis)',
+    freePlanSub: '1 avaliação guardada, 2 dribles por posição',
+    securePayment: 'Método de Pagamento Seguro',
+    sslEncrypted: 'SSL Encriptado',
+    authRequiredTitle: 'Requisito Obrigatório',
+    authRequiredSub: 'Inicie sessão para associar a sua subscrição e ativar o teste de 3 dias.',
+    loginToContinue: 'Iniciar Sessão para Continuar',
+    verified: 'Verificado',
+    stripeTab: 'Cartão / Stripe',
+    paypalTab: 'PayPal',
+    freeNoPayment: 'Não são necessárias informações de pagamento para o Plano Básico Grátis.',
+    cardNumber: 'Número do Cartão',
+    useTestCard: 'Usar cartão de teste',
+    expiry: 'Validade',
+    cvc: 'CVC / CVV',
+    cardholder: 'Nome no Cartão',
+    fullNamePlaceholder: 'Nome e Apelido',
+    paypalExpress: 'PayPal Express Checkout',
+    useDemoAccount: 'Usar conta demo',
+    paypalNotice: 'Será redirecionado para autorizar o seu teste gratuito de 3 dias com proteção ao comprador.',
+    paypalEmail: 'Email do PayPal',
+    regularFee: 'Tarifa normal:',
+    freeTrial: 'Teste gratuito (3 Dias):',
+    firstCharge: 'Primeiro débito:',
+    dueToday: 'Total a pagar hoje:',
+    month: 'mês',
+    year: 'ano',
+    startTrialBtn: 'Iniciar Teste Gratuito de 3 Dias ($0 hoje)',
+    activatingTrial: 'A ativar teste gratuito...',
+    confirmFreeBtn: 'Confirmar Plano Básico',
+    planActive: 'já ativo',
+    yourPlan: '✓ O Seu Plano',
+    disclaimer: 'Não será cobrado nada hoje. Após os 3 dias de teste, será aplicado ${price} USD /{cycle} conforme o plano escolhido. Pode cancelar a qualquer momento.',
+    freeForever: 'Plano gratuito para sempre.',
+    successTag: '🎉 3 Dias de Teste Ativados',
+    welcomeTo: 'Bem-vindo ao {plan}!',
+    successSub: 'O seu teste grátis de 3 dias está ativo. Tem acesso total e ilimitado a todas as ferramentas.',
+    txId: 'ID da Transação:',
+    selectedPlanLbl: 'Plano Selecionado:',
+    chargedToday: 'Cobrado Hoje:',
+    chargedZero: '$0.00 USD (Teste 3 Dias)',
+    regularCharge: 'Primeira Cobrança Normal:',
+    trialEndLbl: 'Data Fim do Teste:',
+    gatewayLbl: 'Plataforma Segura:',
+    startUsingBtn: 'Começar a Utilizar Agora',
+    upgradeToAcademy: 'Upgrade para Modo Academia',
+    upgradeToAcademyDesc: 'Já é Pro. Passe para Academia Básico (30 alunos) ou Elite (200 alunos) com 3 dias grátis.',
+    viewAcademy: 'Ver Academia'
+  }
+};
 
 interface PricingCheckoutModalProps {
   isOpen: boolean;
@@ -39,11 +292,14 @@ export const PricingCheckoutModal: React.FC<PricingCheckoutModalProps> = ({
   initialPlan = 'pro',
   onPlanActivated
 }) => {
+  const { lang } = useLanguage();
   const { user, plan: currentPlan, updatePlan } = useAuth();
   const [selectedPlan, setSelectedPlan] = useState<PlanType>('pro');
   const [billingCycle, setBillingCycle] = useState<'monthly' | 'annual'>('monthly');
   const [provider, setProvider] = useState<PaymentProvider>('stripe');
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+
+  const txt = PRICING_TEXTS[lang] || PRICING_TEXTS.en;
 
   // Automatically select the most relevant plan on modal open
   useEffect(() => {
@@ -53,7 +309,6 @@ export const PricingCheckoutModal: React.FC<PricingCheckoutModalProps> = ({
       } else if (initialPlan === 'academy' || initialPlan === 'academy_basic') {
         setSelectedPlan('academy_basic');
       } else if (currentPlan === 'pro') {
-        // If the user already has Pro, prioritize showing Academy Basic
         setSelectedPlan('academy_basic');
       } else if (currentPlan === 'academy' || currentPlan === 'academy_basic') {
         setSelectedPlan('academy_elite');
@@ -102,7 +357,7 @@ export const PricingCheckoutModal: React.FC<PricingCheckoutModalProps> = ({
 
   const trialDays = 3;
   const trialEndDate = new Date(Date.now() + trialDays * 24 * 60 * 60 * 1000);
-  const trialEndDateFormatted = trialEndDate.toLocaleDateString('es-ES', {
+  const trialEndDateFormatted = trialEndDate.toLocaleDateString(lang === 'en' ? 'en-US' : lang === 'pt' ? 'pt-BR' : 'es-ES', {
     day: 'numeric',
     month: 'long',
     year: 'numeric'
@@ -121,11 +376,6 @@ export const PricingCheckoutModal: React.FC<PricingCheckoutModalProps> = ({
   };
 
   const handleProcessPayment = async () => {
-    if (!user && selectedPlan !== 'free') {
-      setIsAuthModalOpen(true);
-      return;
-    }
-
     if (selectedPlan === 'free') {
       await updatePlan('free');
       if (onPlanActivated) onPlanActivated('free');
@@ -136,15 +386,16 @@ export const PricingCheckoutModal: React.FC<PricingCheckoutModalProps> = ({
     setIsProcessing(true);
 
     try {
-      const endpoint = provider === 'stripe' ? '/api/checkout/stripe' : '/api/checkout/paypal';
-      const response = await fetch(endpoint, {
+      const response = await fetch('/api/create-payment', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           plan: selectedPlan,
           billingCycle,
-          userEmail: user?.email || (provider === 'paypal' ? paypalEmail : 'user@coachstrike.ai'),
-          cardDetails: provider === 'stripe' ? { name: cardName, last4: '4242' } : undefined
+          provider,
+          userEmail: user?.email || (provider === 'paypal' ? paypalEmail : 'customer@coachstrike.ai'),
+          userName: user?.displayName || cardName || 'Alex Morgan',
+          trialDays: 3
         })
       });
 
@@ -152,10 +403,8 @@ export const PricingCheckoutModal: React.FC<PricingCheckoutModalProps> = ({
       const transactionId = data.transactionId || `tx_${Date.now()}`;
       const finalAmount = data.amount ?? currentPrice;
 
-      // Update plan in AuthContext & Firestore
       await updatePlan(selectedPlan);
 
-      // Persist transaction record in Firestore
       if (user) {
         try {
           const paymentRecord: PaymentRecord = {
@@ -239,11 +488,11 @@ export const PricingCheckoutModal: React.FC<PricingCheckoutModalProps> = ({
 
   const getPlanDisplayName = (p: PlanType) => {
     switch (p) {
-      case 'pro': return 'Plan Pro';
+      case 'pro': return txt.proPlan;
       case 'academy_basic':
-      case 'academy': return 'Academia Básico';
-      case 'academy_elite': return 'Academia Élite';
-      case 'free': return 'Plan Gratuito';
+      case 'academy': return txt.academyBasic;
+      case 'academy_elite': return txt.academyElite;
+      case 'free': return txt.freePlan;
     }
   };
 
@@ -271,10 +520,10 @@ export const PricingCheckoutModal: React.FC<PricingCheckoutModalProps> = ({
             </div>
             <div>
               <h2 className="text-lg font-black tracking-tight text-white uppercase italic font-display flex items-center gap-2">
-                Membresías & Planes <span className="text-volt">Strike AI</span>
+                {txt.headerTitle} <span className="text-volt">Strike AI</span>
               </h2>
               <p className="text-xs text-slate-400">
-                Prueba gratuita de 3 días en todos los planes • Sin riesgo • Cancela cuando quieras
+                {txt.headerSub}
               </p>
             </div>
           </div>
@@ -294,38 +543,38 @@ export const PricingCheckoutModal: React.FC<PricingCheckoutModalProps> = ({
               <CheckCircle2 className="w-10 h-10" />
             </div>
             <span className="px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 text-xs font-mono font-bold tracking-widest uppercase">
-              🎉 3 Días de Prueba Activados
+              {txt.successTag}
             </span>
             <h3 className="text-2xl font-black text-white uppercase italic tracking-tight mt-3">
-              ¡Bienvenido a {getPlanDisplayName(successReceipt.plan)}!
+              {txt.welcomeTo.replace('{plan}', getPlanDisplayName(successReceipt.plan))}
             </h3>
             <p className="text-sm text-slate-300 mt-2">
-              Tu prueba gratuita de 3 días está activa desde hoy. Tienes acceso total e ilimitado a todas las herramientas.
+              {txt.successSub}
             </p>
 
             <div className="bg-black/50 border border-white/10 rounded-xl p-4 my-6 text-left text-xs space-y-2 font-mono">
               <div className="flex justify-between text-slate-400">
-                <span>Transacción ID:</span>
+                <span>{txt.txId}</span>
                 <span className="text-white font-bold">{successReceipt.transactionId}</span>
               </div>
               <div className="flex justify-between text-slate-400">
-                <span>Plan Seleccionado:</span>
+                <span>{txt.selectedPlanLbl}</span>
                 <span className="text-volt font-bold uppercase">{getPlanDisplayName(successReceipt.plan)}</span>
               </div>
               <div className="flex justify-between text-slate-400">
-                <span>Cargo Realizado Hoy:</span>
-                <span className="text-emerald-400 font-black">$0.00 USD (Prueba 3 Días)</span>
+                <span>{txt.chargedToday}</span>
+                <span className="text-emerald-400 font-black">{txt.chargedZero}</span>
               </div>
               <div className="flex justify-between text-slate-400">
-                <span>Primer Cobro Regular:</span>
-                <span className="text-white font-bold">${successReceipt.amount} USD ({billingCycle === 'monthly' ? 'mensual' : 'anual'})</span>
+                <span>{txt.regularCharge}</span>
+                <span className="text-white font-bold">${successReceipt.amount} USD ({billingCycle === 'monthly' ? txt.month : txt.year})</span>
               </div>
               <div className="flex justify-between text-slate-400">
-                <span>Fecha Fin de Prueba:</span>
+                <span>{txt.trialEndLbl}</span>
                 <span className="text-amber-400 font-bold">{successReceipt.trialEndsAt}</span>
               </div>
               <div className="flex justify-between text-slate-400">
-                <span>Pasarela Segura:</span>
+                <span>{txt.gatewayLbl}</span>
                 <span className="text-emerald-400 uppercase font-bold">{successReceipt.provider}</span>
               </div>
             </div>
@@ -334,7 +583,7 @@ export const PricingCheckoutModal: React.FC<PricingCheckoutModalProps> = ({
               onClick={onClose}
               className="w-full py-3 rounded-xl bg-volt hover:bg-white text-black font-black uppercase italic tracking-wider shadow-lg shadow-volt/20 transition-all cursor-pointer flex items-center justify-center gap-2"
             >
-              <span>Comenzar a Usar Ahora</span>
+              <span>{txt.startUsingBtn}</span>
               <ArrowRight className="w-4 h-4" />
             </button>
           </div>
@@ -353,10 +602,10 @@ export const PricingCheckoutModal: React.FC<PricingCheckoutModalProps> = ({
                     </div>
                     <div>
                       <span className="text-xs font-black text-white uppercase italic tracking-wide block">
-                        Upgrade a Modo Academia
+                        {txt.upgradeToAcademy}
                       </span>
                       <p className="text-[11px] text-slate-300">
-                        Ya eres <strong>Pro</strong>. Pasa a <strong>Academia Básico (30 alumnos)</strong> o <strong>Élite (200 alumnos)</strong> con 3 días gratis.
+                        {txt.upgradeToAcademyDesc}
                       </p>
                     </div>
                   </div>
@@ -365,7 +614,7 @@ export const PricingCheckoutModal: React.FC<PricingCheckoutModalProps> = ({
                     onClick={() => setSelectedPlan('academy_basic')}
                     className="px-3 py-1.5 rounded-lg bg-emerald-400 hover:bg-white text-black text-xs font-black uppercase italic tracking-wider shrink-0 cursor-pointer shadow-sm transition-all"
                   >
-                    Ver Academia
+                    {txt.viewAcademy}
                   </button>
                 </div>
               )}
@@ -382,7 +631,7 @@ export const PricingCheckoutModal: React.FC<PricingCheckoutModalProps> = ({
                         : 'text-slate-400 hover:text-white'
                     }`}
                   >
-                    Mensual
+                    {txt.monthly}
                   </button>
                   <button
                     type="button"
@@ -393,16 +642,16 @@ export const PricingCheckoutModal: React.FC<PricingCheckoutModalProps> = ({
                         : 'text-slate-400 hover:text-white'
                     }`}
                   >
-                    <span>Anual</span>
+                    <span>{txt.annual}</span>
                     <span className="px-1.5 py-0.2 rounded bg-black/20 text-black text-[10px] font-black uppercase">
-                      -20% Ahorro
+                      {txt.saveDiscount}
                     </span>
                   </button>
                 </div>
 
                 <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-amber-400/10 border border-amber-400/30 text-amber-300 text-[11px] font-bold">
                   <CalendarClock className="w-3.5 h-3.5 text-amber-400" />
-                  <span>3 Días de Prueba Gratuita incluidos</span>
+                  <span>{txt.trialIncluded}</span>
                 </div>
               </div>
 
@@ -421,20 +670,20 @@ export const PricingCheckoutModal: React.FC<PricingCheckoutModalProps> = ({
                     <div>
                       <div className="flex items-center gap-2 flex-wrap">
                         <span className="text-base font-black text-white uppercase italic">
-                          Plan Pro
+                          {txt.proPlan}
                         </span>
                         <span className="px-2 py-0.5 rounded-full bg-amber-400 text-black text-[10px] font-black uppercase tracking-wider flex items-center gap-1">
                           <Flame className="w-3 h-3 fill-black" />
-                          3 Días Gratis
+                          {txt.proBadge}
                         </span>
                         {isCurrentActivePlan('pro') && (
                           <span className="px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 text-[10px] font-mono font-bold uppercase">
-                            ✓ Tu Plan
+                            {txt.yourPlan}
                           </span>
                         )}
                       </div>
                       <p className="text-xs text-slate-400 mt-0.5">
-                        Para jugadores individuales que buscan el máximo rendimiento
+                        {txt.proSub}
                       </p>
                     </div>
                     <div className="text-right shrink-0">
@@ -442,32 +691,22 @@ export const PricingCheckoutModal: React.FC<PricingCheckoutModalProps> = ({
                         ${prices.pro[billingCycle]}
                       </div>
                       <span className="text-[10px] text-slate-400 block">
-                        /{billingCycle === 'monthly' ? 'mes' : 'año'}
+                        /{billingCycle === 'monthly' ? txt.month : txt.year}
                       </span>
                     </div>
                   </div>
 
                   <ul className="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-1 text-xs text-slate-300">
-                    <li className="flex items-center gap-1.5">
-                      <Check className="w-3.5 h-3.5 text-volt shrink-0" />
-                      <span>Evaluaciones ilimitadas</span>
-                    </li>
-                    <li className="flex items-center gap-1.5">
-                      <Check className="w-3.5 h-3.5 text-volt shrink-0" />
-                      <span>Análisis profundo de regates</span>
-                    </li>
-                    <li className="flex items-center gap-1.5">
-                      <Check className="w-3.5 h-3.5 text-volt shrink-0" />
-                      <span>Ficha Scouting PDF UEFA</span>
-                    </li>
-                    <li className="flex items-center gap-1.5">
-                      <Check className="w-3.5 h-3.5 text-volt shrink-0" />
-                      <span>Coach AI Táctico 24/7</span>
-                    </li>
+                    {txt.proFeatures.map((feat, idx) => (
+                      <li key={idx} className="flex items-center gap-1.5">
+                        <Check className="w-3.5 h-3.5 text-volt shrink-0" />
+                        <span>{feat}</span>
+                      </li>
+                    ))}
                   </ul>
                 </div>
 
-                {/* 2. PLAN ACADEMIA BÁSICO CARD ($39.99 - Límite 30 Alumnos) */}
+                {/* 2. PLAN ACADEMIA BÁSICO CARD ($70/m) */}
                 <div
                   onClick={() => setSelectedPlan('academy_basic')}
                   className={`p-3.5 sm:p-4 rounded-xl border-2 transition-all cursor-pointer relative ${
@@ -481,22 +720,22 @@ export const PricingCheckoutModal: React.FC<PricingCheckoutModalProps> = ({
                       <div className="flex items-center gap-2 flex-wrap">
                         <span className="text-base font-black text-white uppercase italic flex items-center gap-1.5">
                           <Users className="w-4 h-4 text-emerald-400" />
-                          Academia Básico
+                          {txt.academyBasic}
                         </span>
                         <span className="px-2 py-0.5 rounded-full bg-emerald-400 text-black text-[10px] font-black uppercase tracking-wider">
-                          Límite 30 Alumnos
+                          {txt.academyBasicLimit}
                         </span>
                         <span className="px-2 py-0.5 rounded-full bg-amber-400 text-black text-[10px] font-black uppercase tracking-wider">
-                          3 Días Gratis
+                          {txt.proBadge}
                         </span>
                         {isCurrentActivePlan('academy_basic') && (
                           <span className="px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 text-[10px] font-mono font-bold uppercase">
-                            ✓ Tu Plan
+                            {txt.yourPlan}
                           </span>
                         )}
                       </div>
                       <p className="text-xs text-slate-400 mt-0.5">
-                        Para entrenadores, formadores y clubes base
+                        {txt.academyBasicSub}
                       </p>
                     </div>
                     <div className="text-right shrink-0">
@@ -504,32 +743,22 @@ export const PricingCheckoutModal: React.FC<PricingCheckoutModalProps> = ({
                         ${prices.academy_basic[billingCycle]}
                       </div>
                       <span className="text-[10px] text-slate-400 block">
-                        /{billingCycle === 'monthly' ? 'mes' : 'año'}
+                        /{billingCycle === 'monthly' ? txt.month : txt.year}
                       </span>
                     </div>
                   </div>
 
                   <ul className="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-1 text-xs text-slate-300">
-                    <li className="flex items-center gap-1.5">
-                      <Check className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
-                      <span className="font-semibold text-white">Hasta 30 alumnos en plantilla</span>
-                    </li>
-                    <li className="flex items-center gap-1.5">
-                      <Check className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
-                      <span>Examen directo y test a alumnos</span>
-                    </li>
-                    <li className="flex items-center gap-1.5">
-                      <Check className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
-                      <span>Armador de Once Ideal interactivo</span>
-                    </li>
-                    <li className="flex items-center gap-1.5">
-                      <Check className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
-                      <span>Asignación de tareas técnicas</span>
-                    </li>
+                    {txt.academyBasicFeatures.map((feat, idx) => (
+                      <li key={idx} className="flex items-center gap-1.5">
+                        <Check className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                        <span className={idx === 0 ? 'font-semibold text-white' : ''}>{feat}</span>
+                      </li>
+                    ))}
                   </ul>
                 </div>
 
-                {/* 3. PLAN ACADEMIA ÉLITE CARD ($59.99 - Límite 200 Alumnos) */}
+                {/* 3. PLAN ACADEMIA ÉLITE CARD ($150/m) */}
                 <div
                   onClick={() => setSelectedPlan('academy_elite')}
                   className={`p-3.5 sm:p-4 rounded-xl border-2 transition-all cursor-pointer relative ${
@@ -543,22 +772,22 @@ export const PricingCheckoutModal: React.FC<PricingCheckoutModalProps> = ({
                       <div className="flex items-center gap-2 flex-wrap">
                         <span className="text-base font-black text-white uppercase italic flex items-center gap-1.5">
                           <Crown className="w-4 h-4 text-amber-400" />
-                          Academia Élite
+                          {txt.academyElite}
                         </span>
                         <span className="px-2 py-0.5 rounded-full bg-gradient-to-r from-amber-400 to-volt text-black text-[10px] font-black uppercase tracking-wider">
-                          Límite 200 Alumnos
+                          {txt.academyEliteLimit}
                         </span>
                         <span className="px-2 py-0.5 rounded-full bg-amber-400 text-black text-[10px] font-black uppercase tracking-wider">
-                          3 Días Gratis
+                          {txt.proBadge}
                         </span>
                         {isCurrentActivePlan('academy_elite') && (
                           <span className="px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 text-[10px] font-mono font-bold uppercase">
-                            ✓ Tu Plan
+                            {txt.yourPlan}
                           </span>
                         )}
                       </div>
                       <p className="text-xs text-slate-400 mt-0.5">
-                        Para grandes canteras, clubes de alto rendimiento y federaciones
+                        {txt.academyEliteSub}
                       </p>
                     </div>
                     <div className="text-right shrink-0">
@@ -566,28 +795,18 @@ export const PricingCheckoutModal: React.FC<PricingCheckoutModalProps> = ({
                         ${prices.academy_elite[billingCycle]}
                       </div>
                       <span className="text-[10px] text-slate-400 block">
-                        /{billingCycle === 'monthly' ? 'mes' : 'año'}
+                        /{billingCycle === 'monthly' ? txt.month : txt.year}
                       </span>
                     </div>
                   </div>
 
                   <ul className="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-1 text-xs text-slate-300">
-                    <li className="flex items-center gap-1.5">
-                      <Check className="w-3.5 h-3.5 text-amber-400 shrink-0" />
-                      <span className="font-semibold text-white">Hasta 200 alumnos en plantilla</span>
-                    </li>
-                    <li className="flex items-center gap-1.5">
-                      <Check className="w-3.5 h-3.5 text-amber-400 shrink-0" />
-                      <span>Múltiples categorías y canteras</span>
-                    </li>
-                    <li className="flex items-center gap-1.5">
-                      <Check className="w-3.5 h-3.5 text-amber-400 shrink-0" />
-                      <span>Once Ideal y banco de suplentes</span>
-                    </li>
-                    <li className="flex items-center gap-1.5">
-                      <Check className="w-3.5 h-3.5 text-amber-400 shrink-0" />
-                      <span>Sincronización multi-dispositivo Cloud</span>
-                    </li>
+                    {txt.academyEliteFeatures.map((feat, idx) => (
+                      <li key={idx} className="flex items-center gap-1.5">
+                        <Check className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+                        <span className={idx === 0 ? 'font-semibold text-white' : ''}>{feat}</span>
+                      </li>
+                    ))}
                   </ul>
                 </div>
 
@@ -602,8 +821,8 @@ export const PricingCheckoutModal: React.FC<PricingCheckoutModalProps> = ({
                 >
                   <div className="flex items-center justify-between">
                     <div>
-                      <span className="text-xs font-bold text-slate-300 uppercase">Plan Básico (Gratis)</span>
-                      <p className="text-[11px] text-slate-500">1 evaluación guardada, 2 regates por posición</p>
+                      <span className="text-xs font-bold text-slate-300 uppercase">{txt.freePlan}</span>
+                      <p className="text-[11px] text-slate-500">{txt.freePlanSub}</p>
                     </div>
                     <span className="text-xs font-bold text-slate-400 font-mono">$0</span>
                   </div>
@@ -616,10 +835,10 @@ export const PricingCheckoutModal: React.FC<PricingCheckoutModalProps> = ({
               <div>
                 <div className="flex items-center justify-between mb-4">
                   <span className="text-xs font-bold text-slate-300 uppercase tracking-wider">
-                    Método de Pago Seguro
+                    {txt.securePayment}
                   </span>
                   <span className="flex items-center gap-1 text-[10px] text-emerald-400 font-mono">
-                    <ShieldCheck className="w-3 h-3" /> SSL Encriptado
+                    <ShieldCheck className="w-3 h-3" /> {txt.sslEncrypted}
                   </span>
                 </div>
 
@@ -632,10 +851,10 @@ export const PricingCheckoutModal: React.FC<PricingCheckoutModalProps> = ({
                       </div>
                       <div>
                         <span className="text-xs font-black text-amber-300 uppercase tracking-wide block">
-                          Requisito Obligatorio
+                          {txt.authRequiredTitle}
                         </span>
                         <p className="text-[11px] text-slate-300">
-                          Inicia sesión para vincular tu membresía y activar los 3 días de prueba.
+                          {txt.authRequiredSub}
                         </p>
                       </div>
                     </div>
@@ -646,7 +865,7 @@ export const PricingCheckoutModal: React.FC<PricingCheckoutModalProps> = ({
                       className="w-full py-2.5 rounded-lg bg-amber-400 hover:bg-white text-black text-xs font-black uppercase tracking-wider flex items-center justify-center gap-2 shadow-md shadow-amber-400/20 cursor-pointer transition-all hover:scale-[1.02]"
                     >
                       <LogIn className="w-4 h-4" />
-                      <span>Iniciar Sesión para Continuar</span>
+                      <span>{txt.loginToContinue}</span>
                     </button>
                   </div>
                 ) : user && selectedPlan !== 'free' ? (
@@ -657,15 +876,15 @@ export const PricingCheckoutModal: React.FC<PricingCheckoutModalProps> = ({
                       </div>
                       <div className="min-w-0">
                         <span className="text-xs font-bold text-white block truncate leading-tight">
-                          {user.displayName || 'Usuario Registrado'}
+                          {user.displayName || (lang === 'en' ? 'Registered User' : 'Usuario Registrado')}
                         </span>
                         <span className="text-[10px] text-emerald-400 font-mono block truncate leading-tight">
-                          {user.email || 'Cuenta Activa'}
+                          {user.email || (lang === 'en' ? 'Active Account' : 'Cuenta Activa')}
                         </span>
                       </div>
                     </div>
                     <span className="px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 text-[9px] font-mono font-bold uppercase shrink-0">
-                      ✓ Verificado
+                      {txt.verified}
                     </span>
                   </div>
                 ) : null}
@@ -682,7 +901,7 @@ export const PricingCheckoutModal: React.FC<PricingCheckoutModalProps> = ({
                     }`}
                   >
                     <CreditCard className="w-4 h-4" />
-                    <span>Tarjeta / Stripe</span>
+                    <span>{txt.stripeTab}</span>
                   </button>
 
                   <button
@@ -695,27 +914,27 @@ export const PricingCheckoutModal: React.FC<PricingCheckoutModalProps> = ({
                     }`}
                   >
                     <span className="font-black italic font-serif">P</span>
-                    <span>PayPal</span>
+                    <span>{txt.paypalTab}</span>
                   </button>
                 </div>
 
                 {/* Gateway Inputs */}
                 {selectedPlan === 'free' ? (
                   <div className="py-8 text-center text-xs text-slate-400">
-                    No se requiere información de pago para el Plan Básico Gratuito.
+                    {txt.freeNoPayment}
                   </div>
                 ) : provider === 'stripe' ? (
                   /* Stripe Form */
                   <div className="space-y-3 text-xs">
                     <div>
                       <div className="flex justify-between items-center mb-1">
-                        <label className="text-slate-400 font-medium">Número de Tarjeta</label>
+                        <label className="text-slate-400 font-medium">{txt.cardNumber}</label>
                         <button
                           type="button"
                           onClick={handleFillDemoStripe}
                           className="text-[10px] text-volt hover:underline cursor-pointer"
                         >
-                          Usar tarjeta de prueba
+                          {txt.useTestCard}
                         </button>
                       </div>
                       <div className="relative">
@@ -734,17 +953,17 @@ export const PricingCheckoutModal: React.FC<PricingCheckoutModalProps> = ({
 
                     <div className="grid grid-cols-2 gap-2">
                       <div>
-                        <label className="text-slate-400 font-medium block mb-1">Caducidad</label>
+                        <label className="text-slate-400 font-medium block mb-1">{txt.expiry}</label>
                         <input
                           type="text"
-                          placeholder="MM/AA"
+                          placeholder="MM/YY"
                           value={cardExpiry}
                           onChange={(e) => setCardExpiry(e.target.value)}
                           className="w-full bg-slate-950 border border-white/15 rounded-lg px-3 py-2 text-white font-mono placeholder:text-slate-600 focus:outline-none focus:border-volt"
                         />
                       </div>
                       <div>
-                        <label className="text-slate-400 font-medium block mb-1">CVC / CVV</label>
+                        <label className="text-slate-400 font-medium block mb-1">{txt.cvc}</label>
                         <input
                           type="text"
                           placeholder="123"
@@ -756,10 +975,10 @@ export const PricingCheckoutModal: React.FC<PricingCheckoutModalProps> = ({
                     </div>
 
                     <div>
-                      <label className="text-slate-400 font-medium block mb-1">Titular de la Tarjeta</label>
+                      <label className="text-slate-400 font-medium block mb-1">{txt.cardholder}</label>
                       <input
                         type="text"
-                        placeholder="Nombre y Apellidos"
+                        placeholder={txt.fullNamePlaceholder}
                         value={cardName}
                         onChange={(e) => setCardName(e.target.value)}
                         className="w-full bg-slate-950 border border-white/15 rounded-lg px-3 py-2 text-white placeholder:text-slate-600 focus:outline-none focus:border-volt"
@@ -772,26 +991,26 @@ export const PricingCheckoutModal: React.FC<PricingCheckoutModalProps> = ({
                     <div className="p-3 rounded-lg bg-[#0070ba]/10 border border-[#0070ba]/30 text-slate-300">
                       <div className="flex items-center justify-between mb-1">
                         <span className="font-bold text-[#00a2e8] flex items-center gap-1">
-                          PayPal Express Checkout
+                          {txt.paypalExpress}
                         </span>
                         <button
                           type="button"
                           onClick={handleFillDemoPaypal}
                           className="text-[10px] text-volt hover:underline cursor-pointer"
                         >
-                          Usar cuenta demo
+                          {txt.useDemoAccount}
                         </button>
                       </div>
                       <p className="text-[11px] text-slate-400">
-                        Serás redirigido para autorizar tu prueba gratuita de 3 días con protección al comprador.
+                        {txt.paypalNotice}
                       </p>
                     </div>
 
                     <div>
-                      <label className="text-slate-400 font-medium block mb-1">Correo de PayPal</label>
+                      <label className="text-slate-400 font-medium block mb-1">{txt.paypalEmail}</label>
                       <input
                         type="email"
-                        placeholder="tu-correo@paypal.com"
+                        placeholder="coach@futbolclub.com"
                         value={paypalEmail}
                         onChange={(e) => setPaypalEmail(e.target.value)}
                         className="w-full bg-slate-950 border border-white/15 rounded-lg px-3 py-2 text-white placeholder:text-slate-600 focus:outline-none focus:border-[#0070ba]"
@@ -806,19 +1025,19 @@ export const PricingCheckoutModal: React.FC<PricingCheckoutModalProps> = ({
                 {selectedPlan !== 'free' && (
                   <div className="bg-black/40 border border-white/10 rounded-xl p-3 text-xs space-y-1.5 font-mono">
                     <div className="flex justify-between text-slate-400">
-                      <span>Tarifa regular:</span>
-                      <span>${currentPrice} USD /{billingCycle === 'monthly' ? 'mes' : 'año'}</span>
+                      <span>{txt.regularFee}</span>
+                      <span>${currentPrice} USD /{billingCycle === 'monthly' ? txt.month : txt.year}</span>
                     </div>
                     <div className="flex justify-between text-amber-300 font-bold">
-                      <span>Prueba gratuita (3 Días):</span>
+                      <span>{txt.freeTrial}</span>
                       <span>-$${currentPrice} USD (100% OFF)</span>
                     </div>
                     <div className="flex justify-between text-slate-400 border-t border-white/5 pt-1 text-[11px]">
-                      <span>Primer cobro:</span>
+                      <span>{txt.firstCharge}</span>
                       <span className="text-white">{trialEndDateFormatted}</span>
                     </div>
                     <div className="flex justify-between items-center pt-1 border-t border-white/10 font-bold">
-                      <span className="text-slate-200">Total a pagar hoy:</span>
+                      <span className="text-slate-200">{txt.dueToday}</span>
                       <span className="text-emerald-400 text-sm font-black">$0.00 USD</span>
                     </div>
                   </div>
@@ -831,7 +1050,7 @@ export const PricingCheckoutModal: React.FC<PricingCheckoutModalProps> = ({
                     className="w-full py-3 rounded-xl bg-amber-400 hover:bg-white text-black font-black uppercase italic tracking-wider text-xs flex items-center justify-center gap-2 shadow-lg shadow-amber-400/20 cursor-pointer transition-all"
                   >
                     <LogIn className="w-4 h-4" />
-                    <span>Inicia Sesión para Activar Plan</span>
+                    <span>{txt.loginToContinue}</span>
                   </button>
                 ) : (
                   <button
@@ -851,19 +1070,19 @@ export const PricingCheckoutModal: React.FC<PricingCheckoutModalProps> = ({
                     {isProcessing ? (
                       <>
                         <Loader2 className="w-4 h-4 animate-spin text-black" />
-                        <span>Activando prueba gratuita...</span>
+                        <span>{txt.activatingTrial}</span>
                       </>
                     ) : isCurrentActivePlan(selectedPlan) && selectedPlan !== 'free' ? (
                       <>
                         <CheckCircle2 className="w-4 h-4 text-emerald-400" />
-                        <span>{getPlanDisplayName(selectedPlan)} ya activo</span>
+                        <span>{getPlanDisplayName(selectedPlan)} {txt.planActive}</span>
                       </>
                     ) : selectedPlan === 'free' ? (
-                      <span>Confirmar Plan Básico</span>
+                      <span>{txt.confirmFreeBtn}</span>
                     ) : (
                       <>
                         <Lock className="w-3.5 h-3.5" />
-                        <span>Iniciar Prueba Gratuita de 3 Días ($0 hoy)</span>
+                        <span>{txt.startTrialBtn}</span>
                       </>
                     )}
                   </button>
@@ -871,11 +1090,11 @@ export const PricingCheckoutModal: React.FC<PricingCheckoutModalProps> = ({
 
                 {selectedPlan !== 'free' ? (
                   <p className="text-[10px] text-slate-400 text-center leading-relaxed">
-                    No se te cobrará nada hoy. Tras los 3 días de prueba, se aplicará ${currentPrice} USD /{billingCycle === 'monthly' ? 'mes' : 'año'} según el plan elegido. Puedes cancelar en cualquier momento sin compromiso.
+                    {txt.disclaimer.replace('${price}', String(currentPrice)).replace('{cycle}', billingCycle === 'monthly' ? txt.month : txt.year)}
                   </p>
                 ) : (
                   <p className="text-[10px] text-slate-500 text-center">
-                    Plan gratuito para siempre.
+                    {txt.freeForever}
                   </p>
                 )}
               </div>

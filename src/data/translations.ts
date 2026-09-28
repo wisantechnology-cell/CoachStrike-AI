@@ -10,6 +10,8 @@ export interface Translations {
   navHistory: string;
   navGlossary: string;
   navSettings: string;
+  navAcademy: string;
+  navPlans: string;
   startEvaluation: string;
 
   // Hero
@@ -127,6 +129,8 @@ export const translations: Record<Language, Translations> = {
     navHistory: 'Fichas & Análisis',
     navGlossary: 'Glosario Táctico',
     navSettings: 'Ajustes',
+    navAcademy: 'Academia',
+    navPlans: 'Planes',
     startEvaluation: 'Hacer Test',
 
     heroTag: 'UEFA PRO METHODOLOGY & AI SCOUTING',
@@ -233,6 +237,8 @@ export const translations: Record<Language, Translations> = {
     navHistory: 'Saved & Analysis',
     navGlossary: 'Tactical Glossary',
     navSettings: 'Settings',
+    navAcademy: 'Academy',
+    navPlans: 'Plans',
     startEvaluation: 'Take Test',
 
     heroTag: 'UEFA PRO METHODOLOGY & AI SCOUTING',
@@ -339,6 +345,8 @@ export const translations: Record<Language, Translations> = {
     navHistory: 'Fichas & Análise',
     navGlossary: 'Glossário Tático',
     navSettings: 'Configurações',
+    navAcademy: 'Academia',
+    navPlans: 'Planos',
     startEvaluation: 'Fazer Teste',
 
     heroTag: 'UEFA PRO METHODOLOGY & AI SCOUTING',

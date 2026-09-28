@@ -103,15 +103,46 @@ function generateSmartTacticalFallback(query: string, playerProfile: any, lang: 
     }
   }
 
-  if (q.includes('ejercicio') || q.includes('drill') || q.includes('treino') || q.includes('rutina')) {
-    return `Recomendación de entrenamiento UEFA Pro para tu perfil de ${pos}:
+  if (q.includes('ejercicio') || q.includes('drill') || q.includes('treino') || q.includes('rutina') || q.includes('workout')) {
+    if (lang === 'en') {
+      return `UEFA Pro Training Recommendation for your ${pos} profile:
+1) Warm-up (8 mins): 4v2 Rondo with a 2-touch limit and high counter-pressing.
+2) Specific Skill Work (15 mins): Agility ladder into rapid body orientation, receiving on the back foot and finishing into corners.
+3) Tactical Application (20 mins): 5v5 small-sided game with neutral wingers to maximize rapid transitions.`;
+    } else if (lang === 'pt') {
+      return `Recomendação de Treino UEFA Pro para o seu perfil de ${pos}:
+1) Aquecimento (8 mins): Rondo 4x2 com limite de 2 toques e pressão imediata pós-perda.
+2) Trabalho Específico (15 mins): Circuito de agilidade com receção orientada de costas e finalização rápida.
+3) Aplicação Tática (20 mins): Jogo reduzido 5x5 com alas abertos para treinar transições ofensivas velozes.`;
+    } else {
+      return `Recomendación de entrenamiento UEFA Pro para tu perfil de ${pos}:
 1) Calentamiento (8 mins): Rondo 4v2 con límite de 2 toques y presión tras pérdida.
 2) Trabajo específico (15 mins): Circuito de agilidad con cambio de ritmo, control orientado de espaldas y remate a puerta.
 3) Aplicación táctica (20 mins): Juego reducido 5v5 con comodines por las bandas para potenciar transiciones veloces.`;
+    }
   }
 
   // Default intelligent response
-  return `¡Excelente consulta táctica, ${name}! Como ${pos}, tu rol requiere lectura de juego superior, perfilación corporal previa al control y precisión en la toma de decisiones. 
+  if (lang === 'en') {
+    return `Excellent tactical query, ${name}! As a ${pos}, your role demands superior spatial awareness, receiving on the half-turn, and decisive speed of thought.
+
+Key tactical directives:
+• Keep your head scanning (360° awareness) before receiving the ball.
+• In defensive phase, manage your containment distance to cut interior passing lanes.
+• In offensive phase, position between opposition midfield and defensive lines.
+
+Feel free to ask for specific tactical advice (e.g., breaking down a low block, 1v1 defensive positioning, or shooting drills)!`;
+  } else if (lang === 'pt') {
+    return `Excelente questão tática, ${name}! Como ${pos}, o seu papel exige leitura de jogo apurada, perfilamento corporal antes do controlo e rapidez na tomada de decisão.
+
+Diretrizes táticas essenciais:
+• Mantenha o rastreio visual (visão 360°) antes de receber a bola.
+• Na fase defensiva, ajuste a distância de contenção para bloquear linhas de passe interiores.
+• Na fase ofensiva, posicione-se entrelinhas para criar dúvidas na defesa adversária.
+
+Fique à vontade para pedir conselhos táticos específicos (ex: superação de bloco baixo, marcação 1v1 ou rotinas de finalização)!`;
+  } else {
+    return `¡Excelente consulta táctica, ${name}! Como ${pos}, tu rol requiere lectura de juego superior, perfilación corporal previa al control y precisión en la toma de decisiones. 
 
 Recomendaciones clave:
 • Mantén siempre la cabeza levantada (escaneo de 360°) antes de recibir la pelota.
@@ -119,6 +150,7 @@ Recomendaciones clave:
 • En fase ofensiva, busca situarte entre las líneas del rival para generar dudas entre su defensa y mediocampo.
 
 ¿Podrías especificar más tu pregunta o pedirme un concepto táctico concreto (p. ej. cómo salir jugando contra presión alta, movimientos de desmarque o rutinas de definición)?`;
+  }
 }
 
 // API Health Check

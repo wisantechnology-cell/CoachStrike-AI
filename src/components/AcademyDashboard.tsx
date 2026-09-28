@@ -39,6 +39,8 @@ import {
 } from '../types';
 import { useAuth } from '../context/AuthContext';
 import { TacticalWhiteboard } from './TacticalWhiteboard';
+import { TacticalTerm } from './TacticalTerm';
+import { Shield, Info } from 'lucide-react';
 import { 
   saveStudentToCloud, 
   deleteStudentFromCloud, 
@@ -46,6 +48,100 @@ import {
   saveLineupToCloud,
   subscribeToAcademyLineup
 } from '../lib/firebase';
+
+interface FormationSlotTemplate {
+  slotId: string;
+  posCode: PositionCategory;
+  label: string;
+  number: number;
+  x: number;
+  y: number;
+  roleName: string;
+  duties: string;
+  tacticalConcept: string;
+  tacticalTermKey?: string;
+}
+
+const FORMATION_TEMPLATES: Record<AcademyFormation, FormationSlotTemplate[]> = {
+  '4-3-3': [
+    { slotId: 'pos-por', posCode: 'POR', label: 'POR', number: 1, x: 10, y: 50, roleName: 'Portero Líbero', duties: 'Salida de balón lavolpiana, blocajes, cobertura a la espalda de centrales y achiques.', tacticalConcept: 'Salida Lavolpiana', tacticalTermKey: 'salida-lavolpiana' },
+    { slotId: 'pos-li', posCode: 'LAT', label: 'LI', number: 3, x: 28, y: 18, roleName: 'Lateral Izquierdo Profundo', duties: 'Amplitud en banda, desdobles ofensivos, centros en carrera y repliegue.', tacticalConcept: 'Desdoble Ofensivo', tacticalTermKey: 'desdoble-ofensivo' },
+    { slotId: 'pos-dfci', posCode: 'DEC', label: 'DEC', number: 4, x: 22, y: 35, roleName: 'Defensa Central Izquierdo', duties: 'Cierre central, duelos 1v1, coberturas laterales y perfilación de pase.', tacticalConcept: 'Perfilación Corporal', tacticalTermKey: 'perfilacion-corporal' },
+    { slotId: 'pos-dfcd', posCode: 'DEC', label: 'DEC', number: 5, x: 22, y: 65, roleName: 'Defensa Central Derecho', duties: 'Marcaje en anticipación, juego aéreo dominante y pase vertical entre líneas.', tacticalConcept: 'Vigilancia Defensiva', tacticalTermKey: 'vigilancia-defensiva' },
+    { slotId: 'pos-ld', posCode: 'LAT', label: 'LD', number: 2, x: 28, y: 82, roleName: 'Lateral Derecho Profundo', duties: 'Proyección constante, basculación en defensa y presión al poseedor.', tacticalConcept: 'Basculación', tacticalTermKey: 'basculacion' },
+    { slotId: 'pos-mcd', posCode: 'MCD', label: 'MCD', number: 6, x: 42, y: 50, roleName: 'Pivote Ancla / Organizador', duties: 'Equilibrio estructural, recuperación en mediocampo y distribución rápida.', tacticalConcept: 'Presión Tras Pérdida', tacticalTermKey: 'presion-tras-perdida' },
+    { slotId: 'pos-mc1', posCode: 'MC', label: 'MC', number: 8, x: 58, y: 32, roleName: 'Interior Izquierdo Box-to-Box', duties: 'Interiores de ida y vuelta, búsqueda del tercer hombre y ruptura.', tacticalConcept: 'Tercer Hombre', tacticalTermKey: 'tercer-hombre' },
+    { slotId: 'pos-mc2', posCode: 'MPO', label: 'MPO', number: 10, x: 58, y: 68, roleName: 'Interior Creativo / Mediapunta', duties: 'Pases filtrados al espacio, remate exterior y asociación en último tercio.', tacticalConcept: 'Pase Filtrado', tacticalTermKey: 'pase-filtrado' },
+    { slotId: 'pos-exti', posCode: 'EXT', label: 'EXT', number: 11, x: 80, y: 15, roleName: 'Extremo Izquierdo Invertido', duties: 'Diagonal a pierna cambiada, desborde 1v1 y finalización al segundo palo.', tacticalConcept: 'Ataque al Espacio', tacticalTermKey: 'ataque-al-espacio' },
+    { slotId: 'pos-dc', posCode: 'DC', label: 'DC', number: 9, x: 86, y: 50, roleName: 'Delantero Centro Killer', duties: 'Fijar centrales rivales, desmarques de ruptura y remate al primer toque.', tacticalConcept: 'Desmarque de Ruptura', tacticalTermKey: 'desmarque-de-ruptura' },
+    { slotId: 'pos-extd', posCode: 'EXT', label: 'EXT', number: 7, x: 80, y: 85, roleName: 'Extremo Derecho Desbordador', duties: 'Máxima amplitud, desborde exterior y centros tensos al área.', tacticalConcept: 'Amplitud y Profundidad', tacticalTermKey: 'amplitud-y-profundidad' }
+  ],
+  '4-2-3-1': [
+    { slotId: 'pos-por', posCode: 'POR', label: 'POR', number: 1, x: 10, y: 50, roleName: 'Portero', duties: 'Atención a balones largos a la espalda y comunicación defensiva.', tacticalConcept: 'Salida Lavolpiana', tacticalTermKey: 'salida-lavolpiana' },
+    { slotId: 'pos-li', posCode: 'LAT', label: 'LI', number: 3, x: 28, y: 18, roleName: 'Lateral Izquierdo', duties: 'Cierre de banda y apoyo en salida.', tacticalConcept: 'Desdoble Ofensivo', tacticalTermKey: 'desdoble-ofensivo' },
+    { slotId: 'pos-dfci', posCode: 'DEC', label: 'DEC', number: 4, x: 22, y: 36, roleName: 'Defensa Central', duties: 'Marcaje estrecho y coberturas.', tacticalConcept: 'Perfilación Corporal', tacticalTermKey: 'perfilacion-corporal' },
+    { slotId: 'pos-dfcd', posCode: 'DEC', label: 'DEC', number: 5, x: 22, y: 64, roleName: 'Defensa Central', duties: 'Anticipación y pase seguro.', tacticalConcept: 'Vigilancia Defensiva', tacticalTermKey: 'vigilancia-defensiva' },
+    { slotId: 'pos-ld', posCode: 'LAT', label: 'LD', number: 2, x: 28, y: 82, roleName: 'Lateral Derecho', duties: 'Cierre por derecha y repliegue.', tacticalConcept: 'Basculación', tacticalTermKey: 'basculacion' },
+    { slotId: 'pos-mcd1', posCode: 'MCD', label: 'MCD', number: 6, x: 42, y: 35, roleName: 'Pivote Robador', duties: 'Presión asfixiante, robos e intercepciones.', tacticalConcept: 'Presión Tras Pérdida', tacticalTermKey: 'presion-tras-perdida' },
+    { slotId: 'pos-mcd2', posCode: 'MC', label: 'MC', number: 8, x: 42, y: 65, roleName: 'Pivote Distribuidor', duties: 'Cambios de orientación y distribución fluida.', tacticalConcept: 'Tercer Hombre', tacticalTermKey: 'tercer-hombre' },
+    { slotId: 'pos-mpo', posCode: 'MPO', label: 'MPO', number: 10, x: 68, y: 50, roleName: 'Mediapunta Nexo', duties: 'Recepción entre líneas y último pase.', tacticalConcept: 'Pase Filtrado', tacticalTermKey: 'pase-filtrado' },
+    { slotId: 'pos-exti', posCode: 'EXT', label: 'EXT', number: 11, x: 72, y: 20, roleName: 'Extremo Izquierdo', duties: 'Entrada al área desde izquierda y remate.', tacticalConcept: 'Ataque al Espacio', tacticalTermKey: 'ataque-al-espacio' },
+    { slotId: 'pos-extd', posCode: 'EXT', label: 'EXT', number: 7, x: 72, y: 80, roleName: 'Extremo Derecho', duties: 'Presión en banda rival y centros venenosos.', tacticalConcept: 'Amplitud y Profundidad', tacticalTermKey: 'amplitud-y-profundidad' },
+    { slotId: 'pos-dc', posCode: 'DC', label: 'DC', number: 9, x: 88, y: 50, roleName: 'Delantero Centro', duties: 'Presión alta, fijación y gol.', tacticalConcept: 'Desmarque de Ruptura', tacticalTermKey: 'desmarque-de-ruptura' }
+  ],
+  '4-4-2': [
+    { slotId: 'pos-por', posCode: 'POR', label: 'POR', number: 1, x: 10, y: 50, roleName: 'Portero', duties: 'Seguridad en balones aéreos y juego con los pies.', tacticalConcept: 'Salida Lavolpiana', tacticalTermKey: 'salida-lavolpiana' },
+    { slotId: 'pos-li', posCode: 'LAT', label: 'LI', number: 3, x: 28, y: 18, roleName: 'Lateral Izquierdo', duties: 'Doble lateral con el volante exterior.', tacticalConcept: 'Desdoble Ofensivo', tacticalTermKey: 'desdoble-ofensivo' },
+    { slotId: 'pos-dfci', posCode: 'DEC', label: 'DEC', number: 4, x: 22, y: 36, roleName: 'Defensa Central', duties: 'Cierre central y contención.', tacticalConcept: 'Perfilación Corporal', tacticalTermKey: 'perfilacion-corporal' },
+    { slotId: 'pos-dfcd', posCode: 'DEC', label: 'DEC', number: 5, x: 22, y: 64, roleName: 'Defensa Central', duties: 'Anticipación por bajo y despejes.', tacticalConcept: 'Vigilancia Defensiva', tacticalTermKey: 'vigilancia-defensiva' },
+    { slotId: 'pos-ld', posCode: 'LAT', label: 'LD', number: 2, x: 28, y: 82, roleName: 'Lateral Derecho', duties: 'Cobertura de banda y apoyo.', tacticalConcept: 'Basculación', tacticalTermKey: 'basculacion' },
+    { slotId: 'pos-mi', posCode: 'EXT', label: 'EXT', number: 11, x: 54, y: 16, roleName: 'Volante Izquierdo', duties: 'Llegada por banda y apoyo defensivo.', tacticalConcept: 'Amplitud y Profundidad', tacticalTermKey: 'amplitud-y-profundidad' },
+    { slotId: 'pos-mc1', posCode: 'MC', label: 'MC', number: 6, x: 48, y: 38, roleName: 'Mediocentro Izquierdo', duties: 'Equilibrio táctico y basculación.', tacticalConcept: 'Presión Tras Pérdida', tacticalTermKey: 'presion-tras-perdida' },
+    { slotId: 'pos-mc2', posCode: 'MC', label: 'MC', number: 8, x: 48, y: 62, roleName: 'Mediocentro Derecho', duties: 'Llegada y distribución.', tacticalConcept: 'Tercer Hombre', tacticalTermKey: 'tercer-hombre' },
+    { slotId: 'pos-md', posCode: 'EXT', label: 'EXT', number: 7, x: 54, y: 84, roleName: 'Volante Derecho', duties: 'Desborde y centros cruzados.', tacticalConcept: 'Ataque al Espacio', tacticalTermKey: 'ataque-al-espacio' },
+    { slotId: 'pos-dc1', posCode: 'DC', label: 'DC', number: 10, x: 82, y: 38, roleName: 'Segundo Delantero', duties: 'Flotar entre líneas y enganche con los puntas.', tacticalConcept: 'Pase Filtrado', tacticalTermKey: 'pase-filtrado' },
+    { slotId: 'pos-dc2', posCode: 'DC', label: 'DC', number: 9, x: 88, y: 62, roleName: 'Delantero de Área', duties: 'Remate y presencia en el área rival.', tacticalConcept: 'Desmarque de Ruptura', tacticalTermKey: 'desmarque-de-ruptura' }
+  ],
+  '3-5-2': [
+    { slotId: 'pos-por', posCode: 'POR', label: 'POR', number: 1, x: 10, y: 50, roleName: 'Portero', duties: 'Comunicación constante y control de área.', tacticalConcept: 'Salida Lavolpiana', tacticalTermKey: 'salida-lavolpiana' },
+    { slotId: 'pos-dfci', posCode: 'DEC', label: 'DEC', number: 2, x: 22, y: 25, roleName: 'Central Perfil Izquierdo', duties: 'Cierre del intervalo izquierdo.', tacticalConcept: 'Perfilación Corporal', tacticalTermKey: 'perfilacion-corporal' },
+    { slotId: 'pos-dfc', posCode: 'DEC', label: 'DEC', number: 4, x: 20, y: 50, roleName: 'Líbero y Mariscal', duties: 'Organización de la línea de 3 y coberturas.', tacticalConcept: 'Vigilancia Defensiva', tacticalTermKey: 'vigilancia-defensiva' },
+    { slotId: 'pos-dfcd', posCode: 'DEC', label: 'DEC', number: 5, x: 22, y: 75, roleName: 'Central Perfil Derecho', duties: 'Cierre del intervalo derecho.', tacticalConcept: 'Perfilación Corporal', tacticalTermKey: 'perfilacion-corporal' },
+    { slotId: 'pos-cari', posCode: 'LAT', label: 'LAT', number: 3, x: 50, y: 12, roleName: 'Carrilero Izquierdo Total', duties: 'Carrilero de banda completa y llegada.', tacticalConcept: 'Desdoble Ofensivo', tacticalTermKey: 'desdoble-ofensivo' },
+    { slotId: 'pos-card', posCode: 'LAT', label: 'LAT', number: 7, x: 50, y: 88, roleName: 'Carrilero Derecho Total', duties: 'Carrilero de banda completa y centros.', tacticalConcept: 'Amplitud y Profundidad', tacticalTermKey: 'amplitud-y-profundidad' },
+    { slotId: 'pos-mcd', posCode: 'MCD', label: 'MCD', number: 6, x: 45, y: 50, roleName: 'Pivote Ancla', duties: 'Recuperador y basculación.', tacticalConcept: 'Presión Tras Pérdida', tacticalTermKey: 'presion-tras-perdida' },
+    { slotId: 'pos-mc1', posCode: 'MC', label: 'MC', number: 8, x: 60, y: 35, roleName: 'Interior de Enlace', duties: 'Interior de apoyo y paredes rápidas.', tacticalConcept: 'Tercer Hombre', tacticalTermKey: 'tercer-hombre' },
+    { slotId: 'pos-mc2', posCode: 'MC', label: 'MC', number: 10, x: 60, y: 65, roleName: 'Interior Ofensivo', duties: 'Llegada desde atrás y tiro lejano.', tacticalConcept: 'Pase Filtrado', tacticalTermKey: 'pase-filtrado' },
+    { slotId: 'pos-dc1', posCode: 'DC', label: 'DC', number: 9, x: 84, y: 38, roleName: 'Delantero Móvil', duties: 'Desmarques en diagonal y arrastre de marcas.', tacticalConcept: 'Ataque al Espacio', tacticalTermKey: 'ataque-al-espacio' },
+    { slotId: 'pos-dc2', posCode: 'DC', label: 'DC', number: 19, x: 84, y: 62, roleName: 'Delantero Tanque', duties: 'Juego de espaldas y remates de cabeza.', tacticalConcept: 'Desmarque de Ruptura', tacticalTermKey: 'desmarque-de-ruptura' }
+  ],
+  '3-4-3': [
+    { slotId: 'pos-por', posCode: 'POR', label: 'POR', number: 1, x: 10, y: 50, roleName: 'Portero Líbero', duties: 'Inicio de juego combinativo y salidas rápidas.', tacticalConcept: 'Salida Lavolpiana', tacticalTermKey: 'salida-lavolpiana' },
+    { slotId: 'pos-dfci', posCode: 'DEC', label: 'DEC', number: 3, x: 22, y: 25, roleName: 'Central Izquierdo', duties: 'Salida limpia por izquierda y cierre.', tacticalConcept: 'Perfilación Corporal', tacticalTermKey: 'perfilacion-corporal' },
+    { slotId: 'pos-dfc', posCode: 'DEC', label: 'DEC', number: 4, x: 19, y: 50, roleName: 'Central Eje', duties: 'Mariscal defensivo y anticipación.', tacticalConcept: 'Vigilancia Defensiva', tacticalTermKey: 'vigilancia-defensiva' },
+    { slotId: 'pos-dfcd', posCode: 'DEC', label: 'DEC', number: 2, x: 22, y: 75, roleName: 'Central Derecho', duties: 'Salida limpia por derecha y duelos.', tacticalConcept: 'Perfilación Corporal', tacticalTermKey: 'perfilacion-corporal' },
+    { slotId: 'pos-mcd', posCode: 'MCD', label: 'MCD', number: 6, x: 42, y: 50, roleName: 'Pivote Base Rombo', duties: 'Vértice inferior del rombo y equilibrio.', tacticalConcept: 'Presión Tras Pérdida', tacticalTermKey: 'presion-tras-perdida' },
+    { slotId: 'pos-mi', posCode: 'MC', label: 'MC', number: 8, x: 56, y: 22, roleName: 'Interior Izquierdo', duties: 'Circulación rápida y triángulos de pase.', tacticalConcept: 'Tercer Hombre', tacticalTermKey: 'tercer-hombre' },
+    { slotId: 'pos-md', posCode: 'MC', label: 'MC', number: 7, x: 56, y: 78, roleName: 'Interior Derecho', duties: 'Asociación y cambios de juego.', tacticalConcept: 'Amplitud y Profundidad', tacticalTermKey: 'amplitud-y-profundidad' },
+    { slotId: 'pos-mpo', posCode: 'MPO', label: 'MPO', number: 10, x: 68, y: 50, roleName: 'Vértice Ofensivo 10', duties: 'Magia entre líneas y asistencia.', tacticalConcept: 'Pase Filtrado', tacticalTermKey: 'pase-filtrado' },
+    { slotId: 'pos-exti', posCode: 'EXT', label: 'EXT', number: 11, x: 82, y: 16, roleName: 'Extremo Izquierdo', duties: '1v1 pegado a la cal y centros rasos.', tacticalConcept: 'Ataque al Espacio', tacticalTermKey: 'ataque-al-espacio' },
+    { slotId: 'pos-extd', posCode: 'EXT', label: 'EXT', number: 17, x: 82, y: 84, roleName: 'Extremo Derecho', duties: 'Desborde explosivo y diagonales.', tacticalConcept: 'Amplitud y Profundidad', tacticalTermKey: 'amplitud-y-profundidad' },
+    { slotId: 'pos-dc', posCode: 'DC', label: 'DC', number: 9, x: 88, y: 50, roleName: 'Delantero Centro', duties: 'Finalización clínica y arrastres.', tacticalConcept: 'Desmarque de Ruptura', tacticalTermKey: 'desmarque-de-ruptura' }
+  ],
+  '4-1-4-1': [
+    { slotId: 'pos-por', posCode: 'POR', label: 'POR', number: 1, x: 10, y: 50, roleName: 'Portero', duties: 'Organización de la línea y seguridad.', tacticalConcept: 'Salida Lavolpiana', tacticalTermKey: 'salida-lavolpiana' },
+    { slotId: 'pos-li', posCode: 'LAT', label: 'LI', number: 3, x: 28, y: 18, roleName: 'Lateral Izquierdo', duties: 'Contención y doblaje oportuno.', tacticalConcept: 'Desdoble Ofensivo', tacticalTermKey: 'desdoble-ofensivo' },
+    { slotId: 'pos-dfci', posCode: 'DEC', label: 'DEC', number: 4, x: 22, y: 36, roleName: 'Defensa Central', duties: 'Líder defensivo por izquierda.', tacticalConcept: 'Perfilación Corporal', tacticalTermKey: 'perfilacion-corporal' },
+    { slotId: 'pos-dfcd', posCode: 'DEC', label: 'DEC', number: 5, x: 22, y: 64, roleName: 'Defensa Central', duties: 'Líder defensivo por derecha.', tacticalConcept: 'Vigilancia Defensiva', tacticalTermKey: 'vigilancia-defensiva' },
+    { slotId: 'pos-ld', posCode: 'LAT', label: 'LD', number: 2, x: 28, y: 82, roleName: 'Lateral Derecho', duties: 'Contención y salidas rápidas.', tacticalConcept: 'Basculación', tacticalTermKey: 'basculacion' },
+    { slotId: 'pos-mcd', posCode: 'MCD', label: 'MCD', number: 6, x: 42, y: 50, roleName: 'Pivote Solitario', duties: 'Ancla táctica y corte de contragolpes.', tacticalConcept: 'Presión Tras Pérdida', tacticalTermKey: 'presion-tras-perdida' },
+    { slotId: 'pos-mi', posCode: 'EXT', label: 'EXT', number: 11, x: 64, y: 18, roleName: 'Interior Izquierdo Alto', duties: 'Presión en bloque medio y llegada.', tacticalConcept: 'Ataque al Espacio', tacticalTermKey: 'ataque-al-espacio' },
+    { slotId: 'pos-mc1', posCode: 'MC', label: 'MC', number: 8, x: 60, y: 38, roleName: 'Interior Conector', duties: 'Pase corto y transiciones rápidas.', tacticalConcept: 'Tercer Hombre', tacticalTermKey: 'tercer-hombre' },
+    { slotId: 'pos-mc2', posCode: 'MC', label: 'MC', number: 10, x: 60, y: 62, roleName: 'Interior Creador', duties: 'Llegada y pases entre líneas.', tacticalConcept: 'Pase Filtrado', tacticalTermKey: 'pase-filtrado' },
+    { slotId: 'pos-md', posCode: 'EXT', label: 'EXT', number: 7, x: 64, y: 82, roleName: 'Interior Derecho Alto', duties: 'Presión alta y desborde.', tacticalConcept: 'Amplitud y Profundidad', tacticalTermKey: 'amplitud-y-profundidad' },
+    { slotId: 'pos-dc', posCode: 'DC', label: 'DC', number: 9, x: 88, y: 50, roleName: 'Delantero Solitario', duties: 'Presión al balón y remate.', tacticalConcept: 'Desmarque de Ruptura', tacticalTermKey: 'desmarque-de-ruptura' }
+  ]
+};
 
 interface AcademyDashboardProps {
   onStartStudentExam: (student: AcademyStudent) => void;
@@ -392,6 +488,7 @@ export const AcademyDashboard: React.FC<AcademyDashboardProps> = ({
 
   // Squad / Lineup Builder state
   const [formation, setFormation] = useState<AcademyFormation>('4-3-3');
+  const [selectedLineupSlotId, setSelectedLineupSlotId] = useState<string>('pos-dc');
   const [lineupSlots, setLineupSlots] = useState<{ slotId: string; posCode: PositionCategory; label: string; studentId: string | null }[]>([
     { slotId: 'pos-por', posCode: 'POR', label: 'POR', studentId: 'std-4' },
     { slotId: 'pos-lat-izq', posCode: 'LAT', label: 'LI', studentId: 'std-7' },
@@ -610,26 +707,63 @@ export const AcademyDashboard: React.FC<AcademyDashboardProps> = ({
 
   const handleFormationChange = (newFormation: AcademyFormation) => {
     setFormation(newFormation);
+    const template = FORMATION_TEMPLATES[newFormation] || FORMATION_TEMPLATES['4-3-3'];
+    const updated = template.map((temp) => {
+      const existing = lineupSlots.find((s) => s.slotId === temp.slotId || s.posCode === temp.posCode);
+      return {
+        slotId: temp.slotId,
+        posCode: temp.posCode,
+        label: temp.label,
+        studentId: existing?.studentId || null
+      };
+    });
+    setLineupSlots(updated);
+    if (!updated.some((u) => u.slotId === selectedLineupSlotId)) {
+      setSelectedLineupSlotId(updated[0]?.slotId || 'pos-por');
+    }
     if (user) {
       saveLineupToCloud(user.uid, {
         formation: newFormation,
-        slots: lineupSlots
+        slots: updated
       }).catch(console.error);
     }
   };
 
   const autoAlignLineup = () => {
-    // Auto-match best students to slots
-    const updated = lineupSlots.map((slot) => {
-      // Find candidate matching position
-      const candidate = students.find(
-        (s) => s.primaryPosition === slot.posCode || s.secondaryPosition === slot.posCode
+    // Auto-match best students to slots without duplicating players
+    const assignedIds = new Set<string>();
+    const template = FORMATION_TEMPLATES[formation] || FORMATION_TEMPLATES['4-3-3'];
+
+    const updated = template.map((slot) => {
+      // Prioritize primary position matches first
+      let bestCandidate = students.find(
+        (s) => !assignedIds.has(s.id) && s.primaryPosition === slot.posCode
       );
+
+      // Secondary position fallback
+      if (!bestCandidate) {
+        bestCandidate = students.find(
+          (s) => !assignedIds.has(s.id) && s.secondaryPosition === slot.posCode
+        );
+      }
+
+      // Any available student if needed
+      if (!bestCandidate) {
+        bestCandidate = students.find((s) => !assignedIds.has(s.id));
+      }
+
+      if (bestCandidate) {
+        assignedIds.add(bestCandidate.id);
+      }
+
       return {
-        ...slot,
-        studentId: candidate ? candidate.id : null
+        slotId: slot.slotId,
+        posCode: slot.posCode,
+        label: slot.label,
+        studentId: bestCandidate ? bestCandidate.id : null
       };
     });
+
     setLineupSlots(updated);
 
     if (user) {
@@ -1333,35 +1467,44 @@ export const AcademyDashboard: React.FC<AcademyDashboardProps> = ({
       {/* VIEW 2: SQUAD & ONCE IDEAL BUILDER */}
       {activeSubTab === 'lineup' && (
         <div className="space-y-4">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-black/40 border border-white/10 rounded-xl p-4">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-slate-900/50 border border-white/10 rounded-2xl p-4 sm:p-5 shadow-2xl">
             <div>
-              <h3 className="text-sm font-bold text-white uppercase italic">
-                Armador Táctico de Once Ideal
+              <div className="flex items-center gap-2">
+                <span className="px-2.5 py-0.5 rounded-full bg-volt/10 border border-volt/30 text-volt text-[10px] font-bold font-mono uppercase tracking-widest">
+                  Cantera Strike • Pizarra Táctica
+                </span>
+              </div>
+              <h3 className="text-xl sm:text-2xl font-black italic text-white uppercase tracking-tight font-display mt-1 flex items-center gap-2">
+                <Sparkles className="w-5 h-5 text-emerald-400" />
+                <span>Once Ideal & Composición Táctica</span>
               </h3>
-              <p className="text-xs text-slate-400">
-                Alinea a tus alumnos según su compatibilidad biomecánica y ADN posicional
+              <p className="text-xs text-slate-400 mt-0.5">
+                Distribución posicional con curvatura real idéntica a la pizarra táctica interactiva. Selecciona cualquier dorsal para inspeccionar sus deberes.
               </p>
             </div>
 
-            <div className="flex items-center gap-3">
-              {/* Formation Dropdown */}
-              <div className="flex items-center gap-2">
-                <span className="text-xs text-slate-400 font-bold">Esquema:</span>
-                <select
-                  value={formation}
-                  onChange={(e) => handleFormationChange(e.target.value as AcademyFormation)}
-                  className="bg-slate-950 border border-white/20 rounded-lg px-2.5 py-1 text-xs text-emerald-400 font-mono font-bold focus:outline-none"
-                >
-                  <option value="4-3-3">4-3-3 (Ofensivo)</option>
-                  <option value="4-2-3-1">4-2-3-1 (Doble Pivote)</option>
-                  <option value="4-4-2">4-4-2 (Equilibrado)</option>
-                  <option value="3-5-2">3-5-2 (Carrileros)</option>
-                </select>
+            <div className="flex flex-wrap items-center gap-2">
+              {/* Formation Selector Tabs (Tactical Board Style) */}
+              <div className="flex flex-wrap items-center gap-1.5 bg-black/60 p-1.5 rounded-xl border border-white/10">
+                {(['4-3-3', '4-2-3-1', '4-4-2', '3-5-2', '3-4-3', '4-1-4-1'] as AcademyFormation[]).map((f) => (
+                  <button
+                    key={f}
+                    onClick={() => handleFormationChange(f)}
+                    className={`px-2.5 py-1.5 rounded-lg text-xs font-black italic font-display uppercase transition-all cursor-pointer ${
+                      formation === f
+                        ? 'bg-volt text-black shadow-md shadow-volt/20'
+                        : 'text-slate-400 hover:text-white hover:bg-white/5'
+                    }`}
+                  >
+                    {f}
+                  </button>
+                ))}
               </div>
 
               <button
                 onClick={autoAlignLineup}
-                className="px-3 py-1.5 rounded-lg bg-emerald-400 hover:bg-white text-black text-xs font-black uppercase italic tracking-wider transition-all cursor-pointer flex items-center gap-1.5"
+                className="px-3.5 py-2 rounded-xl bg-emerald-400 hover:bg-white text-black text-xs font-black uppercase italic tracking-wider transition-all cursor-pointer flex items-center gap-1.5 shadow-md shadow-emerald-500/20 active:scale-95"
+                title="Alinear automáticamente a los mejores futbolistas según su ADN"
               >
                 <Sparkles className="w-3.5 h-3.5" />
                 <span>Auto-Alinear ADN</span>
@@ -1369,57 +1512,342 @@ export const AcademyDashboard: React.FC<AcademyDashboardProps> = ({
             </div>
           </div>
 
-          {/* Interactive Tactical Pitch with Players */}
-          <div className="relative w-full aspect-[16/10] max-h-[560px] bg-emerald-950/60 rounded-2xl border-2 border-emerald-500/30 overflow-hidden shadow-2xl flex items-center justify-center p-4">
-            {/* Pitch Markings */}
-            <div className="absolute inset-4 border-2 border-white/25 pointer-events-none rounded-sm">
-              <div className="absolute top-0 bottom-0 left-1/2 w-0.5 bg-white/25 -translate-x-1/2" />
-              <div className="absolute top-1/2 left-1/2 w-28 h-28 border-2 border-white/25 rounded-full -translate-x-1/2 -translate-y-1/2" />
-              <div className="absolute top-1/4 bottom-1/4 left-0 w-24 border-2 border-white/25 border-l-0" />
-              <div className="absolute top-1/4 bottom-1/4 right-0 w-24 border-2 border-white/25 border-r-0" />
-            </div>
+          {/* Tactical Pitch & Inspector Grid */}
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
+            {/* Left: Authentic Tactical Pitch Canvas (8 Cols) */}
+            <div className="lg:col-span-8 bg-slate-900/50 border border-white/10 rounded-2xl p-4 sm:p-5 shadow-2xl space-y-3">
+              <div className="flex items-center justify-between text-xs text-slate-400 font-mono">
+                <span className="text-volt font-bold uppercase tracking-wider flex items-center gap-1.5">
+                  <Shield className="w-4 h-4 text-volt" />
+                  Esquema {formation} • Once Titular
+                </span>
+                <span className="text-slate-400 text-[11px]">Toca cualquier ficha para ver sus obligaciones tácticas</span>
+              </div>
 
-            {/* Placed Player Tokens Grid */}
-            <div className="relative z-10 w-full h-full grid grid-cols-5 grid-rows-3 gap-2 p-2">
-              {lineupSlots.map((slot) => {
-                const assignedStudent = students.find((s) => s.id === slot.studentId);
+              {/* Pitch Canvas with Realistic Grass & Markings */}
+              <div className="relative w-full aspect-[16/10] bg-emerald-950 border-2 border-white/20 rounded-xl overflow-hidden shadow-inner flex items-center justify-center select-none">
+                {/* Field Grass Stripes */}
+                <div className="absolute inset-0 bg-[linear-gradient(to_right,rgba(255,255,255,0.03)_50%,transparent_50%)] bg-[length:10%_100%]" />
+
+                {/* Pitch Markings */}
+                <div className="absolute inset-2 sm:inset-3 border border-white/20 pointer-events-none rounded-xs" />
+                <div className="absolute left-1/2 top-0 bottom-0 border-l border-white/20 pointer-events-none" />
+                <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-24 sm:w-32 h-24 sm:h-32 border border-white/20 rounded-full pointer-events-none flex items-center justify-center">
+                  <div className="w-1.5 h-1.5 bg-white/40 rounded-full" />
+                </div>
+
+                {/* Penalty Areas */}
+                <div className="absolute left-2 sm:left-3 top-1/2 -translate-y-1/2 w-[16%] h-[54%] border border-white/20 pointer-events-none" />
+                <div className="absolute right-2 sm:right-3 top-1/2 -translate-y-1/2 w-[16%] h-[54%] border border-white/20 pointer-events-none" />
+                <div className="absolute left-2 sm:left-3 top-1/2 -translate-y-1/2 w-[6%] h-[24%] border border-white/20 pointer-events-none" />
+                <div className="absolute right-2 sm:right-3 top-1/2 -translate-y-1/2 w-[6%] h-[24%] border border-white/20 pointer-events-none" />
+
+                {/* Attack Direction Arrow Indicator */}
+                <div className="absolute top-2.5 left-1/2 -translate-x-1/2 z-10 pointer-events-none flex items-center gap-1.5 text-[9px] font-mono font-bold text-emerald-400/70 uppercase tracking-widest bg-black/40 px-2 py-0.5 rounded-full border border-emerald-500/20">
+                  <span>Ataque</span>
+                  <span>→</span>
+                </div>
+
+                {/* Player Tactical Tokens in Authentic Formation Composition */}
+                {(() => {
+                  const currentTemplate = FORMATION_TEMPLATES[formation] || FORMATION_TEMPLATES['4-3-3'];
+                  return currentTemplate.map((slotTemplate) => {
+                    const currentSlot = lineupSlots.find((s) => s.slotId === slotTemplate.slotId) || slotTemplate;
+                    const assignedStudent = students.find((s) => s.id === currentSlot.studentId);
+                    const isSelected = selectedLineupSlotId === slotTemplate.slotId;
+                    const displayDorsal = assignedStudent ? assignedStudent.dorsal : slotTemplate.number;
+
+                    return (
+                      <motion.div
+                        key={slotTemplate.slotId}
+                        onClick={() => setSelectedLineupSlotId(slotTemplate.slotId)}
+                        whileHover={{ scale: 1.15 }}
+                        whileTap={{ scale: 0.95 }}
+                        style={{ left: `${slotTemplate.x}%`, top: `${slotTemplate.y}%` }}
+                        className={`absolute -translate-x-1/2 -translate-y-1/2 cursor-pointer z-10 transition-all flex flex-col items-center ${
+                          isSelected ? 'z-30' : ''
+                        }`}
+                      >
+                        {/* Token Circular Chip (Tactical Board Style) */}
+                        <div
+                          className={`w-9 h-9 sm:w-11 sm:h-11 rounded-full flex flex-col items-center justify-center border-2 shadow-lg transition-all ${
+                            isSelected
+                              ? 'bg-volt text-black border-white ring-4 ring-volt/50 scale-110 shadow-volt/40 font-black'
+                              : assignedStudent
+                              ? 'bg-black/90 text-white border-emerald-400 hover:border-volt'
+                              : 'bg-black/80 text-slate-400 border-dashed border-white/30 hover:border-volt hover:text-white'
+                          }`}
+                        >
+                          <span className="text-xs sm:text-sm font-black font-display italic leading-none">
+                            {displayDorsal}
+                          </span>
+                          <span className={`text-[7px] sm:text-[8px] font-mono leading-none font-bold uppercase ${
+                            isSelected ? 'text-black' : assignedStudent ? 'text-emerald-400' : 'text-slate-400'
+                          }`}>
+                            {slotTemplate.label}
+                          </span>
+                        </div>
+
+                        {/* Player Name Pill */}
+                        <div className="mt-1 px-1.5 py-0.5 rounded-md bg-black/90 border border-white/10 text-[8px] sm:text-[9px] font-bold text-white max-w-[70px] sm:max-w-[85px] truncate text-center shadow-md">
+                          {assignedStudent ? assignedStudent.name.split(' ')[0] : '(Vacante)'}
+                        </div>
+
+                        {/* ADN Match Badge */}
+                        {assignedStudent && (
+                          <span className="mt-0.5 px-1 py-0.2 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 text-[7px] font-mono font-bold">
+                            {assignedStudent.matchPercentage}%
+                          </span>
+                        )}
+                      </motion.div>
+                    );
+                  });
+                })()}
+              </div>
+
+              {/* Squad Chemistry Summary Bar */}
+              {(() => {
+                const assignedStudents = lineupSlots
+                  .map((s) => students.find((st) => st.id === s.studentId))
+                  .filter(Boolean) as AcademyStudent[];
+                
+                const avgIQ = assignedStudents.length > 0 
+                  ? Math.round(assignedStudents.reduce((acc, s) => acc + s.skills.tacticalIQ, 0) / assignedStudents.length)
+                  : 0;
+                const avgTech = assignedStudents.length > 0 
+                  ? Math.round(assignedStudents.reduce((acc, s) => acc + s.skills.technique, 0) / assignedStudents.length)
+                  : 0;
+                const avgSpeed = assignedStudents.length > 0 
+                  ? Math.round(assignedStudents.reduce((acc, s) => acc + s.skills.speed, 0) / assignedStudents.length)
+                  : 0;
+                const avgADN = assignedStudents.length > 0
+                  ? Math.round(assignedStudents.reduce((acc, s) => acc + s.matchPercentage, 0) / assignedStudents.length)
+                  : 0;
 
                 return (
-                  <div
-                    key={slot.slotId}
-                    className="flex flex-col items-center justify-center text-center group"
-                  >
-                    <div className="w-12 h-12 rounded-full bg-black/85 border-2 border-emerald-400 flex flex-col items-center justify-center shadow-lg group-hover:scale-105 group-hover:border-volt transition-transform">
-                      <span className="text-xs font-black text-volt font-mono">
-                        {assignedStudent ? `#${assignedStudent.dorsal}` : slot.label}
-                      </span>
-                      <span className="text-[9px] text-slate-300 font-mono">
-                        {slot.posCode}
+                  <div className="grid grid-cols-4 gap-2 pt-2 border-t border-white/10 text-center text-xs">
+                    <div className="bg-black/40 p-2 rounded-xl border border-white/5">
+                      <span className="text-[10px] text-slate-400 block">Titulares</span>
+                      <span className="text-sm font-black text-emerald-400 font-mono">
+                        {assignedStudents.length} / 11
                       </span>
                     </div>
-
-                    <select
-                      value={slot.studentId || ''}
-                      onChange={(e) => handleSlotStudentChange(slot.slotId, e.target.value || null)}
-                      className="mt-1 bg-black/90 border border-emerald-500/40 text-[10px] text-white rounded px-1.5 py-0.5 max-w-[105px] truncate focus:outline-none focus:border-volt cursor-pointer shadow-md font-medium"
-                    >
-                      <option value="">(Libre)</option>
-                      {students.map((st) => (
-                        <option key={st.id} value={st.id}>
-                          #{st.dorsal} {st.name} ({st.primaryPosition})
-                        </option>
-                      ))}
-                    </select>
-
-                    {assignedStudent && (
-                      <span className="text-[9px] text-emerald-400 font-mono">
-                        {assignedStudent.matchPercentage}% ADN
+                    <div className="bg-black/40 p-2 rounded-xl border border-white/5">
+                      <span className="text-[10px] text-slate-400 block">IQ Táctico</span>
+                      <span className="text-sm font-black text-volt font-mono">
+                        {avgIQ > 0 ? avgIQ : '--'}
                       </span>
-                    )}
+                    </div>
+                    <div className="bg-black/40 p-2 rounded-xl border border-white/5">
+                      <span className="text-[10px] text-slate-400 block">Técnica</span>
+                      <span className="text-sm font-black text-white font-mono">
+                        {avgTech > 0 ? avgTech : '--'}
+                      </span>
+                    </div>
+                    <div className="bg-black/40 p-2 rounded-xl border border-white/5">
+                      <span className="text-[10px] text-slate-400 block">ADN Colectivo</span>
+                      <span className="text-sm font-black text-emerald-400 font-mono">
+                        {avgADN > 0 ? `${avgADN}%` : '--'}
+                      </span>
+                    </div>
                   </div>
                 );
-              })}
+              })()}
             </div>
+
+            {/* Right: Selected Position Duty Card & Student Assignor (4 Cols - TacticalBoard Style) */}
+            {(() => {
+              const currentTemplate = FORMATION_TEMPLATES[formation] || FORMATION_TEMPLATES['4-3-3'];
+              const activeSlotConfig = currentTemplate.find((s) => s.slotId === selectedLineupSlotId) || currentTemplate[0];
+              const activeLineupSlot = lineupSlots.find((s) => s.slotId === activeSlotConfig.slotId);
+              const assignedStudent = students.find((s) => s.id === activeLineupSlot?.studentId);
+
+              // Sort students by affinity for this position
+              const sortedCandidates = [...students].sort((a, b) => {
+                const aMatch = a.primaryPosition === activeSlotConfig.posCode ? 100 : a.secondaryPosition === activeSlotConfig.posCode ? 70 : 30;
+                const bMatch = b.primaryPosition === activeSlotConfig.posCode ? 100 : b.secondaryPosition === activeSlotConfig.posCode ? 70 : 30;
+                return bMatch - aMatch;
+              });
+
+              return (
+                <div className="lg:col-span-4 bg-slate-900/50 border border-white/10 rounded-2xl p-5 shadow-2xl space-y-4">
+                  {/* Position Header & Duty Card Title */}
+                  <div className="flex items-center gap-2 border-b border-white/10 pb-3">
+                    <span className="w-8 h-8 rounded-lg bg-volt/10 text-volt border border-volt/30 flex items-center justify-center font-bold shrink-0">
+                      <Shield className="w-4 h-4" />
+                    </span>
+                    <div>
+                      <h4 className="text-base font-black italic text-white font-display uppercase tracking-wide">
+                        Ficha Técnica & Deberes
+                      </h4>
+                      <span className="text-[10px] text-slate-400 font-mono">
+                        Puesto: {activeSlotConfig.label} ({activeSlotConfig.posCode})
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Position Overview Badge */}
+                  <div className="flex items-center justify-between bg-black/40 p-3 rounded-xl border border-white/10">
+                    <div className="flex items-center gap-3">
+                      <div className="w-11 h-11 rounded-xl bg-volt text-black font-black font-display text-xl flex items-center justify-center italic shrink-0">
+                        {assignedStudent ? assignedStudent.dorsal : activeSlotConfig.number}
+                      </div>
+                      <div>
+                        <div className="text-sm font-black italic text-white font-display uppercase">
+                          {activeSlotConfig.roleName}
+                        </div>
+                        <div className="text-[11px] text-slate-400 font-mono font-bold">
+                          Posición: {activeSlotConfig.posCode}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Tactical Duties Box */}
+                  <div className="p-3.5 rounded-xl bg-black/40 border border-white/10 space-y-1.5">
+                    <div className="text-volt font-bold uppercase text-[10px] font-mono tracking-wider">
+                      Obligaciones Tácticas Principales:
+                    </div>
+                    <p className="text-xs text-slate-200 leading-relaxed font-medium">
+                      {activeSlotConfig.duties}
+                    </p>
+                  </div>
+
+                  {/* Key Tactical Concept with TacticalTerm popover */}
+                  <div className="p-3 rounded-xl bg-volt/10 border border-volt/30 text-xs space-y-1.5">
+                    <div className="text-volt font-bold uppercase text-[10px] font-mono">
+                      💡 Concepto Clave del Puesto:
+                    </div>
+                    <div className="text-slate-300 text-[11px] leading-relaxed">
+                      {activeSlotConfig.tacticalTermKey ? (
+                        <p>
+                          Para dominar esta función, el futbolista debe dominar la <TacticalTerm termKey={activeSlotConfig.tacticalTermKey}>{activeSlotConfig.tacticalConcept}</TacticalTerm> en situaciones de partido.
+                        </p>
+                      ) : (
+                        <p>
+                          Dominar la <strong>{activeSlotConfig.tacticalConcept}</strong> para mantener la cohesión del bloque.
+                        </p>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Current Assigned Student Details Card */}
+                  {assignedStudent ? (
+                    <div className="p-3.5 rounded-xl bg-black/60 border border-emerald-500/40 space-y-3">
+                      <div className="flex items-start justify-between gap-2">
+                        <div>
+                          <span className="text-[9px] font-mono text-emerald-400 uppercase tracking-wider block">Titular Asignado</span>
+                          <h5 className="font-bold text-white text-xs leading-tight">
+                            {assignedStudent.name}
+                          </h5>
+                          <span className="text-[10px] text-slate-400 font-mono">
+                            {assignedStudent.category} • Pie {assignedStudent.preferredFoot}
+                          </span>
+                        </div>
+
+                        <span className="px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 text-[10px] font-mono font-bold">
+                          {assignedStudent.matchPercentage}% ADN
+                        </span>
+                      </div>
+
+                      {/* Mini Attribute Pills */}
+                      <div className="grid grid-cols-4 gap-1 text-[9px] font-mono text-center pt-1 border-t border-white/10">
+                        <div className="bg-white/5 p-1 rounded">
+                          <span className="text-slate-400 block text-[7px]">VEL</span>
+                          <span className="text-white font-bold">{assignedStudent.skills.speed}</span>
+                        </div>
+                        <div className="bg-white/5 p-1 rounded">
+                          <span className="text-slate-400 block text-[7px]">TÉC</span>
+                          <span className="text-white font-bold">{assignedStudent.skills.technique}</span>
+                        </div>
+                        <div className="bg-white/5 p-1 rounded">
+                          <span className="text-slate-400 block text-[7px]">IQ</span>
+                          <span className="text-emerald-400 font-bold">{assignedStudent.skills.tacticalIQ}</span>
+                        </div>
+                        <div className="bg-white/5 p-1 rounded">
+                          <span className="text-slate-400 block text-[7px]">PAS</span>
+                          <span className="text-white font-bold">{assignedStudent.skills.passing}</span>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-2 pt-1">
+                        <button
+                          onClick={() => onStartStudentExam(assignedStudent)}
+                          className="flex-1 py-1.5 rounded-lg bg-volt/15 hover:bg-volt text-volt hover:text-black text-[10px] font-black uppercase italic transition-all cursor-pointer flex items-center justify-center gap-1"
+                        >
+                          <Play className="w-3 h-3 fill-current" />
+                          <span>Hacer Test ADN</span>
+                        </button>
+                        <button
+                          onClick={() => handleSlotStudentChange(activeSlotConfig.slotId, null)}
+                          className="px-2.5 py-1.5 rounded-lg bg-white/5 hover:bg-rose-500/20 text-slate-400 hover:text-rose-400 text-[10px] font-bold transition-all cursor-pointer"
+                          title="Desasignar puesto"
+                        >
+                          Vaciar
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="p-3.5 rounded-xl bg-black/40 border border-dashed border-white/15 text-center space-y-1">
+                      <span className="text-xs font-bold text-slate-300 block">Puesto Actualmente Vacante</span>
+                      <p className="text-[11px] text-slate-400">
+                        Selecciona a un alumno abajo para colocarlo de titular.
+                      </p>
+                    </div>
+                  )}
+
+                  {/* Candidate Selector List */}
+                  <div className="space-y-2">
+                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block font-mono">
+                      Candidatos de Cantera ({sortedCandidates.length}):
+                    </span>
+                    <div className="max-h-[190px] overflow-y-auto space-y-1.5 pr-1">
+                      {sortedCandidates.map((cand) => {
+                        const isPrimary = cand.primaryPosition === activeSlotConfig.posCode;
+                        const isAssignedHere = assignedStudent?.id === cand.id;
+
+                        return (
+                          <div
+                            key={cand.id}
+                            onClick={() => handleSlotStudentChange(activeSlotConfig.slotId, cand.id)}
+                            className={`p-2 rounded-xl border flex items-center justify-between gap-2 transition-all cursor-pointer ${
+                              isAssignedHere
+                                ? 'bg-emerald-500/20 border-emerald-400 shadow-sm'
+                                : 'bg-black/40 border-white/5 hover:border-emerald-500/30 hover:bg-slate-900'
+                            }`}
+                          >
+                            <div className="flex items-center gap-2 min-w-0">
+                              <span className="w-6 h-6 rounded-md bg-white/10 text-white font-mono font-bold text-[10px] flex items-center justify-center shrink-0">
+                                #{cand.dorsal}
+                              </span>
+                              <div className="min-w-0">
+                                <span className="text-xs font-bold text-white block truncate leading-tight">
+                                  {cand.name}
+                                </span>
+                                <span className="text-[9px] text-slate-400 font-mono block">
+                                  {cand.primaryPosition} • {cand.preferredFoot}
+                                </span>
+                              </div>
+                            </div>
+
+                            <div className="flex items-center gap-1.5 shrink-0">
+                              {isPrimary && (
+                                <span className="px-1.5 py-0.5 rounded bg-volt text-black text-[8px] font-black uppercase">
+                                  Afinidad
+                                </span>
+                              )}
+                              <span className="text-[10px] font-mono text-emerald-400 font-bold">
+                                {cand.matchPercentage}%
+                              </span>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                </div>
+              );
+            })()}
           </div>
         </div>
       )}

@@ -1,67 +1,104 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 
 export type ThemeBackground = 'obsidian' | 'turf' | 'cyber' | 'slate';
-export type AccentColor = 'volt' | 'cyan' | 'emerald' | 'orange' | 'magenta' | 'purple';
+export type AccentColor = 'volt' | 'blue' | 'lime' | 'orange' | 'red' | 'purple' | 'cyan' | 'emerald' | 'magenta';
 
 export interface AccentConfig {
   id: AccentColor;
   name: string;
+  shortLabel: string;
   hex: string;
   rgb: string;
   hoverHex: string;
   shadowRgb: string;
 }
 
-export const ACCENT_PALETTE: Record<AccentColor, AccentConfig> = {
+export const ACCENT_PALETTE: Record<string, AccentConfig> = {
   volt: {
     id: 'volt',
     name: 'Amarillo Neón (Volt)',
+    shortLabel: 'Amarillo Volt',
     hex: '#ccff00',
     rgb: '204, 255, 0',
     hoverHex: '#e5ff66',
     shadowRgb: '204, 255, 0'
   },
-  cyan: {
-    id: 'cyan',
-    name: 'Azul Neón (Electric Cyan)',
-    hex: '#00f0ff',
-    rgb: '0, 240, 255',
-    hoverHex: '#66f5ff',
-    shadowRgb: '0, 240, 255'
+  blue: {
+    id: 'blue',
+    name: 'Azul Eléctrico (#4E92F2)',
+    shortLabel: 'Azul (4E92F2)',
+    hex: '#4E92F2',
+    rgb: '78, 146, 242',
+    hoverHex: '#6da7f5',
+    shadowRgb: '78, 146, 242'
   },
-  emerald: {
-    id: 'emerald',
-    name: 'Verde Esmeralda (Field Emerald)',
-    hex: '#10b981',
-    rgb: '16, 185, 129',
-    hoverHex: '#34d399',
-    shadowRgb: '16, 185, 129'
+  lime: {
+    id: 'lime',
+    name: 'Verde Limón (Neon Lime)',
+    shortLabel: 'Verde Limón',
+    hex: '#84e414',
+    rgb: '132, 228, 20',
+    hoverHex: '#a3f23a',
+    shadowRgb: '132, 228, 20'
   },
   orange: {
     id: 'orange',
     name: 'Naranja Fuego (Flame Orange)',
+    shortLabel: 'Naranja Fuego',
     hex: '#ff6b00',
     rgb: '255, 107, 0',
     hoverHex: '#ff8533',
     shadowRgb: '255, 107, 0'
   },
-  magenta: {
-    id: 'magenta',
-    name: 'Rosa Neón (Hyper Magenta)',
-    hex: '#f43f5e',
-    rgb: '244, 63, 94',
-    hoverHex: '#fb7185',
-    shadowRgb: '244, 63, 94'
+  red: {
+    id: 'red',
+    name: 'Rojo Intenso (Power Red)',
+    shortLabel: 'Rojo',
+    hex: '#ef233c',
+    rgb: '239, 35, 60',
+    hoverHex: '#ff4d5e',
+    shadowRgb: '239, 35, 60'
   },
   purple: {
     id: 'purple',
     name: 'Púrpura Táctico (Tactical Violet)',
+    shortLabel: 'Púrpura',
     hex: '#a855f7',
     rgb: '168, 85, 247',
     hoverHex: '#c084fc',
     shadowRgb: '168, 85, 247'
+  },
+  // Legacy aliases
+  cyan: {
+    id: 'blue',
+    name: 'Azul Eléctrico (#4E92F2)',
+    shortLabel: 'Azul (4E92F2)',
+    hex: '#4E92F2',
+    rgb: '78, 146, 242',
+    hoverHex: '#6da7f5',
+    shadowRgb: '78, 146, 242'
+  },
+  emerald: {
+    id: 'lime',
+    name: 'Verde Limón (Neon Lime)',
+    shortLabel: 'Verde Limón',
+    hex: '#84e414',
+    rgb: '132, 228, 20',
+    hoverHex: '#a3f23a',
+    shadowRgb: '132, 228, 20'
+  },
+  magenta: {
+    id: 'red',
+    name: 'Rojo Intenso (Power Red)',
+    shortLabel: 'Rojo',
+    hex: '#ef233c',
+    rgb: '239, 35, 60',
+    hoverHex: '#ff4d5e',
+    shadowRgb: '239, 35, 60'
   }
 };
+
+export const DISPLAY_ACCENTS: AccentColor[] = ['volt', 'blue', 'lime', 'orange', 'red', 'purple'];
 
 export const THEME_BACKGROUNDS: Record<ThemeBackground, { id: ThemeBackground; name: string; bgClass: string; hex: string }> = {
   obsidian: {

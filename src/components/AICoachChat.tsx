@@ -5,13 +5,14 @@ import { ChatMessage, AssessmentResult } from '../types';
 import { useLanguage } from '../context/LanguageContext';
 import { useAuth } from '../context/AuthContext';
 import { TacticalTerm } from './TacticalTerm';
+import { detectLanguage } from '../utils/languageDetector';
 
 interface AICoachChatProps {
   playerProfile?: AssessmentResult | null;
 }
 
 export const AICoachChat: React.FC<AICoachChatProps> = ({ playerProfile }) => {
-  const { lang, t, interpolate } = useLanguage();
+  const { lang, setLang, detectAndSetLanguage, t, interpolate } = useLanguage();
   const { plan, isPro } = useAuth();
   const weeklyLimit = isPro ? 10 : 3;
 
@@ -93,14 +94,28 @@ export const AICoachChat: React.FC<AICoachChatProps> = ({ playerProfile }) => {
     const query = textToSend || input;
     if (!query.trim() || loading) return;
 
+    // Detect language and auto-switch whole app to the user's language
+    const detected = detectLanguage(query.trim());
+    let currentLang = lang;
+    if (detected) {
+      currentLang = detected;
+      setLang(detected);
+    }
+
     const currentUsage = getWeeklyUsage();
     if (currentUsage >= weeklyLimit) {
+      const limitNotice = currentLang === 'en'
+        ? `⚠️ You have reached your weekly AI message limit (${currentUsage}/${weeklyLimit} for your ${isPro ? 'Pro / Academy' : 'Free'} plan). Upgrade your plan in the top menu to keep consulting with the UEFA Pro Tactical Assistant.`
+        : currentLang === 'pt'
+        ? `⚠️ Atingiu o seu limite semanal de mensagens de IA (${currentUsage}/${weeklyLimit} para o seu plano ${isPro ? 'Pro / Academia' : 'Gratuito'}). Atualize o seu plano no menu superior para continuar a consultar o Assistente Tático UEFA Pro.`
+        : `⚠️ Has alcanzado tu límite semanal de mensajes con la IA (${currentUsage}/${weeklyLimit} para tu plan ${isPro ? 'Pro / Academia' : 'Gratuito'}). Actualiza tu plan en el menú superior para continuar consultando con el Asistente Táctico UEFA Pro.`;
+
       setMessages((prev) => [
         ...prev,
         {
           id: `limit-${Date.now()}`,
           sender: 'ai',
-          text: `⚠️ Has alcanzado tu límite semanal de mensajes con la IA (${currentUsage}/${weeklyLimit} para tu plan ${isPro ? 'Pro / Academia' : 'Gratuito'}). Actualiza tu plan en el menú superior para continuar consultando con el Asistente Táctico UEFA Pro.`,
+          text: limitNotice,
           timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
         }
       ]);
@@ -126,28 +141,40 @@ export const AICoachChat: React.FC<AICoachChatProps> = ({ playerProfile }) => {
         body: JSON.stringify({
           messages: [...messages, userMsg],
           playerProfile,
-          lang
+          lang: currentLang
         })
       });
 
       const data = await response.json();
 
+      const defaultFallbackReply = currentLang === 'en'
+        ? 'Great tactical approach. Remember to keep your head up before receiving the ball to scan your passing angles.'
+        : currentLang === 'pt'
+        ? 'Excelente abordagem tática. Lembre-se de manter a cabeça erguida antes de receber a bola.'
+        : 'Buen planteamiento táctico. Recuerda mantener la cabeza levantada antes de recibir el balón.';
+
       const aiReply: ChatMessage = {
         id: `ai-${Date.now()}`,
         sender: 'ai',
-        text: data.reply || 'Buen planteamiento táctico. Recuerda mantener la cabeza levantada antes de recibir el balón.',
+        text: data.reply || defaultFallbackReply,
         timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
       };
 
       setMessages((prev) => [...prev, aiReply]);
     } catch (err) {
       console.error('Error sending message to coach:', err);
+      const errorFallback = currentLang === 'en'
+        ? 'Maintain tactical focus. In the attacking phase, always position in the half-spaces to receive on the half-turn.'
+        : currentLang === 'pt'
+        ? 'Mantenha a concentração tática. Na fase ofensiva, posicione-se no meio-espaço para receber orientado.'
+        : 'Mantén la concentración táctica. En fase ofensiva busca siempre posicionarte en el carril interior para recibir perfilado.';
+
       setMessages((prev) => [
         ...prev,
         {
           id: `ai-fallback-${Date.now()}`,
           sender: 'ai',
-          text: 'Mantén la concentración táctica. En fase ofensiva busca siempre posicionarte en el carril interior para recibir perfilado.',
+          text: errorFallback,
           timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
         }
       ]);

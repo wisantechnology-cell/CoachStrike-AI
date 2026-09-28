@@ -84,7 +84,7 @@ export const Header: React.FC<HeaderProps> = ({
       return (
         <span className="px-2 py-0.5 rounded-full bg-amber-400/20 text-amber-300 border border-amber-400/40 text-[9px] font-mono font-bold flex items-center gap-1">
           <Crown className="w-2.5 h-2.5 text-amber-400" />
-          ACADEMIA ÉLITE
+          {lang === 'en' ? 'ACADEMY ELITE' : lang === 'pt' ? 'ACADEMIA ELITE' : 'ACADEMIA ÉLITE'}
         </span>
       );
     }
@@ -92,7 +92,7 @@ export const Header: React.FC<HeaderProps> = ({
       return (
         <span className="px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 text-[9px] font-mono font-bold flex items-center gap-1">
           <Users className="w-2.5 h-2.5 text-emerald-400" />
-          ACADEMIA BÁSICO
+          {lang === 'en' ? 'ACADEMY BASIC' : 'ACADEMIA BÁSICO'}
         </span>
       );
     }
@@ -100,13 +100,13 @@ export const Header: React.FC<HeaderProps> = ({
       return (
         <span className="px-2 py-0.5 rounded-full bg-volt/20 text-volt border border-volt/40 text-[9px] font-mono font-bold flex items-center gap-1">
           <Crown className="w-2.5 h-2.5 text-volt" />
-          PLAN PRO
+          {lang === 'en' ? 'PRO PLAN' : lang === 'pt' ? 'PLANO PRO' : 'PLAN PRO'}
         </span>
       );
     }
     return (
       <span className="px-2 py-0.5 rounded-full bg-white/10 text-slate-300 border border-white/20 text-[9px] font-mono font-bold">
-        GRATIS
+        {lang === 'en' ? 'FREE' : lang === 'pt' ? 'GRÁTIS' : 'GRATIS'}
       </span>
     );
   };
@@ -192,7 +192,7 @@ export const Header: React.FC<HeaderProps> = ({
               }`}
             >
               <Users className="w-3.5 h-3.5" />
-              <span>Academia</span>
+              <span>{t.navAcademy}</span>
               {isAcademy ? (
                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
               ) : (
@@ -222,10 +222,10 @@ export const Header: React.FC<HeaderProps> = ({
               <button
                 onClick={onOpenPricing}
                 className="px-2.5 sm:px-3 py-1.5 sm:py-2 rounded-xl bg-gradient-to-r from-amber-500/20 via-volt/20 to-emerald-500/20 hover:from-amber-500/30 hover:to-emerald-500/30 border border-volt/30 text-volt text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer shadow-sm"
-                title="Ver planes Pro y Academia con Stripe / PayPal"
+                title="Ver planes Pro y Academia"
               >
                 <Crown className="w-3.5 h-3.5 text-volt" />
-                <span className="hidden sm:inline">Planes</span>
+                <span className="hidden sm:inline">{t.navPlans}</span>
                 {getPlanBadge()}
               </button>
             )}
@@ -310,12 +310,12 @@ export const Header: React.FC<HeaderProps> = ({
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center justify-between gap-1">
                         <h4 className="text-sm font-black text-white truncate font-display uppercase tracking-wide">
-                          {user?.displayName || 'Futbolista Strike AI'}
+                          {user?.displayName || (lang === 'en' ? 'Strike AI Player' : 'Futbolista Strike AI')}
                         </h4>
                         {user ? (
                           <span className="px-1.5 py-0.5 rounded text-[9px] font-mono-code font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 flex items-center gap-1 shrink-0">
                             <CheckCircle2 className="w-2.5 h-2.5" />
-                            Conectado
+                            {lang === 'en' ? 'Connected' : 'Conectado'}
                           </span>
                         ) : (
                           <button
@@ -325,16 +325,16 @@ export const Header: React.FC<HeaderProps> = ({
                             }}
                             className="px-2 py-0.5 rounded bg-volt text-black text-[9px] font-black uppercase tracking-wider hover:bg-white transition-colors cursor-pointer"
                           >
-                            Acceder
+                            {lang === 'en' ? 'Sign In' : 'Acceder'}
                           </button>
                         )}
                       </div>
                       <p className="text-xs text-slate-400 truncate mt-0.5 font-mono-code">
-                        {user?.email || 'Sesión como invitado'}
+                        {user?.email || (lang === 'en' ? 'Guest session' : 'Sesión como invitado')}
                       </p>
                       
                       <div className="flex items-center justify-between mt-2 pt-1 border-t border-white/5">
-                        <span className="text-[10px] text-slate-400">Plan actual:</span>
+                        <span className="text-[10px] text-slate-400">{lang === 'en' ? 'Current plan:' : 'Plan actual:'}</span>
                         {getPlanBadge()}
                       </div>
                     </div>
@@ -356,7 +356,7 @@ export const Header: React.FC<HeaderProps> = ({
                         </div>
                         <div>
                           <div className="text-xs font-bold text-white flex items-center gap-1.5">
-                            <span>Ver Posiciones Guardadas</span>
+                            <span>{lang === 'en' ? 'Saved Reports & Profiles' : 'Ver Posiciones Guardadas'}</span>
                             {savedCount > 0 && (
                               <span className="px-1.5 py-0.2 text-[9px] font-mono-code font-bold rounded bg-volt text-black">
                                 {savedCount}
@@ -364,7 +364,7 @@ export const Header: React.FC<HeaderProps> = ({
                             )}
                           </div>
                           <p className="text-[11px] text-slate-400">
-                            Revisa tus fichas tácticas y evaluaciones
+                            {lang === 'en' ? 'Review scouting reports and player history' : 'Revisa tus fichas tácticas y evaluaciones'}
                           </p>
                         </div>
                       </div>
@@ -386,10 +386,10 @@ export const Header: React.FC<HeaderProps> = ({
                         <div>
                           <div className="text-xs font-black text-volt flex items-center gap-1">
                             <Sparkles className="w-3 h-3 text-volt" />
-                            <span>Examinar a Profundidad</span>
+                            <span>{lang === 'en' ? 'In-Depth Tactical Deep Dive' : 'Examinar a Profundidad'}</span>
                           </div>
                           <p className="text-[11px] text-slate-300">
-                            Regates más eficaces & en qué copiar a los pros
+                            {lang === 'en' ? 'Most effective dribbles & what to copy from pros' : 'Regates más eficaces & en qué copiar a los pros'}
                           </p>
                         </div>
                       </div>
@@ -410,10 +410,10 @@ export const Header: React.FC<HeaderProps> = ({
                         </div>
                         <div>
                           <div className="text-xs font-black text-emerald-400 flex items-center gap-1">
-                            <span>Modo Academia & Entrenadores</span>
+                            <span>{lang === 'en' ? 'Academy Mode & Coaches' : 'Modo Academia & Entrenadores'}</span>
                           </div>
                           <p className="text-[11px] text-slate-300">
-                            Gestión de alumnos, exámenes y Once Ideal
+                            {lang === 'en' ? 'Roster management, DNA tests & Starting XI' : 'Gestión de alumnos, exámenes y Once Ideal'}
                           </p>
                         </div>
                       </div>
@@ -435,10 +435,10 @@ export const Header: React.FC<HeaderProps> = ({
                           </div>
                           <div>
                             <div className="text-xs font-bold text-amber-300 flex items-center gap-1">
-                              <span>Planes & Pagos (Stripe / PayPal)</span>
+                              <span>{lang === 'en' ? 'Plans & Billing (Stripe / PayPal)' : 'Planes & Pagos (Stripe / PayPal)'}</span>
                             </div>
                             <p className="text-[11px] text-slate-400">
-                              Desbloquea funciones Pro y Modo Academia
+                              {lang === 'en' ? 'Unlock Pro features & Academy Mode' : 'Desbloquea funciones Pro y Modo Academia'}
                             </p>
                           </div>
                         </div>
@@ -457,7 +457,7 @@ export const Header: React.FC<HeaderProps> = ({
                       className="text-[11px] text-slate-400 hover:text-slate-200 flex items-center gap-1 py-1 px-2 rounded-lg hover:bg-white/5 transition-colors cursor-pointer"
                     >
                       <Settings className="w-3.5 h-3.5" />
-                      <span>Preferencias</span>
+                      <span>{t.navSettings}</span>
                     </button>
 
                     {user ? (
@@ -469,7 +469,7 @@ export const Header: React.FC<HeaderProps> = ({
                         className="text-xs font-bold text-red-400 hover:text-red-300 hover:bg-red-500/10 px-3 py-1.5 rounded-lg border border-red-500/20 flex items-center gap-1.5 transition-all cursor-pointer"
                       >
                         <LogOut className="w-3.5 h-3.5" />
-                        <span>Cerrar Sesión</span>
+                        <span>{lang === 'en' ? 'Sign Out' : lang === 'pt' ? 'Terminar Sessão' : 'Cerrar Sesión'}</span>
                       </button>
                     ) : (
                       <button
@@ -480,7 +480,7 @@ export const Header: React.FC<HeaderProps> = ({
                         className="text-xs font-bold text-volt hover:text-white bg-volt/10 hover:bg-volt/20 px-3 py-1.5 rounded-lg border border-volt/30 flex items-center gap-1.5 transition-all cursor-pointer"
                       >
                         <LogIn className="w-3.5 h-3.5" />
-                        <span>Iniciar Sesión</span>
+                        <span>{lang === 'en' ? 'Sign In' : lang === 'pt' ? 'Iniciar Sessão' : 'Iniciar Sesión'}</span>
                       </button>
                     )}
                   </div>
@@ -506,31 +506,31 @@ export const Header: React.FC<HeaderProps> = ({
             onClick={() => setActiveTab('hero')}
             className={`py-1 ${activeTab === 'hero' ? 'text-volt' : ''}`}
           >
-            Inicio
+            {lang === 'en' ? 'Home' : 'Inicio'}
           </button>
           <button
             onClick={onStartTest}
             className={`py-1 ${activeTab === 'test' ? 'text-volt' : ''}`}
           >
-            Test
+            {lang === 'en' ? 'Test' : 'Test'}
           </button>
           <button
             onClick={() => setActiveTab('drills')}
             className={`py-1 ${activeTab === 'drills' ? 'text-volt' : ''}`}
           >
-            Ejercicios
+            {lang === 'en' ? 'Drills' : 'Ejercicios'}
           </button>
           <button
             onClick={() => setActiveTab('tactics')}
             className={`py-1 ${activeTab === 'tactics' ? 'text-volt' : ''}`}
           >
-            Pizarra
+            {lang === 'en' ? 'Tactics' : 'Pizarra'}
           </button>
           <button
             onClick={() => setActiveTab('academy')}
             className={`py-1 flex items-center gap-0.5 ${activeTab === 'academy' ? 'text-emerald-400' : ''}`}
           >
-            <span>Academia</span>
+            <span>{t.navAcademy}</span>
             {!isAcademy && <Lock className="w-2.5 h-2.5 text-slate-500" />}
           </button>
           <button
@@ -543,7 +543,7 @@ export const Header: React.FC<HeaderProps> = ({
             onClick={() => setActiveTab('history')}
             className={`py-1 flex items-center gap-1 ${activeTab === 'history' ? 'text-volt' : ''}`}
           >
-            Fichas {savedCount > 0 && `(${savedCount})`}
+            {t.navHistory} {savedCount > 0 && `(${savedCount})`}
           </button>
         </div>
       </header>

@@ -20,6 +20,7 @@ import {
 } from 'lucide-react';
 import { AssessmentResult, PositionCategory } from '../types';
 import { POSITION_ANALYSIS_DATA, EffectiveDribble, ProInspirationPlayer } from '../data/positionAnalysisData';
+import { useLanguage } from '../context/LanguageContext';
 
 interface PositionDeepDiveModalProps {
   isOpen: boolean;
@@ -40,6 +41,7 @@ export const PositionDeepDiveModal: React.FC<PositionDeepDiveModalProps> = ({
   savedProfiles = [],
   onSelectProfile
 }) => {
+  const { lang } = useLanguage();
   // Determine active position code
   const currentPosCode: PositionCategory = assessmentResult?.primaryPosition?.code || initialPosition || 'EXT';
   const [selectedPosition, setSelectedPosition] = useState<PositionCategory>(currentPosCode);
@@ -64,16 +66,38 @@ export const PositionDeepDiveModal: React.FC<PositionDeepDiveModalProps> = ({
   // Pre-expand first dribble if none expanded
   const currentExpandedDribble = expandedDribbleId || dribbles[0]?.id;
 
-  const positionButtons: { code: PositionCategory; label: string }[] = [
-    { code: 'EXT', label: 'Extremo' },
-    { code: 'DC', label: 'Delantero' },
-    { code: 'MPO', label: 'Mediapunta' },
-    { code: 'MC', label: 'Mediocentro' },
-    { code: 'MCD', label: 'Pivote' },
-    { code: 'LAT', label: 'Lateral' },
-    { code: 'DEC', label: 'Central' },
-    { code: 'POR', label: 'Portero' }
-  ];
+  const positionButtons: { code: PositionCategory; label: string }[] = lang === 'en'
+    ? [
+        { code: 'EXT', label: 'Winger' },
+        { code: 'DC', label: 'Striker' },
+        { code: 'MPO', label: 'Attacking Mid' },
+        { code: 'MC', label: 'Central Mid' },
+        { code: 'MCD', label: 'Defensive Mid' },
+        { code: 'LAT', label: 'Fullback' },
+        { code: 'DEC', label: 'Center Back' },
+        { code: 'POR', label: 'Goalkeeper' }
+      ]
+    : lang === 'pt'
+    ? [
+        { code: 'EXT', label: 'Extremo' },
+        { code: 'DC', label: 'Avançado' },
+        { code: 'MPO', label: 'Médio Ofensivo' },
+        { code: 'MC', label: 'Médio Centro' },
+        { code: 'MCD', label: 'Médio Defensivo' },
+        { code: 'LAT', label: 'Lateral' },
+        { code: 'DEC', label: 'Defesa Central' },
+        { code: 'POR', label: 'Guarda-Redes' }
+      ]
+    : [
+        { code: 'EXT', label: 'Extremo' },
+        { code: 'DC', label: 'Delantero' },
+        { code: 'MPO', label: 'Mediapunta' },
+        { code: 'MC', label: 'Mediocentro' },
+        { code: 'MCD', label: 'Pivote' },
+        { code: 'LAT', label: 'Lateral' },
+        { code: 'DEC', label: 'Central' },
+        { code: 'POR', label: 'Portero' }
+      ];
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 bg-black/80 backdrop-blur-md overflow-y-auto">
@@ -178,7 +202,7 @@ export const PositionDeepDiveModal: React.FC<PositionDeepDiveModalProps> = ({
             }`}
           >
             <Flame className="w-4 h-4 text-volt" />
-            <span>Regates Más Eficaces</span>
+            <span>{lang === 'en' ? 'Most Effective Dribbles' : lang === 'pt' ? 'Dribles Mais Eficazes' : 'Regates Más Eficaces'}</span>
             <span className="px-1.5 py-0.5 rounded-full bg-volt/10 text-volt text-[10px] font-mono-code font-bold">
               {dribbles.length}
             </span>
@@ -193,7 +217,7 @@ export const PositionDeepDiveModal: React.FC<PositionDeepDiveModalProps> = ({
             }`}
           >
             <Trophy className="w-4 h-4 text-amber-400" />
-            <span>Inspiración Pro: En Qué Copiarlo</span>
+            <span>{lang === 'en' ? 'Pro Inspiration: What to Emulate' : lang === 'pt' ? 'Inspiração Pro: O Que Copiar' : 'Inspiración Pro: En Qué Copiarlo'}</span>
             <span className="px-1.5 py-0.5 rounded-full bg-amber-400/10 text-amber-400 text-[10px] font-mono-code font-bold">
               {inspirations.length}
             </span>
@@ -208,7 +232,7 @@ export const PositionDeepDiveModal: React.FC<PositionDeepDiveModalProps> = ({
             }`}
           >
             <Compass className="w-4 h-4 text-sky-400" />
-            <span>ADN Táctico & Misión</span>
+            <span>{lang === 'en' ? 'Tactical DNA & Role' : lang === 'pt' ? 'ADN Tático & Função' : 'ADN Táctico & Misión'}</span>
           </button>
 
           <button
@@ -220,7 +244,7 @@ export const PositionDeepDiveModal: React.FC<PositionDeepDiveModalProps> = ({
             }`}
           >
             <Dumbbell className="w-4 h-4 text-emerald-400" />
-            <span>Enfoques de Entrenamiento</span>
+            <span>{lang === 'en' ? 'Recommended Drills' : lang === 'pt' ? 'Exercícios Recomendados' : 'Ejercicios Recomendados'}</span>
           </button>
         </div>
 
