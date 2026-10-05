@@ -38,7 +38,7 @@ export const SavedProfiles: React.FC<SavedProfilesProps> = ({
   onNewTest,
   onAskCoach
 }) => {
-  const { t } = useLanguage();
+  const { t, lang } = useLanguage();
   const { user, login } = useAuth();
   
   // State for Deep Dive modal
@@ -58,6 +58,21 @@ export const SavedProfiles: React.FC<SavedProfilesProps> = ({
     setIsDeepDiveOpen(true);
   };
 
+  const formatFoot = (foot?: string) => {
+    if (!foot) return '--';
+    const f = foot.toLowerCase();
+    if (f.includes('die') || f.includes('righ') || f.includes('dest')) {
+      return lang === 'en' ? 'Right' : lang === 'pt' ? 'Destro' : 'Diestro';
+    }
+    if (f.includes('zur') || f.includes('left') || f.includes('canh')) {
+      return lang === 'en' ? 'Left' : lang === 'pt' ? 'Canhoto' : 'Zurdo';
+    }
+    if (f.includes('ambi') || f.includes('both')) {
+      return lang === 'en' ? 'Both' : lang === 'pt' ? 'Ambidestro' : 'Ambidestro';
+    }
+    return foot;
+  };
+
   return (
     <div className="max-w-6xl mx-auto py-8 px-4 space-y-8">
       {/* Cloud Sync Status Card */}
@@ -69,17 +84,25 @@ export const SavedProfiles: React.FC<SavedProfilesProps> = ({
           <div>
             <div className="flex items-center gap-2">
               <span className="text-xs font-black uppercase tracking-wider text-white">
-                Base de Datos Firebase Firestore
+                {lang === 'en' ? 'Firebase Firestore Cloud Database' : lang === 'pt' ? 'Base de Dados Firebase Firestore' : 'Base de Datos Firebase Firestore'}
               </span>
               <span className="inline-flex items-center gap-1 text-[10px] font-mono-code font-bold text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/30">
                 <CheckCircle className="w-2.5 h-2.5" />
-                ACTIVO
+                {lang === 'en' ? 'ONLINE' : lang === 'pt' ? 'ATIVO' : 'ACTIVO'}
               </span>
             </div>
             <p className="text-[11px] text-slate-400 mt-0.5">
               {user
-                ? `Conectado como ${user.displayName || user.email}. Tus evaluaciones y análisis de posición se guardan en la nube.`
-                : 'Inicia sesión con Google para sincronizar y respaldar permanentemente tus fichas de jugador en Firebase.'}
+                ? (lang === 'en' 
+                    ? `Connected as ${user.displayName || user.email}. Your tactical evaluations are synchronized with the cloud.` 
+                    : lang === 'pt'
+                    ? `Ligado como ${user.displayName || user.email}. As suas avaliações táticas estão sincronizadas na nuvem.`
+                    : `Conectado como ${user.displayName || user.email}. Tus evaluaciones y análisis de posición se guardan en la nube.`)
+                : (lang === 'en'
+                    ? 'Sign in with Google to permanently back up and sync your scouting reports with Firebase.'
+                    : lang === 'pt'
+                    ? 'Inicie sessão com o Google para sincronizar e guardar permanentemente os seus relatórios.'
+                    : 'Inicia sesión con Google para sincronizar y respaldar permanentemente tus fichas de jugador en Firebase.')}
             </p>
           </div>
         </div>
@@ -90,7 +113,7 @@ export const SavedProfiles: React.FC<SavedProfilesProps> = ({
             className="px-4 py-2 rounded-xl bg-white/10 hover:bg-white/20 border border-white/20 text-white font-bold text-xs uppercase tracking-wider flex items-center gap-2 transition-all shrink-0 cursor-pointer"
           >
             <LogIn className="w-3.5 h-3.5 text-volt" />
-            <span>Conectar con Google</span>
+            <span>{lang === 'en' ? 'Connect with Google' : lang === 'pt' ? 'Ligar com Google' : 'Conectar con Google'}</span>
           </button>
         )}
       </div>
@@ -105,10 +128,10 @@ export const SavedProfiles: React.FC<SavedProfilesProps> = ({
             </span>
           </div>
           <h1 className="text-3xl sm:text-5xl font-black italic text-white font-display uppercase tracking-tight">
-            Fichas Guardadas & Análisis
+            {t.historyTitle}
           </h1>
           <p className="text-xs text-slate-400 mt-1 max-w-2xl">
-            Inspecciona todas las posiciones evaluadas, analiza los regates más eficaces para cada puesto y descubre en qué jugadores profesionales inspirarte para copiar sus patrones.
+            {t.historySubtitle}
           </p>
         </div>
 
@@ -134,7 +157,7 @@ export const SavedProfiles: React.FC<SavedProfilesProps> = ({
           }`}
         >
           <UserCheck className="w-3.5 h-3.5" />
-          <span>Mis Evaluaciones ({savedProfiles.length})</span>
+          <span>{lang === 'en' ? `My Evaluations (${savedProfiles.length})` : lang === 'pt' ? `Minhas Avaliações (${savedProfiles.length})` : `Mis Evaluaciones (${savedProfiles.length})`}</span>
         </button>
 
         <button
@@ -146,7 +169,7 @@ export const SavedProfiles: React.FC<SavedProfilesProps> = ({
           }`}
         >
           <Sparkles className="w-3.5 h-3.5" />
-          <span>Explorador de Regates & Inspiración Pro</span>
+          <span>{lang === 'en' ? 'Dribble Academy & Pro Inspiration' : lang === 'pt' ? 'Academia de Dribles & Inspiração Pro' : 'Explorador de Regates & Inspiración Pro'}</span>
         </button>
       </div>
 
@@ -161,7 +184,7 @@ export const SavedProfiles: React.FC<SavedProfilesProps> = ({
                   {t.noSavedProfilesTitle}
                 </h3>
                 <p className="text-xs text-slate-400 max-w-md mx-auto">
-                  Aún no tienes posiciones guardadas. Realiza tu primer test de ADN o explora la academia de regates para cualquier puesto.
+                  {t.noSavedProfilesSub}
                 </p>
               </div>
 
@@ -176,7 +199,7 @@ export const SavedProfiles: React.FC<SavedProfilesProps> = ({
                   onClick={() => setActiveSubTab('academy')}
                   className="px-6 py-3 rounded-xl bg-white/10 hover:bg-white/20 text-white font-black uppercase italic text-xs tracking-widest transition-all cursor-pointer font-display"
                 >
-                  Explorar Regates por Posición
+                  {lang === 'en' ? 'Explore Dribbles by Position' : lang === 'pt' ? 'Explorar Dribles por Posição' : 'Explorar Regates por Posición'}
                 </button>
               </div>
             </div>
@@ -212,7 +235,7 @@ export const SavedProfiles: React.FC<SavedProfilesProps> = ({
                           {prof.playerName}
                         </h3>
                         <div className="text-xs text-volt font-black uppercase italic font-display mt-0.5">
-                          {prof.primaryPosition.title} ({prof.preferredFoot})
+                          {prof.primaryPosition.title} ({formatFoot(prof.preferredFoot)})
                         </div>
                       </div>
 
@@ -221,10 +244,10 @@ export const SavedProfiles: React.FC<SavedProfilesProps> = ({
                         <div className="flex items-center justify-between text-xs">
                           <span className="font-bold text-volt uppercase tracking-wider flex items-center gap-1.5 font-mono-code text-[11px]">
                             <Flame className="w-3.5 h-3.5 text-volt" />
-                            Regates Eficaces en esta posición:
+                            {lang === 'en' ? 'Effective Dribbles for this position:' : lang === 'pt' ? 'Dribles Eficazes nesta posição:' : 'Regates Eficaces en esta posición:'}
                           </span>
                           <span className="text-[10px] font-mono-code text-slate-400">
-                            {posData.effectiveDribbles.length} tácticas
+                            {posData.effectiveDribbles.length} {lang === 'en' ? 'moves' : lang === 'pt' ? 'movimentos' : 'tácticas'}
                           </span>
                         </div>
                         <div className="flex flex-wrap gap-1.5">
@@ -249,13 +272,13 @@ export const SavedProfiles: React.FC<SavedProfilesProps> = ({
                           />
                           <div className="min-w-0">
                             <div className="text-[10px] text-amber-400 font-bold uppercase font-mono-code">
-                              Inspiración Pro a Estudiar:
+                              {lang === 'en' ? 'Pro Inspiration to Study:' : lang === 'pt' ? 'Inspiração Pro a Estudar:' : 'Inspiración Pro a Estudiar:'}
                             </div>
                             <div className="text-xs font-bold text-white truncate">
                               {mainInspiration.name} ({mainInspiration.club})
                             </div>
                             <div className="text-[11px] text-slate-300 line-clamp-1">
-                              En qué copiarlo: {mainInspiration.copyGuide[0]?.habitTitle}
+                              {lang === 'en' ? 'What to copy: ' : lang === 'pt' ? 'O que copiar: ' : 'En qué copiarlo: '} {mainInspiration.copyGuide[0]?.habitTitle}
                             </div>
                           </div>
                         </div>
@@ -269,12 +292,12 @@ export const SavedProfiles: React.FC<SavedProfilesProps> = ({
                         className="flex-1 py-2.5 rounded-xl bg-volt hover:bg-white text-black font-black uppercase italic text-xs tracking-wider flex items-center justify-center gap-2 transition-all cursor-pointer font-display shadow-md shadow-volt/20"
                       >
                         <Sparkles className="w-4 h-4 text-black" />
-                        <span>Análisis Profundo</span>
+                        <span>{lang === 'en' ? 'Deep Analysis' : lang === 'pt' ? 'Análise Profunda' : 'Análisis Profundo'}</span>
                       </button>
 
                       <button
                         onClick={() => onSelectProfile(prof)}
-                        title="Ver Informe Scouting Completo"
+                        title={t.viewFullReport}
                         className="px-3 py-2.5 rounded-xl bg-white/5 hover:bg-white/15 text-slate-300 hover:text-white border border-white/10 font-bold text-xs uppercase flex items-center justify-center transition-colors cursor-pointer"
                       >
                         <Eye className="w-4 h-4" />
@@ -282,7 +305,7 @@ export const SavedProfiles: React.FC<SavedProfilesProps> = ({
 
                       <button
                         onClick={() => onDeleteProfile(prof.id)}
-                        title="Eliminar Ficha"
+                        title={lang === 'en' ? 'Delete Profile' : lang === 'pt' ? 'Eliminar Ficha' : 'Eliminar Ficha'}
                         className="p-2.5 rounded-xl bg-black/40 hover:bg-rose-500/20 text-slate-400 hover:text-rose-400 border border-white/10 hover:border-rose-500/30 transition-colors cursor-pointer"
                       >
                         <Trash2 className="w-4 h-4" />
@@ -302,13 +325,21 @@ export const SavedProfiles: React.FC<SavedProfilesProps> = ({
           <div className="bg-slate-900/60 border border-white/10 rounded-2xl p-6 space-y-4">
             <div className="flex items-center gap-2 text-volt font-bold text-xs uppercase tracking-wider font-mono-code">
               <Sparkles className="w-4 h-4 text-volt" />
-              Catálogo Táctico por Posición
+              {lang === 'en' ? 'Tactical Catalog by Position' : lang === 'pt' ? 'Catálogo Tático por Posição' : 'Catálogo Táctico por Posición'}
             </div>
             <h2 className="text-2xl sm:text-3xl font-black italic text-white font-display uppercase tracking-tight">
-              Regates Más Eficaces e Inspiración Pro en Todas las Posiciones
+              {lang === 'en'
+                ? 'Effective Dribbles & Pro Inspiration Across All Positions'
+                : lang === 'pt'
+                ? 'Dribles Mais Eficazes e Inspiração Pro em Todas as Posições'
+                : 'Regates Más Eficaces e Inspiración Pro en Todas las Posiciones'}
             </h2>
             <p className="text-xs sm:text-sm text-slate-300 max-w-3xl leading-relaxed">
-              Selecciona cualquier demarcación táctica para acceder al análisis en profundidad: descubre los regates con mayor tasa de éxito en el fútbol profesional y qué pautas exactas copiar de los mejores futbolistas del planeta.
+              {lang === 'en'
+                ? 'Select any pitch position to open full tactical analysis: discover the highest-percentage 1v1 moves in pro football and exact masterclasses to model from world superstars.'
+                : lang === 'pt'
+                ? 'Selecione qualquer posição tática para aceder à análise aprofundada: descubra os dribles com maior sucesso e as técnicas a copiar dos melhores futebolistas do planeta.'
+                : 'Selecciona cualquier demarcación táctica para acceder al análisis en profundidad: descubre los regates con mayor tasa de éxito en el fútbol profesional y qué pautas exactas copiar de los mejores futbolistas del planeta.'}
             </p>
 
             {/* Position Cards Grid */}
@@ -328,7 +359,7 @@ export const SavedProfiles: React.FC<SavedProfilesProps> = ({
                           {code}
                         </span>
                         <span className="text-[10px] font-mono-code text-slate-400">
-                          {item.effectiveDribbles.length} regates
+                          {item.effectiveDribbles.length} {lang === 'en' ? 'dribbles' : lang === 'pt' ? 'dribles' : 'regates'}
                         </span>
                       </div>
 
@@ -341,7 +372,7 @@ export const SavedProfiles: React.FC<SavedProfilesProps> = ({
                     </div>
 
                     <div className="pt-3 border-t border-white/5 flex items-center justify-between text-xs text-volt font-bold font-display">
-                      <span>Ver Análisis & Regates</span>
+                      <span>{lang === 'en' ? 'View Analysis & Moves' : lang === 'pt' ? 'Ver Análise & Dribles' : 'Ver Análisis & Regates'}</span>
                       <ChevronRight className="w-4 h-4 transform group-hover:translate-x-1 transition-transform" />
                     </div>
                   </motion.div>

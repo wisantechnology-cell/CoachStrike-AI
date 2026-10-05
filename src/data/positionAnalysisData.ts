@@ -1,11 +1,12 @@
 import { PositionCategory } from '../types';
+import { Language } from './translations';
 
 export interface EffectiveDribble {
   id: string;
   name: string;
-  difficulty: 'Básico' | 'Intermedio' | 'Avanzado' | 'Élite';
+  difficulty: 'Básico' | 'Intermedio' | 'Avanzado' | 'Élite' | 'Basic' | 'Intermediate' | 'Advanced' | 'Elite';
   efficacyScore: number; // e.g. 94%
-  zone: string; // e.g. "Banda exterior y pico del área"
+  zone: string;
   tagline: string;
   whyEffective: string;
   stepByStep: string[];
@@ -17,7 +18,7 @@ export interface EffectiveDribble {
 
 export interface ProInspirationCopyGuide {
   habitTitle: string;
-  category: 'Escaneo Visual' | 'Gesto Técnico' | 'Decisión Táctica' | 'Manejo de la Pausa' | 'Comportamiento en Pérdida' | 'Físico / Postura' | 'Mentalidad';
+  category: 'Escaneo Visual' | 'Gesto Técnico' | 'Decisión Táctica' | 'Manejo de la Pausa' | 'Comportamiento en Pérdida' | 'Físico / Postura' | 'Mentalidad' | 'Visual Scanning' | 'Technical Gesture' | 'Tactical Decision' | 'Tempo & Pause' | 'Post-Loss Reaction' | 'Physical & Posture' | 'Mindset';
   whatToCopy: string;
   howToPractice: string;
 }
@@ -47,7 +48,7 @@ export interface PositionDeepAnalysis {
   recommendedTrainingFocus: string[];
 }
 
-export const POSITION_ANALYSIS_DATA: Record<PositionCategory, PositionDeepAnalysis> = {
+export const POSITION_ANALYSIS_DATA_ES: Record<PositionCategory, PositionDeepAnalysis> = {
   EXT: {
     positionCode: 'EXT',
     title: 'Extremo / Extremo Invertido',
@@ -242,25 +243,6 @@ export const POSITION_ANALYSIS_DATA: Record<PositionCategory, PositionDeepAnalys
         mistakesToAvoid: 'Dar un toque demasiado largo que permita la salida del portero o el cruce del otro central.',
         proMaster: 'Pedri / Andrés Iniesta / Bernardo Silva',
         keySkillRequired: 'Tacto milimétrico y pies ágiles'
-      },
-      {
-        id: 'fake-pass-turn',
-        name: 'Amago de Pase y Pisada (Fake Pass & Roll)',
-        difficulty: 'Intermedio',
-        efficacyScore: 89,
-        zone: 'Tres cuartos de campo',
-        tagline: 'Armar la pierna vendiendo un pase a banda y pisar el balón hacia adentro con la suela.',
-        whyEffective: 'El mediocentro defensivo rival suele estirar la pierna para cortar tu pase anunciado. Al pisar el balón en el último instante, su propio esfuerzo defensivo te abre un carril despejado hacia la portería.',
-        stepByStep: [
-          'Levanta la mirada y fija al extremo para que el defensor crea que vas a soltar la pelota.',
-          'Arma la pierna de pase con fuerza aparente.',
-          'En lugar de golpear, coloca la suela sobre el balón y arrástralo hacia tu perfil opuesto.',
-          'Da el pase real hacia el delantero que ataca el espacio que quedó desguarnecido.'
-        ],
-        whenToUse: 'Para descolocar a pivotes con buen sentido táctico que marcan las líneas de pase.',
-        mistakesToAvoid: 'Mirar al balón mientras haces el amago; el engaño se vende con la mirada y los hombros.',
-        proMaster: 'Kevin De Bruyne / Mesut Özil / David Silva',
-        keySkillRequired: 'Lenguaje corporal creíble y control de suela'
       }
     ],
     proInspirations: [
@@ -286,37 +268,6 @@ export const POSITION_ANALYSIS_DATA: Record<PositionCategory, PositionDeepAnalys
             category: 'Gesto Técnico',
             whatToCopy: 'Nunca controlar el balón hacia donde vino; el primer toque debe salir hacia el espacio vacío o superar al mediocentro que viene a apretar.',
             howToPractice: 'Rondos de 4v2 con la regla de orientar el control obligatoriamente fuera del cono de visión del defensor.'
-          },
-          {
-            habitTitle: 'La pausa para que el delantero entre en juego',
-            category: 'Manejo de la Pausa',
-            whatToCopy: 'Pisar el balón un segundo entero para congelar a la defensa rival hasta que el delantero inicie su carrera sin caer en fuera de juego.',
-            howToPractice: 'Practicar pases al hueco midiendo el timing con el silbato de un entrenador.'
-          }
-        ]
-      },
-      {
-        id: 'debruyne-inspire',
-        name: 'Kevin De Bruyne',
-        club: 'Manchester City',
-        nationality: 'Bélgica',
-        roleTitle: 'Creador Vertical y Francotirador de Pases Decisivos',
-        avatarUrl: 'https://images.unsplash.com/photo-1543351611-72475171ee53?auto=format&fit=crop&w=400&q=80',
-        quote: 'Si ves el espacio, el balón tiene que ir allí con la fuerza y comba exactas.',
-        signatureMove: 'Centro tenso con rosca al segundo palo desde el semicírculo central',
-        tacticalSuperpower: 'Precisión quirúrgica en pases de media y larga distancia en plena carrera.',
-        copyGuide: [
-          {
-            habitTitle: 'Conducción agresiva atacando el espacio libre',
-            category: 'Decisión Táctica',
-            whatToCopy: 'Cuando haya espacio por delante, no devolver el pase fácil; conducir con zancada potente para obligar a un central a salir de su cueva.',
-            howToPractice: 'Transiciones de 3v2 a toda velocidad cronometradas en menos de 6 segundos desde el medio campo.'
-          },
-          {
-            habitTitle: 'Golpeo tenso con comba por delante de los centrales',
-            category: 'Gesto Técnico',
-            whatToCopy: 'Envolver el balón con el empeine interior para que pase justo entre el portero y la última línea de defensas.',
-            howToPractice: 'Centros con portero rival activo tratando de colocar el balón en el pasillo de la incertidumbre (entre el punto de penalti y el área pequeña).'
           }
         ]
       }
@@ -327,95 +278,9 @@ export const POSITION_ANALYSIS_DATA: Record<PositionCategory, PositionDeepAnalys
       'Pases filtrados con muñecos fijos simulando líneas defensivas compactas.'
     ]
   },
-  MCD: {
-    positionCode: 'MCD',
-    title: 'Mediocentro Defensivo / Pivote Posicional',
-    subtitle: 'Equilibrio estructural, primer pase de salida y protección del bloque',
-    tacticalProfile: 'El pivote posicional es el cerebro defensivo y el compás organizador del equipo. No corre detrás del balón innecesariamente; lee los movimientos del rival para cortar contragolpes y entrega siempre con ventaja.',
-    coreMission: 'Ser el ancla que equilibra las transiciones, recuperar segundas jugadas y dar fluidez a la salida de balón.',
-    physicalDemand: 'Resistencia aeróbica élite (11-13 km por partido), fuerza para aguantar duelos cuerpo a cuerpo y lectura táctica.',
-    effectiveDribbles: [
-      {
-        id: 'giro-blindaje-mcd',
-        name: 'Giro de Blindaje con Brazo de Protección (Shield Turn)',
-        difficulty: 'Básico',
-        efficacyScore: 96,
-        zone: 'Círculo central y primer tercio',
-        tagline: 'Interponer la cadera y el brazo entre el balón y el delantero que acosa por detrás.',
-        whyEffective: 'En tu zona perder el balón es casi gol rival. Este regate no busca humillar al rival, sino garantizar al 100% que la pelota queda a salvo mientras giras hacia tu lateral libre.',
-        stepByStep: [
-          'Siente la presencia del delantero que te aprieta de espaldas con tu espalda.',
-          'Coloca tu cuerpo de perfil y extiende el brazo correspondiente con el puño cerrado firme.',
-          'Pisa la pelota con la suela de tu pie más alejado y gira sobre tu pie de apoyo.',
-          'Descarga con el interior hacia el central o lateral que está perfilado de cara.'
-        ],
-        whenToUse: 'Bajo presión alta del rival al recibir el primer pase de salida de los centrales.',
-        mistakesToAvoid: 'Agarrar la camiseta del rival (falta) o intentar salir hacia el centro si hay otro mediocampista cerrando.',
-        proMaster: 'Rodri Hernández / Sergio Busquets / Casemiro',
-        keySkillRequired: 'Estabilidad de tronco y uso legal del cuerpo'
-      },
-      {
-        id: 'falso-pase-central',
-        name: 'Amago de Retorno y Ruptura Vertical',
-        difficulty: 'Intermedio',
-        efficacyScore: 90,
-        zone: 'Zona de gestación (propio campo)',
-        tagline: 'Amagar con devolver el balón a tu central y salir conduciendo hacia el espacio que el delantero abandonó.',
-        whyEffective: 'Los delanteros rivales saltan a presionar al pivote esperando que este descargue atrás hacia el central. Con un leve amago corporal el delantero sigue de largo y te deja 15 metros libres para avanzar.',
-        stepByStep: [
-          'Orienta tu cuerpo de vuelta hacia tu portería como si fueras a jugar fácil atrás.',
-          'Arma el pie de pase hacia el central.',
-          'A medio camino, desliza el balón hacia adelante con un toque sutil del empeine.',
-          'Acelera dos zancadas para conectar con el interior o extremo desmarcado.'
-        ],
-        whenToUse: 'Cuando el equipo contrario está en bloque medio y el delantero presiona con saltos descoordinados.',
-        mistakesToAvoid: 'Tardar demasiado en tomar la decisión y quedar atrapado con un 2v1 rival.',
-        proMaster: 'Sergio Busquets / Rodri Hernández / Joshua Kimmich',
-        keySkillRequired: 'Sangre fría y pausa bajo presión'
-      }
-    ],
-    proInspirations: [
-      {
-        id: 'rodri-inspire',
-        name: 'Rodri Hernández',
-        club: 'Manchester City',
-        nationality: 'España',
-        roleTitle: 'El Metrónomo Táctico & Balón de Oro',
-        avatarUrl: 'https://images.unsplash.com/photo-1522778119026-d647f0596c20?auto=format&fit=crop&w=400&q=80',
-        quote: 'El mejor pivote es aquel que parece que no corre porque siempre estuvo en el lugar correcto.',
-        signatureMove: 'Control orientado con el pecho o muslo que se convierte en pase vertical de seguridad',
-        tacticalSuperpower: 'Lectura milimétrica de las segundas jugadas: recupera 8 de cada 10 balones divididos en el medio campo.',
-        copyGuide: [
-          {
-            habitTitle: 'Posicionamiento como tercer vértice de pase',
-            category: 'Decisión Táctica',
-            whatToCopy: 'Estar siempre formando un triángulo de pase con tus dos centrales; nunca esconderte detrás del delantero rival.',
-            howToPractice: 'Grábate en un partido y revisa si en cada salida de balón eres una línea de pase visible o si te tapas detrás del rival.'
-          },
-          {
-            habitTitle: 'Pase con la tensión perfecta al pie dominante del compañero',
-            category: 'Gesto Técnico',
-            whatToCopy: 'No dar pases flotados o lentos que comprometan al receptor; pasar con fuerza a ras de césped para acelerar la circulación.',
-            howToPractice: 'Series de 50 pases de 20 metros con un compañero buscando que el balón no bote ni una sola vez en el trayecto.'
-          },
-          {
-            habitTitle: 'Freno táctico sin cometer falta',
-            category: 'Comportamiento en Pérdida',
-            whatToCopy: 'Temporizar la carrera del contragolpe rival cerrando el carril central para dar tiempo a que tus compañeros replieguen.',
-            howToPractice: '1v1 en transición defensiva donde tu objetivo no es quitar la pelota, sino retrasar su avance 5 segundos.'
-          }
-        ]
-      }
-    ],
-    recommendedTrainingFocus: [
-      'Rondos 5v2 en el círculo central con dos toques obligatorios.',
-      'Trabajo de perfilación corporal para recibir viendo ambos costados del campo.',
-      'Tiro de media distancia tras segunda jugada rechazada al borde del área.'
-    ]
-  },
   MC: {
     positionCode: 'MC',
-    title: 'Mediocentro Mixto / Box-to-Box',
+    title: 'Centrocampista Box-to-Box / Mixto',
     subtitle: 'Dominio de las dos áreas, despliegue físico y llegada por sorpresa',
     tacticalProfile: 'El mediocentro todoterreno es el motor del equipo. Rompe líneas mediante conducciones poderosas, colabora en la recuperación en campo propio y llega como un puñal a rematar centros en el área rival.',
     coreMission: 'Conectar defensa con ataque con transiciones veloces y aportar goles desde segunda línea.',
@@ -439,25 +304,6 @@ export const POSITION_ANALYSIS_DATA: Record<PositionCategory, PositionDeepAnalys
         mistakesToAvoid: 'Tocar el balón demasiado largo y regalárselo al central rival.',
         proMaster: 'Jude Bellingham / Federico Valverde / Steven Gerrard',
         keySkillRequired: 'Zancada potente y control en carrera'
-      },
-      {
-        id: 'v-pull-mc',
-        name: 'Pisada y Salida en V (V-Pull)',
-        difficulty: 'Avanzado',
-        efficacyScore: 89,
-        zone: 'Centro del campo bajo presión lateral',
-        tagline: 'Traer la pelota con la suela hacia atrás y empujar con el interior o exterior en ángulo de 45°.',
-        whyEffective: 'Hace que el rival que viene en carrera lateral pase de largo y te permite cambiar de frente de juego con comodidad.',
-        stepByStep: [
-          'Conduce hacia la presión rival simulando que te has quedado sin salida.',
-          'Pisa la pelota con la suela de tu pie dominante y arrástrala hacia tu cadera de apoyo.',
-          'Con el empeine del mismo pie golpea hacia el otro lado en forma de letra V.',
-          'Acelera hacia el espacio recién creado.'
-        ],
-        whenToUse: 'Cuando te enciman dos rivales por la misma banda.',
-        mistakesToAvoid: 'Arrastrar el balón demasiado despacio permitiendo que el rival recupere la posición.',
-        proMaster: 'Luka Modrić / Jude Bellingham',
-        keySkillRequired: 'Sensibilidad plantar y agilidad de tobillo'
       }
     ],
     proInspirations: [
@@ -477,37 +323,6 @@ export const POSITION_ANALYSIS_DATA: Record<PositionCategory, PositionDeepAnalys
             category: 'Decisión Táctica',
             whatToCopy: 'No meterte en el área antes de tiempo; quedarte en el borde del área y acelerar justo cuando el extremo lanza el centro.',
             howToPractice: 'Practicar centros laterales donde arrancas desde 20 metros fuera del área para rematar al llegar.'
-          },
-          {
-            habitTitle: 'Conducción con el torso erguido para ver todo el campo',
-            category: 'Físico / Postura',
-            whatToCopy: 'Correr con el balón sin mirar constantemente al suelo; mantener la vista al frente para elegir el pase adecuado.',
-            howToPractice: 'Conducción en eslalon con conos mientras sostienes la mirada en una pantalla o compañero que cambia de color.'
-          }
-        ]
-      },
-      {
-        id: 'valverde-inspire',
-        name: 'Federico Valverde',
-        club: 'Real Madrid',
-        nationality: 'Uruguay',
-        roleTitle: 'El Halcón de Despliegue Infinito & Cañón Lejano',
-        avatarUrl: 'https://images.unsplash.com/photo-1517927033932-b3d18e61fb3a?auto=format&fit=crop&w=400&q=80',
-        quote: 'El talento sin pulmones no sirve de nada en el fútbol de máxima exigencia.',
-        signatureMove: 'Sprint de 40 metros con golpeo con empeine total a la escuadra',
-        tacticalSuperpower: 'Sprint defensivo de repliegue que desbarata contragolpes casi sentenciados.',
-        copyGuide: [
-          {
-            habitTitle: 'El sprint de repliegue con orgullo competitivo',
-            category: 'Comportamiento en Pérdida',
-            whatToCopy: 'Correr hacia atrás a la misma velocidad que corres hacia adelante cuando tu equipo pierde la pelota.',
-            howToPractice: 'Series de lanzamientos de ataque con transición inmediata de repliegue a defender tu área en menos de 8 segundos.'
-          },
-          {
-            habitTitle: 'Disparo seco con empeine total sin dar pistas',
-            category: 'Gesto Técnico',
-            whatToCopy: 'Armar el pie con rapidez y golpear el centro del balón con el empeine duro para que salga como un proyectil sin rotación.',
-            howToPractice: 'Golpeos desde 25 metros tras pase raso hacia atrás; enfócate en bloquear el tobillo al impactar.'
           }
         ]
       }
@@ -516,6 +331,116 @@ export const POSITION_ANALYSIS_DATA: Record<PositionCategory, PositionDeepAnalys
       'Circuitos de resistencia intermitente de alta intensidad (HIIT con balón).',
       'Definición de primeras tras llegada desde la frontal del área.',
       'Duelos aéreos y coberturas a los laterales cuando suben al ataque.'
+    ]
+  },
+  MCD: {
+    positionCode: 'MCD',
+    title: 'Mediocentro Defensivo / Pivote Posicional',
+    subtitle: 'Equilibrio estructural, primer pase de salida y protección del bloque',
+    tacticalProfile: 'El pivote posicional es el cerebro defensivo y el compás organizador del equipo. No corre detrás del balón innecesariamente; lee los movimientos del rival para cortar contragolpes y entrega siempre con ventaja.',
+    coreMission: 'Ser el ancla que equilibra las transiciones, recuperar segundas jugadas y dar fluidez a la salida de balón.',
+    physicalDemand: 'Resistencia aeróbica élite (11-13 km por partido), fuerza para aguantar duelos cuerpo a cuerpo y lectura táctica.',
+    effectiveDribbles: [
+      {
+        id: 'giro-blindaje-mcd',
+        name: 'Giro de Blindaje con Brazo de Protección (Shield Turn)',
+        difficulty: 'Básico',
+        efficacyScore: 96,
+        zone: 'Círculo central y primer tercio',
+        tagline: 'Interponer la cadera y el brazo entre el balón y el delantero que acosa por detrás.',
+        whyEffective: 'En tu zona perder el balón es casi gol rival. Este regate garantiza al 100% que la pelota queda a salvo mientras giras hacia tu lateral libre.',
+        stepByStep: [
+          'Siente la presencia del delantero que te aprieta de espaldas con tu espalda.',
+          'Coloca tu cuerpo de perfil y extiende el brazo correspondiente con el puño cerrado firme.',
+          'Pisa la pelota con la suela de tu pie más alejado y gira sobre tu pie de apoyo.',
+          'Descarga con el interior hacia el central o lateral que está perfilado de cara.'
+        ],
+        whenToUse: 'Bajo presión alta del rival al recibir el primer pase de salida de los centrales.',
+        mistakesToAvoid: 'Agarrar la camiseta del rival (falta) o intentar salir hacia el centro si hay otro mediocampista cerrando.',
+        proMaster: 'Rodri Hernández / Sergio Busquets / Casemiro',
+        keySkillRequired: 'Estabilidad de tronco y uso legal del cuerpo'
+      }
+    ],
+    proInspirations: [
+      {
+        id: 'rodri-inspire',
+        name: 'Rodri Hernández',
+        club: 'Manchester City',
+        nationality: 'España',
+        roleTitle: 'El Metrónomo Táctico & Balón de Oro',
+        avatarUrl: 'https://images.unsplash.com/photo-1522778119026-d647f0596c20?auto=format&fit=crop&w=400&q=80',
+        quote: 'El mejor pivote es aquel que parece que no corre porque siempre estuvo en el lugar correcto.',
+        signatureMove: 'Control orientado con el pecho o muslo que se convierte en pase vertical de seguridad',
+        tacticalSuperpower: 'Lectura milimétrica de las segundas jugadas: recupera 8 de cada 10 balones divididos en el medio campo.',
+        copyGuide: [
+          {
+            habitTitle: 'Posicionamiento como tercer vértice de pase',
+            category: 'Decisión Táctica',
+            whatToCopy: 'Estar siempre formando un triángulo de pase con tus dos centrales; nunca esconderte detrás del delantero rival.',
+            howToPractice: 'Grábate en un partido y revisa si en cada salida de balón eres una línea de pase visible.'
+          }
+        ]
+      }
+    ],
+    recommendedTrainingFocus: [
+      'Rondos 5v2 en el círculo central con dos toques obligatorios.',
+      'Trabajo de perfilación corporal para recibir viendo ambos costados del campo.',
+      'Tiro de media distancia tras segunda jugada rechazada al borde del área.'
+    ]
+  },
+  LAT: {
+    positionCode: 'LAT',
+    title: 'Lateral de Recorrido / Carrilero',
+    subtitle: 'Doble función: muralla en banda y puñal ofensivo en ataque',
+    tacticalProfile: 'El lateral contemporáneo es uno de los puestos más demandantes física y tácticamente. Debe anular a los extremos más rápidos del mundo y a la vez ser el generador de amplitud y centros peligrosos en ataque.',
+    coreMission: 'Dominar la banda de área a área, ganar duelos 1v1 defensivos y abastecer de centros de calidad.',
+    physicalDemand: 'Velocidad sostenida, capacidad de repetir esfuerzos máximos de 60 metros y repliegue veloz.',
+    effectiveDribbles: [
+      {
+        id: 'autopase-espacio-lat',
+        name: 'Auto-Pase al Espacio con Aceleración (Knock & Run)',
+        difficulty: 'Básico',
+        efficacyScore: 93,
+        zone: 'Línea de cal en propio campo o medio campo',
+        tagline: 'Tocar el balón 10 metros adelante en diagonal hacia la banda y superarlo con sprint puro.',
+        whyEffective: 'El extremo rival suele presionar de frente con el cuerpo volcado. Un toque largo al espacio libre aprovecha que tú ya estás orientado hacia adelante.',
+        stepByStep: [
+          'Espera a que el extremo rival acuda a apretarte con entusiasmo.',
+          'Con el exterior de tu bota empuja la pelota 8 a 12 metros por delante pegado a la línea.',
+          'Pasa por el lado opuesto del rival o por fuera del campo si es necesario.',
+          'Conecta con el centro al área antes de que llegue el central a la cobertura.'
+        ],
+        whenToUse: 'En salidas de banda cuando el extremo rival viene lanzado sin freno.',
+        mistakesToAvoid: 'Tocar el balón hacia el centro del campo donde puede interceptarlo el mediocentro rival.',
+        proMaster: 'Alphonso Davies / Achraf Hakimi / Kyle Walker',
+        keySkillRequired: 'Potencia de aceleración en línea recta'
+      }
+    ],
+    proInspirations: [
+      {
+        id: 'davies-inspire',
+        name: 'Alphonso Davies',
+        club: 'FC Bayern München',
+        nationality: 'Canadá',
+        roleTitle: 'El Correcaminos de Banda & Potencia Pura',
+        avatarUrl: 'https://images.unsplash.com/photo-1574629810360-7efbbe195018?auto=format&fit=crop&w=400&q=80',
+        quote: 'Cuando tienes velocidad, cada balón al espacio es una oportunidad de gol.',
+        signatureMove: 'Sprint de recuperación que anula el 1v1 rival cuando ya te había superado',
+        tacticalSuperpower: 'Recuperación defensiva turbo: subsana cualquier desajuste táctico en 3 segundos.',
+        copyGuide: [
+          {
+            habitTitle: 'Repliegue inmediato tras pérdida',
+            category: 'Comportamiento en Pérdida',
+            whatToCopy: 'No lamentar el centro fallido; girar inmediatamente y sprintar para proteger la espalda del central.',
+            howToPractice: 'Sprints de ida y vuelta con centro y posterior cierre de cono defensivo.'
+          }
+        ]
+      }
+    ],
+    recommendedTrainingFocus: [
+      'Centros en carrera tras sprint de 30 metros.',
+      'Perfilación defensiva para orientar al extremo hacia su pierna débil.',
+      'Resistencia anaeróbica con repetición de carreras de banda a banda.'
     ]
   },
   DC: {
@@ -544,25 +469,6 @@ export const POSITION_ANALYSIS_DATA: Record<PositionCategory, PositionDeepAnalys
         mistakesToAvoid: 'Dar un segundo toque demasiado largo que permita la salida del guardameta.',
         proMaster: 'Erling Haaland / Robert Lewandowski / Karim Benzema',
         keySkillRequired: 'Frialdad extrema y coordinación de apoyo'
-      },
-      {
-        id: 'giro-apoyo-cadera',
-        name: 'Giro de Espaldas con Apoyo de Cadera (Turn & Roll)',
-        difficulty: 'Avanzado',
-        efficacyScore: 91,
-        zone: 'Borde del área grande de espaldas a portería',
-        tagline: 'Fijar al central con la espalda, sentir hacia dónde carga su peso y girar por el lado ciego.',
-        whyEffective: 'El central que te encima fuerte queda vendido si utilizas su propio peso de apoyo para pivotar sobre él como una puerta giratoria.',
-        stepByStep: [
-          'Recibe de espaldas usando tu espalda y glúteos para mantener alejado al central.',
-          'Siente con tu cuerpo si el central carga su peso a tu izquierda o derecha.',
-          'Gira con el empeine exterior hacia el lado donde el central tiene menos apoyo.',
-          'Dispara en el primer paso tras completar el giro de 180°.'
-        ],
-        whenToUse: 'En pases frontales cuando el central está pegado sin darte espacio para controlar de cara.',
-        mistakesToAvoid: 'Dejar que el central te anticipe tocando el balón antes de que lo asegures con tu cuerpo.',
-        proMaster: 'Karim Benzema / Romelu Lukaku / Luis Suárez',
-        keySkillRequired: 'Fuerza de tronco y juego de espaldas'
       }
     ],
     proInspirations: [
@@ -582,37 +488,6 @@ export const POSITION_ANALYSIS_DATA: Record<PositionCategory, PositionDeepAnalys
             category: 'Decisión Táctica',
             whatToCopy: 'Dar dos pasos hacia atrás simulando que te abres y luego sprintar a la espalda del central en su punto ciego.',
             howToPractice: 'Ejercicios de desmarque con oposición pasiva donde debes ganar la posición en menos de 3 pasos.'
-          },
-          {
-            habitTitle: 'Remate al primer toque sin dudar ni un segundo',
-            category: 'Gesto Técnico',
-            whatToCopy: 'No acomodarse el balón dentro del área; rematar con lo que haga falta (empeine, puntera, cabeza) en el primer contacto.',
-            howToPractice: 'Rondas de remates rápidos con centros imprevisibles desde ambos costados sin control previo permitido.'
-          }
-        ]
-      },
-      {
-        id: 'mbappe-inspire',
-        name: 'Kylian Mbappé',
-        club: 'Real Madrid',
-        nationality: 'Francia',
-        roleTitle: 'Velocidad Letal & Definición al Palo Corto/Largo',
-        avatarUrl: 'https://images.unsplash.com/photo-1574629810360-7efbbe195018?auto=format&fit=crop&w=400&q=80',
-        quote: 'El espacio está ahí para quien tenga la convicción y la velocidad de reclamarlo.',
-        signatureMove: 'Paso largo en diagonal, mirada al segundo palo y definición rasa al palo corto',
-        tacticalSuperpower: 'Aceleración en diagonal partiendo desde el límite exacto del fuera de juego.',
-        copyGuide: [
-          {
-            habitTitle: 'Alinear la carrera con el hombro del último defensa',
-            category: 'Decisión Táctica',
-            whatToCopy: 'No estar en posición adelantada; correr en paralelo a la línea de fuera de juego y romper en cuanto el pasador levanta la cabeza.',
-            howToPractice: 'Trabajo de timing con banderas de fuera de juego y pasador que varía el momento del golpeo.'
-          },
-          {
-            habitTitle: 'Apertura de pie para definir con el interior o empeine cruzado',
-            category: 'Gesto Técnico',
-            whatToCopy: 'Engañar al portero con la cadera: abrir el cuerpo como si fueras a cruzarla y meter el tiro al palo corto con sutileza.',
-            howToPractice: '1v1 mano a mano contra el portero practicando definir a ambos lados de la red.'
           }
         ]
       }
@@ -623,131 +498,31 @@ export const POSITION_ANALYSIS_DATA: Record<PositionCategory, PositionDeepAnalys
       'Trabajo de juego de espaldas y descargas a los mediapuntas.'
     ]
   },
-  LAT: {
-    positionCode: 'LAT',
-    title: 'Lateral / Carrilero Moderno',
-    subtitle: 'Doble función: muralla en banda y puñal ofensivo en ataque',
-    tacticalProfile: 'El lateral contemporáneo es uno de los puestos más demandantes física y tácticamente. Debe anular a los extremos más rápidos del mundo y a la vez ser el generador de amplitud y centros peligrosos en ataque.',
-    coreMission: 'Dominar la banda de área a área, ganar duelos 1v1 defensivos y abastecer de centros de calidad.',
-    physicalDemand: 'Velocidad sostenida, capacidad de repetir esfuerzos máximos de 60 metros y repliegue veloz.',
-    effectiveDribbles: [
-      {
-        id: 'autopase-espacio-lat',
-        name: 'Auto-Pase al Espacio con Aceleración (Knock & Run)',
-        difficulty: 'Básico',
-        efficacyScore: 93,
-        zone: 'Línea de cal en propio campo o medio campo',
-        tagline: 'Tocar el balón 10 metros adelante en diagonal hacia la banda y superarlo con sprint puro.',
-        whyEffective: 'El extremo rival suele presionar de frente con el cuerpo volcado. Un toque largo al espacio libre aprovecha que tú ya estás orientado hacia adelante y él debe girar 180° para perseguirte.',
-        stepByStep: [
-          'Espera a que el extremo rival acuda a apretarte con entusiasmo.',
-          'Con el exterior de tu bota empuja la pelota 8 a 12 metros por delante pegado a la línea.',
-          'Pasa por el lado opuesto del rival o por fuera del campo si es necesario.',
-          'Conecta con el centro al área antes de que llegue el central a la cobertura.'
-        ],
-        whenToUse: 'En salidas de banda cuando el extremo rival viene lanzado sin freno.',
-        mistakesToAvoid: 'Tocar el balón hacia el centro del campo donde puede interceptarlo el mediocentro rival.',
-        proMaster: 'Alphonso Davies / Achraf Hakimi / Kyle Walker',
-        keySkillRequired: 'Velocidad punta y timing de contacto'
-      },
-      {
-        id: 'freno-recorte-interior-lat',
-        name: 'Freno en Seco y Recorte hacia el Interior',
-        difficulty: 'Intermedio',
-        efficacyScore: 90,
-        zone: 'Último tercio pegado al banderín de córner',
-        tagline: 'Frenar la carrera en seco con el empeine interior para dejar pasar al lateral/extremo en carrera.',
-        whyEffective: 'El defensor que te persigue por banda va a máxima velocidad intentando tapar el centro a la carrera. Si frenas de golpe, pasará de largo y te dejará espacio para asociarte con tu mediocentro o centrar con tu pierna hábil.',
-        stepByStep: [
-          'Inicia un sprint potente por la banda como si fueras a centrar de primeras.',
-          'Planta el pie de apoyo firmemente en el césped.',
-          'Con el interior del pie ejecutor corta el balón hacia tu espalda o hacia adentro.',
-          'Levanta la cabeza con calma y busca el pase retrasado al punto de penalti.'
-        ],
-        whenToUse: 'Cuando el rival te gana la posición en carrera para tapar la línea de fondo.',
-        mistakesToAvoid: 'Frenar sin clavar bien los tacos (resbalar) o recortar hacia donde viene un segundo defensor.',
-        proMaster: 'Dani Carvajal / Trent Alexander-Arnold / Andrew Robertson',
-        keySkillRequired: 'Equilibrio de frenada y templanza visual'
-      }
-    ],
-    proInspirations: [
-      {
-        id: 'hakimi-inspire',
-        name: 'Achraf Hakimi',
-        club: 'Paris Saint-Germain',
-        nationality: 'Marruecos',
-        roleTitle: 'El Carrilero Flecha de Recorrido Infatigable',
-        avatarUrl: 'https://images.unsplash.com/photo-1518091043644-c1d4457512c6?auto=format&fit=crop&w=400&q=80',
-        quote: 'El carril es tuyo: debes conquistarlo con el corazón y con las piernas en cada jugada.',
-        signatureMove: 'Conducción en diagonal con el exterior y centro tenso raso al punto de penalti',
-        tacticalSuperpower: 'Capacidad de sprintar en el minuto 90 a la misma velocidad que en el minuto 1.',
-        copyGuide: [
-          {
-            habitTitle: 'El desdoblamiento exterior (Overlap) en el momento justo',
-            category: 'Decisión Táctica',
-            whatToCopy: 'Iniciar la carrera por detrás de tu extremo en cuanto este fija la atención del lateral rival.',
-            howToPractice: 'Trabajo de 2v1 en banda coordinando la señal visual con tu extremo para pasar a máxima velocidad.'
-          },
-          {
-            habitTitle: 'Perfilación defensiva de costado en el 1v1',
-            category: 'Físico / Postura',
-            whatToCopy: 'Nunca esperar al extremo rival con los pies en línea recta; colocarse de lado orientándolo hacia la línea de banda o su pierna débil.',
-            howToPractice: 'Práctica de aguantar 1v1 defensivo sin meter el pie hasta que el extremo dé un toque largo.'
-          }
-        ]
-      }
-    ],
-    recommendedTrainingFocus: [
-      'Centros en carrera tras sprint de 30 metros a máxima intensidad.',
-      'Duelos 1v1 defensivos orientando al atacante hacia la banda.',
-      'Trabajo de diagonales defensivas para cubrir la espalda de los centrales.'
-    ]
-  },
   DEC: {
     positionCode: 'DEC',
-    title: 'Defensa Central / Mariscal de Área',
-    subtitle: 'Solidez defensiva, liderazgo de la línea y salida limpia de balón',
-    tacticalProfile: 'El central de hoy en día es el primer atacante y el último bastión defensivo. Debe dominar el juego aéreo, tener la velocidad para defender con 40 metros a sus espaldas y la templanza para romper líneas con pases tensos.',
-    coreMission: 'Neutralizar las acometidas rivales, liderar la basculación defensiva y organizar la salida limpia de juego.',
-    physicalDemand: 'Dominio del juego aéreo, potencia en el choque, aceleración en giros y resistencia mental.',
+    title: 'Defensa Central Imponente / Mariscal',
+    subtitle: 'Liderazgo defensivo, dominio aéreo y salida limpia de balón',
+    tacticalProfile: 'El central contemporáneo lidera la línea con comunicación y colocación. Destaca por cortar avances en el momento justo y filtrar el primer pase superando la presión rival.',
+    coreMission: 'Impedir goles, ganar duelos 1v1 y asegurar la posesión desde la primera línea de construcción.',
+    physicalDemand: 'Potencia en el salto vertical, fuerza de choque corporal y velocidad de reacción en 5 metros.',
     effectiveDribbles: [
       {
-        id: 'recorte-despeje-dec',
-        name: 'Recorte Defensivo con Amago de Despeje (Fake Clearance)',
+        id: 'recorte-salida-dec',
+        name: 'Recorte Interior de Seguridad (Step-Back Cut)',
         difficulty: 'Básico',
-        efficacyScore: 95,
-        zone: 'Borde de área propia bajo presión alta',
-        tagline: 'Amagar un pelotazo largo con el empeine y enganchar con el interior hacia tu portero o lateral.',
-        whyEffective: 'El delantero rival corre desesperado a tapar tu despeje largo. Con el amago salta con las piernas abiertas o se barre, dejándote una salida limpia y tranquila sin regalar el balón.',
+        efficacyScore: 92,
+        zone: 'Borde de la propia área grande',
+        tagline: 'Amagar el pase largo al delantero y recortar hacia el interior para conectar con el lateral libre.',
+        whyEffective: 'El delantero que presiona va lanzado esperando el golpeo largo. El recorte suave te permite salir sin rifar la pelota.',
         stepByStep: [
-          'Arma la pierna de golpeo exagerando el movimiento como si fueras a reventar el balón al medio campo.',
-          'El delantero cerrará los ojos o estirará la pierna para tapar el impacto.',
-          'Pasa suavemente tu pie por encima o frena la pelota con el interior hacia el lado contrario.',
-          'Entrega el balón raso y con calma a tu lateral desmarcado.'
+          'Arma la pierna de golpeo como si fueras a dar un pelotazo arriba.',
+          'Pasa el pie por encima del balón frenándolo con el interior hacia tu otro pie.',
+          'Sal jugando raso con tu pivote o lateral descubierto.'
         ],
-        whenToUse: 'Cuando el delantero rival va a bloquear tu pase largo y no tienes un compañero fácil de frente.',
-        mistakesToAvoid: 'Hacerlo dentro de tu propia área pequeña si el portero está descolocado.',
-        proMaster: 'Virgil van Dijk / Sergio Ramos / Ronald Araújo',
-        keySkillRequired: 'Sangre fría y convencimiento corporal'
-      },
-      {
-        id: 'conduccion-fijadora-dec',
-        name: 'Paso Adelante y Conducción Fijadora',
-        difficulty: 'Intermedio',
-        efficacyScore: 91,
-        zone: 'Primer tercio hacia el medio campo',
-        tagline: 'Conducir con decisión 10 metros hacia adelante para obligar a un mediocentro rival a salir de su posición.',
-        whyEffective: 'Si no te presionan, ganas metros gratis. En cuanto un mediocampista rival salta a frenarte, automáticamente deja libre a tu mediapunta a su espalda.',
-        stepByStep: [
-          'Si los delanteros rivales están cerrando las bandas, avanza por el pasillo central.',
-          'Conduce a velocidad media con la cabeza levantada observando la segunda línea rival.',
-          'En el segundo en que el mediocampista rival se mueva hacia ti, filtra el balón a su espalda.',
-          'Retrocede dos pasos para quedar listo para la cobertura en caso de pérdida.'
-        ],
-        whenToUse: 'Contra bloques bajos o medios donde el rival te concede la posesión de los primeros 30 metros.',
-        mistakesToAvoid: 'Conducir demasiado lento o seguir avanzando cuando ya te han cerrado el espacio de pase.',
-        proMaster: 'Virgil van Dijk / Antonio Rüdiger / David Alaba',
-        keySkillRequired: 'Visión de juego y pase tenso a ras de césped'
+        whenToUse: 'Bajo presión de la primera línea de delanteros rivales.',
+        mistakesToAvoid: 'Arriesgar el recorte como último hombre si hay un segundo delantero cerrando.',
+        proMaster: 'Virgil van Dijk / Rúben Dias / Antonio Rüdiger',
+        keySkillRequired: 'Paciencia y seguridad en el primer toque'
       }
     ],
     proInspirations: [
@@ -756,85 +531,649 @@ export const POSITION_ANALYSIS_DATA: Record<PositionCategory, PositionDeepAnalys
         name: 'Virgil van Dijk',
         club: 'Liverpool FC',
         nationality: 'Países Bajos',
-        roleTitle: 'El Mariscal Tranquilo & Amo de los Duelos Aéreos',
+        roleTitle: 'El Muro Infranqueable & Líder de la Zaga',
         avatarUrl: 'https://images.unsplash.com/photo-1508098682722-e99c43a406b2?auto=format&fit=crop&w=400&q=80',
-        quote: 'El gran defensa no necesita tirarse al suelo; impone su presencia y lee la jugada antes.',
-        signatureMove: 'Temporización 1v1 guiando al atacante hacia la banda sin tirarse nunca al suelo',
-        tacticalSuperpower: 'Gana el 82% de todos los duelos aéreos y terrestres mediante lectura de trayectoria.',
+        quote: 'Defender bien es hacer que el delantero rival sienta que no tiene ninguna opción antes de intentarlo.',
+        signatureMove: 'Temporización perfecta sin tirarse al suelo obligando al rival a disparar con su pierna débil',
+        tacticalSuperpower: 'Aura de calma y comunicación: ordena a toda la línea defensiva con su voz.',
         copyGuide: [
           {
-            habitTitle: 'Temporizar en lugar de precipitarse a meter el pie',
+            habitTitle: 'Temporización defensiva sin regalar el suelo',
             category: 'Decisión Táctica',
-            whatToCopy: 'Retroceder perfilado con pasos cortos sin tirarse al suelo, obligando al delantero a tomar una decisión apresurada.',
-            howToPractice: 'Práctica de 1v1 donde tienes prohibido tirarte al césped; tu único objetivo es que el delantero no pueda rematar a puerta.'
-          },
-          {
-            habitTitle: 'Pase en diagonal de 40 metros al pecho del extremo opuesto',
-            category: 'Gesto Técnico',
-            whatToCopy: 'Golpear el balón con el empeine exterior con trayectoria descendente para cambiar el frente de ataque en un segundo.',
-            howToPractice: 'Series de pases largos a zonas diana marcadas con conos en el córner contrario.'
+            whatToCopy: 'No tirarse a cortar a lo loco; mantener los apoyos activos y esperar a que el atacante dé un toque largo.',
+            howToPractice: 'Duelos 1v1 en retroceso donde se prohíbe ir al suelo y solo se permite robar cuando el balón esté a más de medio metro del rival.'
           }
         ]
       }
     ],
     recommendedTrainingFocus: [
-      'Despejes aéreos dirigidos hacia las bandas en lugar de hacia el centro.',
-      'Temporización y perfilación corporal en contragolpes de 2v2.',
-      'Pases verticales rasos entre líneas que rompen la primera presión rival.'
+      'Despejes aéreos dirigidos hacia las bandas.',
+      'Pase tenso raso que supere la línea de presión de delanteros.',
+      'Duelos 1v1 en campo abierto con metros a la espalda.'
     ]
   },
   POR: {
     positionCode: 'POR',
-    title: 'Portero / Guardameta Líbero',
-    subtitle: 'Bajo los tres palos, dominio aéreo y primer organizador con los pies',
-    tacticalProfile: 'El guardameta moderno es un jugador de campo con guantes: debe dominar el área de penalti, anticipar balones a la espalda de los centrales como líbero y tener precisión con ambos pies para el juego asociativo.',
-    coreMission: 'Evitar goles, transmitir seguridad y actuar como líbero en balones largos a la espalda de la defensa.',
-    physicalDemand: 'Reflejos felinos, potencia explosiva de piernas para saltos laterales y flexibilidad articular.',
+    title: 'Guardameta Moderno / Sweeper Keeper',
+    subtitle: 'Seguridad bajo palos, dominio del área y primer iniciador de ataque',
+    tacticalProfile: 'El portero moderno no solo ataja bajo los tres palos; juega adelantado para anticipar balones largos a la espalda de la defensa y actúa como un jugador de campo más en la salida de balón.',
+    coreMission: 'Proteger la portería a cero y distribuir con precisión milimétrica.',
+    physicalDemand: 'Reflejos felinos, potencia de salto lateral y coordinación óculo-manual de élite.',
     effectiveDribbles: [
       {
         id: 'amago-pase-portero',
-        name: 'Amago de Despeje y Pase Corto al Central',
+        name: 'Falso Despeje y Pase Corto al Lateral (Keeper Feint)',
         difficulty: 'Intermedio',
-        efficacyScore: 92,
-        zone: 'Área propia ante presión de delanteros',
-        tagline: 'Fingir el despeje largo para congelar al delantero y filtrar el pase raso seguro.',
-        whyEffective: 'Desactiva la trampa de presión rival y permite al equipo salir jugando desde el fondo con superioridad numérica.',
+        efficacyScore: 90,
+        zone: 'Dentro del área chica y área penal',
+        tagline: 'Fingir despeje largo para que el delantero salte a tapar y salir con pase corto al lateral.',
+        whyEffective: 'El delantero salta en el aire dándote la espalda y dejando abierta la línea de pase más segura.',
         stepByStep: [
-          'Arma la pierna como si fueras a despejar en largo hacia el campo rival.',
-          'Pisa o recorta el balón 30 cm hacia tu pierna de apoyo.',
-          'Entrega de primeras al central abierto que tiene tiempo y espacio.'
+          'Arma el pie como si fueras a enviar un balón de 60 metros.',
+          'Pisa suavemente la pelota en el último instante y cambia la dirección hacia el lateral libre.',
+          'Entrega el pase con precisión al pie del defensor.'
         ],
-        whenToUse: 'Bajo presión alta de los delanteros rivales.',
-        mistakesToAvoid: 'Hacer el recorte en dirección a la propia portería.',
-        proMaster: 'Marc-André ter Stegen / Manuel Neuer / Ederson',
-        keySkillRequired: 'Paciencia y seguridad con el balón en los pies'
+        whenToUse: 'En saques de puerta o cesiones cuando el rival presiona muy alto.',
+        mistakesToAvoid: 'Dudar a mitad del gesto o realizarlo demasiado cerca de la línea de gol.',
+        proMaster: 'Manuel Neuer / Alisson Becker / Thibaut Courtois',
+        keySkillRequired: 'Templanza bajo presión y buen golpeo con ambos pies'
       }
     ],
     proInspirations: [
       {
-        id: 'terstegen-inspire',
-        name: 'Marc-André ter Stegen',
-        club: 'FC Barcelona',
-        nationality: 'Alemania',
-        roleTitle: 'El Muro de Reflejos & Juego de Pies Milimétrico',
-        avatarUrl: 'https://images.unsplash.com/photo-1522778119026-d647f0596c20?auto=format&fit=crop&w=400&q=80',
-        quote: 'Un buen portero transmite tanta calma que hace que el equipo juegue sin miedo.',
-        signatureMove: 'Parada en cruz estilo balonmano para tapar tiros a bocajarro',
-        tacticalSuperpower: 'Salida de balón con ambos pies como si fuera un mediocentro más.',
+        id: 'alisson-inspire',
+        name: 'Alisson Becker',
+        club: 'Liverpool FC',
+        nationality: 'Brasil',
+        roleTitle: 'El Cerrojo Tranquilo & Especialista en 1v1',
+        avatarUrl: 'https://images.unsplash.com/photo-1518091043644-c1d4457512c6?auto=format&fit=crop&w=400&q=80',
+        quote: 'Un gran portero no necesita hacer paradas para la foto; su colocación hace que todo parezca fácil.',
+        signatureMove: 'Salida en cruz (K-Block) achicando el ángulo en mano a mano sin vencerse antes de tiempo',
+        tacticalSuperpower: 'Ubicación posicional perfecta y serenidad contagiosa para toda la defensa.',
         copyGuide: [
           {
-            habitTitle: 'La postura en cruz (bloqueo balonmano)',
-            category: 'Físico / Postura',
-            whatToCopy: 'Bajar una rodilla al suelo y abrir los brazos en 1v1 para tapar el máximo arco posible ante el delantero.',
-            howToPractice: 'Ejercicios de reacción corta en remates dentro del área pequeña.'
+            habitTitle: 'Achique en cruz aguantando de pie hasta el final',
+            category: 'Gesto Técnico',
+            whatToCopy: 'No lanzarse a los pies del delantero demasiado pronto; aguantar erguido para tapar el máximo arco de portería.',
+            howToPractice: 'Rondas de 1v1 mano a mano con delanteros que rematan desde 10 metros.'
           }
         ]
       }
     ],
     recommendedTrainingFocus: [
-      'Juego con los pies bajo presión de dos atacantes.',
-      'Salidas en balones aéreos al área pequeña con puños decididos.',
-      'Reflejos en disparos desviados a quemarropa.'
+      'Blocajes aéreos en centros con oposición física.',
+      'Juego de pies con pases de media y larga distancia a extremos.',
+      'Reacción rápida ante remates a quemarropa en área chica.'
     ]
   }
 };
+
+export const POSITION_ANALYSIS_DATA_EN: Record<PositionCategory, PositionDeepAnalysis> = {
+  EXT: {
+    positionCode: 'EXT',
+    title: 'Inverted Winger / Wide Attacker',
+    subtitle: 'Flank 1v1 dominance, sudden burst & cut-inside goal threat',
+    tacticalProfile: 'The modern winger does not just run down the outside; they pin the opposing fullback, slash diagonally into the half-space channel between center back and fullback, and finish with assists or curled far-post strikes.',
+    coreMission: 'Generate numerical and positional superiority through high-speed dribbling, lethal crosses, and inverted strikes.',
+    physicalDemand: 'High explosive power, repeated 15-30m sprints, 0-100 acceleration bursts, and hip mobility.',
+    effectiveDribbles: [
+      {
+        id: 'croqueta-ext',
+        name: 'The Electric Croqueta',
+        difficulty: 'Intermediate',
+        efficacyScore: 94,
+        zone: 'Edge of the penalty box & half-space channel',
+        tagline: 'Instant weight transfer from one foot to the other to bypass the defender outstretched tackle.',
+        whyEffective: 'When the opposing fullback attempts to anticipate or stick a foot in while retreating, the croqueta shifts the ball laterally outside their tackle radius without killing forward momentum toward goal.',
+        stepByStep: [
+          'Drive toward the defender diagonally, slightly decelerating to force them to plant their studs.',
+          'With the inside of your dominant foot, gently slide the ball toward the inside of your other foot.',
+          'With the inside of your secondary foot, push the ball forward in one continuous tempo.',
+          'Accelerate away with a low center of gravity to prevent the defender from recovering with upper-body contact.'
+        ],
+        whenToUse: 'At the corner of the 18-yard box when the defender steps out to block an inswinging cross or shot.',
+        mistakesToAvoid: 'Taking two slow touches; it must be a crisp, fluid "tick-tack" motion completed in under half a second.',
+        proMaster: 'Andrés Iniesta / Pedri / Eden Hazard',
+        keySkillRequired: 'Two-footed coordination and reading opponent tackle timing'
+      },
+      {
+        id: 'tijera-salida',
+        name: 'Double Step-Over + Pace Burst',
+        difficulty: 'Advanced',
+        efficacyScore: 91,
+        zone: 'Touchline & wide 1v1 channel',
+        tagline: 'Leg scissor wrapping over the ball to freeze the defender knees and explode down the flank.',
+        whyEffective: 'Forces the opposing fullback to shift their balance toward the fake side. Once their weight is locked, they cannot react to your explosive acceleration toward the byline.',
+        stepByStep: [
+          'Dribble at moderate speed aiming toward the defender outside shoulder.',
+          'Sweep your right foot around the front of the ball inside-out without touching it, flexing your knee.',
+          'Immediately repeat with the left foot while dropping your hips.',
+          'Push the ball firmly with the outside of your dominant foot into open space and accelerate at max pace.'
+        ],
+        whenToUse: 'In open space when the fullback shows you the line while attempting to contain you.',
+        mistakesToAvoid: 'Performing the step-overs too far from the defender or staring straight down at your boots.',
+        proMaster: 'Cristiano Ronaldo / Vinícius Jr. / Neymar Jr.',
+        keySkillRequired: 'Hip agility and explosive acceleration over the first 3 steps'
+      },
+      {
+        id: 'amago-recorte-chop',
+        name: 'Ronaldo Chop / Jump Cut',
+        difficulty: 'Intermediate',
+        efficacyScore: 88,
+        zone: 'Diagonal run toward the edge of the 18-yard box',
+        tagline: 'Sharp cut behind the supporting plant foot, abruptly redirecting trajectory 90 degrees.',
+        whyEffective: 'Fullbacks sprint at full speed to block your cross. The chop acts as an instant brake, sliding you into the central lane facing goal while the defender slides past.',
+        stepByStep: [
+          'Sprint diagonally as if preparing to unleash a powerful shot or cross.',
+          'Wind up your kicking leg with exaggerated motion to sell the fake.',
+          'Execute a small hop forward onto your plant foot.',
+          'Strike the ball behind your plant leg with the inside of your kicking foot directed inward.'
+        ],
+        whenToUse: 'When a defender is running parallel at full sprint and you want to create an immediate shooting window.',
+        mistakesToAvoid: 'Striking your own plant heel or cutting too wide into a secondary covering defender.',
+        proMaster: 'Cristiano Ronaldo / Marcus Rashford / Raphinha',
+        keySkillRequired: 'Dynamic balance and sharp deceleration'
+      },
+      {
+        id: 'body-feint-salida',
+        name: 'Shoulder Drop Body Feint (No-Touch)',
+        difficulty: 'Basic',
+        efficacyScore: 92,
+        zone: 'Final third & static 1v1 duels',
+        tagline: 'Dropping the shoulder to feint acceleration one way without touching the ball, exploding the opposite way.',
+        whyEffective: 'The most energy-efficient dribble in football: expends minimal energy, does not expose the ball, and uses the defender own momentum against them.',
+        stepByStep: [
+          'Dribble calmly toward the defender, keeping your eyes on their hips.',
+          'Drop your left shoulder sharply while bending your left knee as if bursting that way.',
+          'As soon as the defender leans to close that channel, push off firmly to your right.',
+          'Touch the ball with the outside instep of your other foot into the open corridor created.'
+        ],
+        whenToUse: 'When receiving out wide with the defender rushing in aggressively to close down.',
+        mistakesToAvoid: 'Only moving your head rather than lowering your entire torso and center of mass.',
+        proMaster: 'Lionel Messi / Bukayo Saka / Riyad Mahrez',
+        keySkillRequired: 'Reading defender plant foot and sudden change of pace'
+      }
+    ],
+    proInspirations: [
+      {
+        id: 'vini-inspire',
+        name: 'Vinícius Jr.',
+        club: 'Real Madrid',
+        nationality: 'Brazil',
+        roleTitle: 'Relentless Take-On Specialist & Wide Threat',
+        avatarUrl: 'https://images.unsplash.com/photo-1508098682722-e99c43a406b2?auto=format&fit=crop&w=400&q=80',
+        quote: 'The secret is never giving up: if you lose the first duel, take on the second with even more hunger.',
+        signatureMove: 'Left-foot sole roll + right-foot outside touch into high-speed acceleration',
+        tacticalSuperpower: 'Psychological persistence: takes on the fullback 10 to 15 times a match until breaking their resolve.',
+        copyGuide: [
+          {
+            habitTitle: 'Fearless 1v1 take-ons after mistakes',
+            category: 'Mindset',
+            whatToCopy: 'Never hide after losing a ball; immediately demand the next pass and attack the tired fullback.',
+            howToPractice: 'In small-sided drills, make it a personal rule to engage the defender in 3 touches or fewer every time you receive wide.'
+          },
+          {
+            habitTitle: 'Explosive gear-shift takeoff (0 to 100)',
+            category: 'Physical & Posture',
+            whatToCopy: 'Walk with the ball to lull the defender to sleep, then suddenly explode into a devastating 5-meter sprint.',
+            howToPractice: 'Plyometric jump sets followed immediately by 10-meter sprints starting from a static stance.'
+          },
+          {
+            habitTitle: 'Diagonal dart between center back and fullback',
+            category: 'Tactical Decision',
+            whatToCopy: 'Do not stay glued to the touchline; when your central midfielder looks up, slice into the space behind the backline.',
+            howToPractice: 'Practice curved runs on the blindside of the last defender to stay onside while targeting through-balls.'
+          }
+        ]
+      },
+      {
+        id: 'saka-inspire',
+        name: 'Bukayo Saka',
+        club: 'Arsenal FC',
+        nationality: 'England',
+        roleTitle: 'Intelligent Inverted Winger & Direct Decider',
+        avatarUrl: 'https://images.unsplash.com/photo-1518091043644-c1d4457512c6?auto=format&fit=crop&w=400&q=80',
+        quote: 'Simplicity executed at maximum speed is the hardest technique to stop in football.',
+        signatureMove: 'Left-footed inward carry with open body angle and pinpoint far-post delivery',
+        tacticalSuperpower: 'Lower-body strength to shrug off physical contact while maintaining full control of the ball.',
+        copyGuide: [
+          {
+            habitTitle: 'Using forearm and lower body as a shield',
+            category: 'Physical & Posture',
+            whatToCopy: 'Extend your non-dominant arm across the defender chest to prevent them from reaching in or unbalancing you.',
+            howToPractice: '1v1 drills down a narrow lane with legal upper-body contact; learn to shield while driving forward.'
+          },
+          {
+            habitTitle: 'The pause before the decisive assist',
+            category: 'Tempo & Pause',
+            whatToCopy: 'Do not rush the final ball at the byline; take an extra composed touch with your head up to find the free runner.',
+            howToPractice: 'Byline arrival drills with 3 pass options designated by color cones called out by the coach on the fly.'
+          }
+        ]
+      }
+    ],
+    recommendedTrainingFocus: [
+      '1v1 duel drills against defenders varying their pressing distance.',
+      'Driven crosses on the sprint with both feet following sharp cuts.',
+      'Curled far-post finishing after cutting inside onto your dominant foot.'
+    ]
+  },
+  MPO: {
+    positionCode: 'MPO',
+    title: 'Attacking Midfielder / Number 10 Playmaker',
+    subtitle: 'Between-the-lines mastery, decisive assists and 360-degree body shape',
+    tacticalProfile: 'The modern #10 thrives in the most congested zone of the pitch: the pocket between opposition midfield and defensive lines. Requires elite mental processing to receive with back to goal, turn in a phone booth, and slip through-balls.',
+    coreMission: 'Transform possession into clean goalscoring chances by unlocking low blocks with precision vision.',
+    physicalDemand: 'Neuromuscular agility, dynamic balance under high pressure, and explosive 3-5 meter directional turns.',
+    effectiveDribbles: [
+      {
+        id: 'giro-360-exterior',
+        name: 'Outside Hook 180-Degree Turn',
+        difficulty: 'Intermediate',
+        efficacyScore: 95,
+        zone: 'Between the lines (Zone 14)',
+        tagline: 'Outside-of-the-foot hook shielding the ball away from the center back stepping up to press.',
+        whyEffective: 'When receiving with your back to goal, the defender steps in looking for contact. Hooking the ball in one touch with the outside of your boot uses their forward momentum to leave them stranded behind you.',
+        stepByStep: [
+          'Before receiving, scan over your shoulder to identify which side the pressure is coming from.',
+          'Shape your body as if about to bounce the ball first-time back to your defensive midfielder.',
+          'Just as the ball arrives, hook with your outside three toes toward your open side.',
+          'Rotate hips 180 degrees and take two acceleration strides to attack the backline.'
+        ],
+        whenToUse: 'On vertical passes from center backs or pivots with tight pressure on your back.',
+        mistakesToAvoid: 'Receiving completely static without checking if the defender is already jumping the route.',
+        proMaster: 'Luka Modrić / Pedri / Zinedine Zidane',
+        keySkillRequired: 'Pre-reception visual scanning and delicate outside-foot touch'
+      },
+      {
+        id: 'croqueta-espacio-reducido',
+        name: 'Tight Pocket Croqueta',
+        difficulty: 'Advanced',
+        efficacyScore: 92,
+        zone: 'Edge of the D & central congestion',
+        tagline: 'Ultra-compact side-to-side ball shift between both feet in under 30 centimeters of space.',
+        whyEffective: 'Around the D, defenders avoid lunging in fear of conceding free kicks or penalties. The pocket croqueta instantly opens a clean window to shoot or thread a reverse pass.',
+        stepByStep: [
+          'Keep the ball glued to the tips of your boots.',
+          'Take a micro 15cm touch with your inside instep toward your other foot.',
+          'Without separating from the ball, caress it forward with the other inside foot.',
+          'Release the strike or through-pass on the very next stride.'
+        ],
+        whenToUse: 'When two defenders are closing the direct passing angle to your striker.',
+        mistakesToAvoid: 'Taking too heavy a touch that allows the keeper to smother or the other center back to step across.',
+        proMaster: 'Pedri / Andrés Iniesta / Bernardo Silva',
+        keySkillRequired: 'Millimeter ball feel and agile footwork'
+      }
+    ],
+    proInspirations: [
+      {
+        id: 'pedri-inspire',
+        name: 'Pedri González',
+        club: 'FC Barcelona',
+        nationality: 'Spain',
+        roleTitle: 'Tight-Space Magician & 360-Degree Pivot Master',
+        avatarUrl: 'https://images.unsplash.com/photo-1518091043644-c1d4457512c6?auto=format&fit=crop&w=400&q=80',
+        quote: 'Playing fast is not sprinting mindlessly; it is thinking two moves ahead before the ball reaches your feet.',
+        signatureMove: 'Directional first-touch spin pivoting around the center back in tight congestion',
+        tacticalSuperpower: 'Total 360-degree peripheral awareness: knows where all 21 players are before making first contact.',
+        copyGuide: [
+          {
+            habitTitle: 'Constant shoulder checking (4 to 6 head turns)',
+            category: 'Visual Scanning',
+            whatToCopy: 'Turn your head left and right every 2 seconds before receiving to build a live mental map of space.',
+            howToPractice: 'Have a partner stand behind you holding up fingers; call out the number just before you touch the ball.'
+          },
+          {
+            habitTitle: 'Elimination first touch into open space',
+            category: 'Technical Gesture',
+            whatToCopy: 'Never control the ball back where it came from; your first touch must escape the pressing cone of the opponent.',
+            howToPractice: '4v2 rondos with the mandatory rule of orienting your first touch away from the defender vision angle.'
+          }
+        ]
+      }
+    ],
+    recommendedTrainingFocus: [
+      'High-intensity 3v3 and 4v4 possession games in tight 15x15m grids.',
+      'Positional games with back-to-goal receiving and mandatory turns.',
+      'Threading incisive passes through mannequin defensive banks.'
+    ]
+  },
+  MC: {
+    positionCode: 'MC',
+    title: 'Box-to-Box Central Midfielder',
+    subtitle: 'All-pitch engine, physical dominance and late box arrivals',
+    tacticalProfile: 'The box-to-box midfielder is the team relentless engine. They break lines through powerful drives, assist defensively in their own third, and arrive into the penalty box to finish second-phase balls.',
+    coreMission: 'Connect defense to attack through high-tempo transitions and provide goal contributions from midfield.',
+    physicalDemand: 'Elite aerobic and anaerobic capacity, upper-body strength in 50/50 duels, and stamina.',
+    effectiveDribbles: [
+      {
+        id: 'control-ruptura-mc',
+        name: 'First Touch Drive & Penetration',
+        difficulty: 'Intermediate',
+        efficacyScore: 93,
+        zone: 'Midfield transition & half-way line',
+        tagline: 'Driving into open space on the half-turn, bypassing opposition midfielders in a single touch.',
+        whyEffective: 'Eliminates the time needed to stop and restart. The first touch serves as both a take-on and an immediate counter-attack launch.',
+        stepByStep: [
+          'Demand the ball with your body angled at 45 degrees toward the attacking third.',
+          'Strike the ball with your outside instep into your running stride.',
+          'Use your natural forward momentum to gain a 2-meter head start on your marker.',
+          'Keep your chin up while driving forward to decide between a strike or slip pass.'
+        ],
+        whenToUse: 'In rapid counter-attacks immediately after winning possession.',
+        mistakesToAvoid: 'Pushing the ball too far ahead and giving it straight to the opposition center back.',
+        proMaster: 'Jude Bellingham / Federico Valverde / Steven Gerrard',
+        keySkillRequired: 'Powerful stride and high-speed close control'
+      }
+    ],
+    proInspirations: [
+      {
+        id: 'bellingham-inspire',
+        name: 'Jude Bellingham',
+        club: 'Real Madrid',
+        nationality: 'England',
+        roleTitle: 'The Complete Box-to-Box Midfielder with Striker Instincts',
+        avatarUrl: 'https://images.unsplash.com/photo-1543351611-72475171ee53?auto=format&fit=crop&w=400&q=80',
+        quote: 'If you are on the pitch, you must influence both penalty boxes; there are no excuses for not getting there.',
+        signatureMove: 'Ghosting run into the penalty spot to attack loose balls that defenders fail to track',
+        tacticalSuperpower: 'Far-post anticipation and first-time finishing technique on the full sprint.',
+        copyGuide: [
+          {
+            habitTitle: 'Undetected late box arrivals from deep',
+            category: 'Tactical Decision',
+            whatToCopy: 'Do not crowd the box early; hover on the edge of the D and accelerate just as the winger delivers.',
+            howToPractice: 'Crossing drills where you start 20 meters outside the 18-yard box and time your arrival to finish.'
+          }
+        ]
+      }
+    ],
+    recommendedTrainingFocus: [
+      'High-intensity interval training (HIIT) circuits with ball mastery.',
+      'First-time shooting drills arriving onto edge-of-box cutbacks.',
+      'Aerial duels and tactical coverages when fullbacks push forward.'
+    ]
+  },
+  MCD: {
+    positionCode: 'MCD',
+    title: 'Defensive Anchor / Deep-Lying Pivot',
+    subtitle: 'Structural balance, first build-up pass and defensive shield',
+    tacticalProfile: 'The deep-lying anchor is the defensive brain and organizational compass of the side. They do not chase the ball aimlessly; they read opposition movements to snuff out counter-attacks and distribute with composure.',
+    coreMission: 'Act as the foundation balancing transitions, intercepting loose balls, and ensuring clean build-up play.',
+    physicalDemand: 'Elite aerobic stamina (11-13 km/game), physical core strength in 50/50 duels, and game reading.',
+    effectiveDribbles: [
+      {
+        id: 'giro-blindaje-mcd',
+        name: 'Arm-Shield Pivot Turn (Shield Turn)',
+        difficulty: 'Basic',
+        efficacyScore: 96,
+        zone: 'Center circle & defensive third',
+        tagline: 'Placing hip and forearm between the ball and the pressing striker to protect possession.',
+        whyEffective: 'In the anchor zone, losing possession is almost an instant goal. This move ensures 100% security while you rotate toward your open fullback.',
+        stepByStep: [
+          'Feel the striker pressing your back with your upper torso.',
+          'Position your body side-on and extend your near forearm firmly with a closed fist.',
+          'Roll the ball with the sole of your far foot and pivot on your plant foot.',
+          'Lay off cleanly with the inside of your foot to your center back or fullback facing play.'
+        ],
+        whenToUse: 'Under intense high pressing when receiving the initial pass out from the backline.',
+        mistakesToAvoid: 'Grabbing the opponent shirt (foul) or turning blindly into central traffic.',
+        proMaster: 'Rodri Hernández / Sergio Busquets / Casemiro',
+        keySkillRequired: 'Core stability and legal body positioning'
+      }
+    ],
+    proInspirations: [
+      {
+        id: 'rodri-inspire',
+        name: 'Rodri Hernández',
+        club: 'Manchester City',
+        nationality: 'Spain',
+        roleTitle: 'Tactical Metronome & Ballon d Or Anchor',
+        avatarUrl: 'https://images.unsplash.com/photo-1522778119026-d647f0596c20?auto=format&fit=crop&w=400&q=80',
+        quote: 'The best defensive midfielder is the one who seems not to run, because they were already in the right place.',
+        signatureMove: 'Cushioned chest/thigh control transitioning instantly into a forward pass',
+        tacticalSuperpower: 'Second-ball dominance: wins 8 out of 10 loose balls across the middle third.',
+        copyGuide: [
+          {
+            habitTitle: 'Forming the passing triangle with center backs',
+            category: 'Tactical Decision',
+            whatToCopy: 'Always form an open passing triangle with your two center backs; never hide in the striker shadow.',
+            howToPractice: 'Review your game footage and check if you are a clear, open passing line in every phase of build-up.'
+          }
+        ]
+      }
+    ],
+    recommendedTrainingFocus: [
+      '5v2 rondos in the center circle with mandatory 2-touch limit.',
+      'Open body-shape drills to receive facing both flanks simultaneously.',
+      'Edge-of-box strikes off cleared second balls.'
+    ]
+  },
+  LAT: {
+    positionCode: 'LAT',
+    title: 'Dynamic Wing-Back / Overlapping Fullback',
+    subtitle: 'Dual engine: flank defensive wall and overlapping attacking dagger',
+    tacticalProfile: 'The modern fullback is one of the most demanding positions in world football. They must neutralize the world fastest wingers while providing width, overlapping runs, and dangerous deliveries in the final third.',
+    coreMission: 'Own the touchline box-to-box, dominate 1v1 defensive duels, and supply quality crosses.',
+    physicalDemand: 'Sustained sprint endurance, capacity to execute repeated 60m sprints, and rapid recovery.',
+    effectiveDribbles: [
+      {
+        id: 'autopase-espacio-lat',
+        name: 'Knock-and-Run Sprint (Knock & Run)',
+        difficulty: 'Basic',
+        efficacyScore: 93,
+        zone: 'Touchline in own half or middle third',
+        tagline: 'Pushing the ball 10 meters ahead down the line and blowing past the marker with pure pace.',
+        whyEffective: 'The opposing winger presses front-on with their weight committed. A firm touch into space takes advantage of your forward posture while they must turn 180 degrees to chase.',
+        stepByStep: [
+          'Wait for the opposing winger to commit their weight forward.',
+          'With the outside of your boot, push the ball 8 to 12 meters ahead hugging the touchline.',
+          'Accelerate around the opponent on the outside.',
+          'Deliver the cross into the box before the covering center back arrives.'
+        ],
+        whenToUse: 'In touchline build-up when the winger rushes in aggressively.',
+        mistakesToAvoid: 'Pushing the ball into central midfield where the opposition anchor can cut it off.',
+        proMaster: 'Alphonso Davies / Achraf Hakimi / Kyle Walker',
+        keySkillRequired: 'Straight-line acceleration and timing'
+      }
+    ],
+    proInspirations: [
+      {
+        id: 'davies-inspire',
+        name: 'Alphonso Davies',
+        club: 'FC Bayern München',
+        nationality: 'Canada',
+        roleTitle: 'Flank Speedster & High-Speed Recovery Machine',
+        avatarUrl: 'https://images.unsplash.com/photo-1574629810360-7efbbe195018?auto=format&fit=crop&w=400&q=80',
+        quote: 'When you have speed, every open ball into space is an opportunity to score or create.',
+        signatureMove: 'Turbo recovery sprint to shut down an opposition 1v1 after being beaten initially',
+        tacticalSuperpower: 'High-velocity recovery: fixes any defensive tactical misalignment within 3 seconds.',
+        copyGuide: [
+          {
+            habitTitle: 'Immediate defensive sprint on possession turnover',
+            category: 'Post-Loss Reaction',
+            whatToCopy: 'Never complain about an errant cross; turn immediately and sprint to cover your center back.',
+            howToPractice: 'End-to-end sprint intervals with a delivery followed by a defensive recovery run.'
+          }
+        ]
+      }
+    ],
+    recommendedTrainingFocus: [
+      'Delivering driven crosses on the full sprint after 30-meter runs.',
+      'Defensive posture angling the winger onto their weaker foot.',
+      'Anaerobic endurance with repeated touchline shuttle runs.'
+    ]
+  },
+  DC: {
+    positionCode: 'DC',
+    title: 'Clinical Center Forward / Poacher',
+    subtitle: 'Predatory instincts, blindside runs and ruthless 1-touch finishing',
+    tacticalProfile: 'The modern #9 is far more than a box target: they hold up play to pin center backs, peel wide to create space for midfielders, and attack the near post with killer determination.',
+    coreMission: 'Convert chances into goals and serve as the team focal attacking reference point.',
+    physicalDemand: 'Lower-body power in physical duels with center backs, 10-meter burst, and vertical jump.',
+    effectiveDribbles: [
+      {
+        id: 'amago-tiro-dc',
+        name: 'Fake Shot & Near-Post Cut',
+        difficulty: 'Intermediate',
+        efficacyScore: 94,
+        zone: 'Inside the penalty box (12 to 16 meters)',
+        tagline: 'Selling the first-time strike so the center back lunges to block, slipping into open net.',
+        whyEffective: 'Inside the 18-yard box, defenders panic about conceding shots. The fake shot takes them out of play while they slide into the turf.',
+        stepByStep: [
+          'Wind up your kicking leg with full visible force.',
+          'At the final millisecond, cushion the ball with a gentle touch instead of striking.',
+          'Take a 50cm lateral stride to bypass the sliding defender body.',
+          'Finish low into the far corner away from the keeper.'
+        ],
+        whenToUse: 'On loose balls or low cutbacks inside the penalty area.',
+        mistakesToAvoid: 'Taking too heavy a second touch that allows the goalkeeper to close you down.',
+        proMaster: 'Erling Haaland / Robert Lewandowski / Karim Benzema',
+        keySkillRequired: 'Ice-cold composure and footwork balance'
+      }
+    ],
+    proInspirations: [
+      {
+        id: 'haaland-inspire',
+        name: 'Erling Haaland',
+        club: 'Manchester City',
+        nationality: 'Norway',
+        roleTitle: 'The Goal Machine & Master of Box Movement',
+        avatarUrl: 'https://images.unsplash.com/photo-1574629810360-7efbbe195018?auto=format&fit=crop&w=400&q=80',
+        quote: 'My only thought inside the box is getting the ball into the net no matter what it takes.',
+        signatureMove: 'Ferocious near-post dart beating the center back to the ball by inches',
+        tacticalSuperpower: 'Decoy box runs: feints toward the far post then explodes like a rocket to the near post.',
+        copyGuide: [
+          {
+            habitTitle: 'Zig-zag blindside movement to disorient center backs',
+            category: 'Tactical Decision',
+            whatToCopy: 'Take two steps back into the defender blind spot before exploding across their face to finish.',
+            howToPractice: 'Box movement drills with passive markers where you must gain position in under 3 strides.'
+          }
+        ]
+      }
+    ],
+    recommendedTrainingFocus: [
+      'Volleys and aerial headers off driven crosses.',
+      '1v1 finishing against the keeper under pursuit pressure.',
+      'Back-to-goal hold-up play and lay-offs for attacking midfielders.'
+    ]
+  },
+  DEC: {
+    positionCode: 'DEC',
+    title: 'Commanding Center Back / Defensive General',
+    subtitle: 'Defensive leadership, aerial supremacy and composed ball progression',
+    tacticalProfile: 'The modern center back marshals the defensive line through communication and positioning. They excel at timing tackles and finding vertical passes that break the first line of opposition press.',
+    coreMission: 'Prevent goals, dominate 1v1 duels, and initiate possession from the first phase.',
+    physicalDemand: 'Vertical leap power, upper-body core strength, and 5-meter reaction burst.',
+    effectiveDribbles: [
+      {
+        id: 'recorte-salida-dec',
+        name: 'Step-Back Safety Cut (Step-Back Cut)',
+        difficulty: 'Basic',
+        efficacyScore: 92,
+        zone: 'Edge of own penalty area',
+        tagline: 'Feigning a long clearance and cutting inside to connect with the unmarked fullback.',
+        whyEffective: 'The pressing striker runs at full speed anticipating a long punt. The subtle cut lets you step into space without giving away cheap possession.',
+        stepByStep: [
+          'Wind up your leg as if launching a 50-meter direct ball.',
+          'Drag the foot over the top of the ball, cushioning it inward to your other foot.',
+          'Play a crisp ground pass to your open pivot or fullback.'
+        ],
+        whenToUse: 'Under aggressive pressing from opposition front-line forwards.',
+        mistakesToAvoid: 'Risking a cut when you are the last man and a second striker is closing in.',
+        proMaster: 'Virgil van Dijk / Rúben Dias / Antonio Rüdiger',
+        keySkillRequired: 'Patience and clean first-touch security'
+      }
+    ],
+    proInspirations: [
+      {
+        id: 'vandijk-inspire',
+        name: 'Virgil van Dijk',
+        club: 'Liverpool FC',
+        nationality: 'Netherlands',
+        roleTitle: 'The Defensive Wall & Backline Leader',
+        avatarUrl: 'https://images.unsplash.com/photo-1508098682722-e99c43a406b2?auto=format&fit=crop&w=400&q=80',
+        quote: 'Defending well is making the striker feel they have no chance before they even try.',
+        signatureMove: 'Jockeying without going to ground, forcing the striker onto their weaker foot',
+        tacticalSuperpower: 'Composed presence and vocal leadership: orchestrates the entire backline.',
+        copyGuide: [
+          {
+            habitTitle: 'Patient jockeying without diving in',
+            category: 'Tactical Decision',
+            whatToCopy: 'Never dive in rashly; keep feet active and wait for the attacker to take a heavy touch.',
+            howToPractice: 'Backwards 1v1 jockeying drills where going to ground is prohibited.'
+          }
+        ]
+      }
+    ],
+    recommendedTrainingFocus: [
+      'Directional aerial clearances toward the touchlines.',
+      'Driven ground passes breaking the first pressing line.',
+      '1v1 defending in open space with 30 meters behind you.'
+    ]
+  },
+  POR: {
+    positionCode: 'POR',
+    title: 'Modern Sweeper-Keeper',
+    subtitle: 'Shot-stopping authority, commanding aerial presence and first build-up attacker',
+    tacticalProfile: 'The modern goalkeeper does not merely react on the goal line; they position themselves high to sweep behind the defensive line and act as an extra outfield player in build-up play.',
+    coreMission: 'Keep clean sheets and distribute with pinpoint accuracy from deep.',
+    physicalDemand: 'Lightning reflexes, lateral dive power, and hand-eye coordination.',
+    effectiveDribbles: [
+      {
+        id: 'amago-pase-portero',
+        name: 'Keeper Feint & Lay-Off',
+        difficulty: 'Intermediate',
+        efficacyScore: 90,
+        zone: '6-yard box & penalty area',
+        tagline: 'Feigning a long goal kick to make the striker jump, rolling the ball short to the fullback.',
+        whyEffective: 'The striker jumps in the air turning their back on the play, opening the safest short passing lane.',
+        stepByStep: [
+          'Shape up as if launching a 60-meter punt.',
+          'Gently cushion the ball at the last instant and switch angle toward the open fullback.',
+          'Deliver a firm, accurate pass straight to the defender feet.'
+        ],
+        whenToUse: 'On goal kicks or backpasses when the opponent commits to a high press.',
+        mistakesToAvoid: 'Hesitating halfway through the motion or executing it too close to the goal line.',
+        proMaster: 'Manuel Neuer / Alisson Becker / Thibaut Courtois',
+        keySkillRequired: 'Composure under pressure and two-footed distribution'
+      }
+    ],
+    proInspirations: [
+      {
+        id: 'alisson-inspire',
+        name: 'Alisson Becker',
+        club: 'Liverpool FC',
+        nationality: 'Brazil',
+        roleTitle: 'The Composed Shot-Stopper & 1v1 Specialist',
+        avatarUrl: 'https://images.unsplash.com/photo-1518091043644-c1d4457512c6?auto=format&fit=crop&w=400&q=80',
+        quote: 'A great goalkeeper does not need flashy saves; proper positioning makes everything look effortless.',
+        signatureMove: 'K-Block spread closing down 1v1 angles while staying upright until the shot',
+        tacticalSuperpower: 'Flawless positional angle calculation and calming presence for the defense.',
+        copyGuide: [
+          {
+            habitTitle: 'K-Block spread staying on your feet until the trigger',
+            category: 'Technical Gesture',
+            whatToCopy: 'Do not dive at the striker feet too early; stay upright to cover maximum goal frame.',
+            howToPractice: '1v1 close-range duel drills against strikers shooting from 10 meters.'
+          }
+        ]
+      }
+    ],
+    recommendedTrainingFocus: [
+      'High-ball catches under physical pressure in traffic.',
+      'Pinpoint mid and long-range distribution to wingers.',
+      'Point-blank reflex reactions inside the 6-yard box.'
+    ]
+  }
+};
+
+export const POSITION_ANALYSIS_DATA = POSITION_ANALYSIS_DATA_ES;
+
+export function getLocalizedPositionAnalysis(pos: PositionCategory, lang: Language): PositionDeepAnalysis {
+  if (lang === 'en') {
+    return POSITION_ANALYSIS_DATA_EN[pos] || POSITION_ANALYSIS_DATA_EN.EXT;
+  }
+  // For 'pt' and 'es', default to Spanish (or Portuguese when applicable)
+  return POSITION_ANALYSIS_DATA_ES[pos] || POSITION_ANALYSIS_DATA_ES.EXT;
+}

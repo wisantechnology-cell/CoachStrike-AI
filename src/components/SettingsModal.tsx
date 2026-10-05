@@ -2,7 +2,16 @@ import React from 'react';
 import { X, Settings, Check, RefreshCw, Palette, Globe, Sparkles } from 'lucide-react';
 import { motion } from 'motion/react';
 import { useLanguage } from '../context/LanguageContext';
-import { useTheme, ACCENT_PALETTE, DISPLAY_ACCENTS, THEME_BACKGROUNDS, AccentColor, ThemeBackground } from '../context/ThemeContext';
+import { 
+  useTheme, 
+  ACCENT_PALETTE, 
+  DISPLAY_ACCENTS, 
+  THEME_BACKGROUNDS, 
+  AccentColor, 
+  ThemeBackground,
+  getLocalizedAccentLabel,
+  getLocalizedThemeName
+} from '../context/ThemeContext';
 import { Language } from '../data/translations';
 
 interface SettingsModalProps {
@@ -17,8 +26,8 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
   if (!isOpen) return null;
 
   const languagesList: { id: Language; flag: string; label: string }[] = [
-    { id: 'es', flag: '🇪🇸', label: 'Español' },
     { id: 'en', flag: '🇺🇸', label: 'English' },
+    { id: 'es', flag: '🇪🇸', label: 'Español' },
     { id: 'pt', flag: '🇧🇷', label: 'Português' }
   ];
 
@@ -88,12 +97,13 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
             <span>{t.accentSectionTitle}</span>
           </div>
           <p className="text-xs text-slate-400">
-            Cambia el color de los textos destacados, bordes, medidores e indicadores neón en toda la aplicación:
+            {t.accentSubtitle}
           </p>
 
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
             {DISPLAY_ACCENTS.map((accKey) => {
               const acc = ACCENT_PALETTE[accKey];
+              const localizedAcc = getLocalizedAccentLabel(accKey, lang);
               const isSelected = accent === accKey || (accKey === 'blue' && accent === 'cyan') || (accKey === 'lime' && accent === 'emerald') || (accKey === 'red' && accent === 'magenta');
               return (
                 <button
@@ -105,16 +115,16 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
                       : 'bg-black/40 border-white/10 text-slate-300 hover:border-white/30'
                   }`}
                 >
-                  <div className="flex items-center gap-2.5">
+                  <div className="flex items-center gap-2.5 min-w-0">
                     <span
                       className="w-5 h-5 rounded-full border border-white/20 shrink-0 shadow-sm"
                       style={{ backgroundColor: acc.hex }}
                     />
-                    <span className="text-xs font-bold">{acc.shortLabel || acc.name}</span>
+                    <span className="text-xs font-bold truncate">{localizedAcc.shortLabel || localizedAcc.name}</span>
                   </div>
                   {isSelected && (
                     <span
-                      className="w-2.5 h-2.5 rounded-full"
+                      className="w-2.5 h-2.5 rounded-full shrink-0"
                       style={{ backgroundColor: acc.hex }}
                     />
                   )}
@@ -134,6 +144,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             {(Object.keys(THEME_BACKGROUNDS) as ThemeBackground[]).map((bgKey) => {
               const bg = THEME_BACKGROUNDS[bgKey];
+              const localizedThemeName = getLocalizedThemeName(bgKey, lang);
               const isSelected = themeBg === bgKey;
               return (
                 <button
@@ -150,7 +161,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
                       className="w-6 h-6 rounded-lg border border-white/20 shrink-0"
                       style={{ backgroundColor: bg.hex }}
                     />
-                    <span>{bg.name}</span>
+                    <span>{localizedThemeName}</span>
                   </div>
                   {isSelected && <Check className="w-4 h-4 text-volt shrink-0" />}
                 </button>

@@ -45,4 +45,11 @@ body {
   .font-mono-code {
     font-family: 'JetBrains Mono', monospace;
   }
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
 }

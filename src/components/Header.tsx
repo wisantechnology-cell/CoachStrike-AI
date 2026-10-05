@@ -17,7 +17,8 @@ import {
   Users,
   CreditCard,
   Crown,
-  Lock
+  Lock,
+  GraduationCap
 } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
 import { useAuth } from '../context/AuthContext';
@@ -27,7 +28,7 @@ import { PositionDeepDiveModal } from './PositionDeepDiveModal';
 import { AuthModal } from './AuthModal';
 import { AssessmentResult } from '../types';
 
-export type HeaderTab = 'hero' | 'test' | 'drills' | 'tactics' | 'chat' | 'history' | 'academy';
+export type HeaderTab = 'hero' | 'test' | 'drills' | 'tactics' | 'chat' | 'history' | 'academy' | 'portal';
 
 interface HeaderProps {
   activeTab: HeaderTab;
@@ -120,13 +121,18 @@ export const Header: React.FC<HeaderProps> = ({
             onClick={() => setActiveTab('hero')}
             className="flex items-center gap-3 cursor-pointer group select-none shrink-0"
           >
-            <div className="w-8 h-8 bg-volt rounded-xs flex items-center justify-center transform -skew-x-12 shadow-md shadow-volt/20 group-hover:scale-105 transition-transform">
-              <span className="text-black font-black text-xl italic font-display">S</span>
+            {/* CoachStrike Badge in Original Slanted Volt Style with separated CS */}
+            <div className="h-8 sm:h-9 px-2 sm:px-2.5 bg-volt rounded-xs flex items-center justify-center transform -skew-x-12 shadow-md shadow-volt/20 group-hover:scale-105 transition-transform shrink-0">
+              <span className="text-black font-black text-lg sm:text-xl italic font-display leading-none select-none flex items-center gap-1 sm:gap-1.5">
+                <span>C</span>
+                <span>S</span>
+              </span>
             </div>
+
             <div>
               <div className="flex items-center gap-1.5">
                 <span className="font-black tracking-tighter text-2xl uppercase italic font-display text-white">
-                  STRIKE <span className="text-volt">AI</span>
+                  COACHSTRIKE <span className="text-volt">AI</span>
                 </span>
                 {isCloudActive && (
                   <span className="hidden sm:inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-[9px] font-mono-code font-bold tracking-wider">
@@ -146,7 +152,7 @@ export const Header: React.FC<HeaderProps> = ({
                 activeTab === 'hero' ? 'text-volt border-b-2 border-volt' : 'hover:text-white'
               }`}
             >
-              Inicio
+              {t.navHome}
             </button>
 
             <button
@@ -198,6 +204,16 @@ export const Header: React.FC<HeaderProps> = ({
               ) : (
                 <Lock className="w-3 h-3 text-slate-500" />
               )}
+            </button>
+
+            <button
+              onClick={() => setActiveTab('portal')}
+              className={`pb-1 transition-colors cursor-pointer flex items-center gap-1.5 ${
+                activeTab === 'portal' ? 'text-volt border-b-2 border-volt' : 'hover:text-white'
+              }`}
+            >
+              <GraduationCap className="w-3.5 h-3.5" />
+              <span>{lang === 'en' ? 'Player Portal' : lang === 'pt' ? 'Portal Jogador' : 'Portal Jugador'}</span>
             </button>
 
             <button
@@ -282,10 +298,10 @@ export const Header: React.FC<HeaderProps> = ({
                 
                 <div className="text-left hidden sm:block">
                   <span className="block text-xs font-bold text-white max-w-[90px] truncate leading-tight">
-                    {user?.displayName || 'Mi Cuenta'}
+                    {user?.displayName || (lang === 'en' ? 'My Account' : lang === 'pt' ? 'Minha Conta' : 'Mi Cuenta')}
                   </span>
                   <span className="block text-[9px] font-mono-code text-slate-400 max-w-[90px] truncate leading-tight">
-                    {user?.email || 'Ver perfil'}
+                    {user?.email || (lang === 'en' ? 'View profile' : lang === 'pt' ? 'Ver perfil' : 'Ver perfil')}
                   </span>
                 </div>
               </button>
@@ -310,12 +326,12 @@ export const Header: React.FC<HeaderProps> = ({
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center justify-between gap-1">
                         <h4 className="text-sm font-black text-white truncate font-display uppercase tracking-wide">
-                          {user?.displayName || (lang === 'en' ? 'Strike AI Player' : 'Futbolista Strike AI')}
+                          {user?.displayName || (lang === 'en' ? 'Strike AI Player' : lang === 'pt' ? 'Jogador Strike AI' : 'Futbolista Strike AI')}
                         </h4>
                         {user ? (
                           <span className="px-1.5 py-0.5 rounded text-[9px] font-mono-code font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 flex items-center gap-1 shrink-0">
                             <CheckCircle2 className="w-2.5 h-2.5" />
-                            {lang === 'en' ? 'Connected' : 'Conectado'}
+                            {lang === 'en' ? 'Connected' : lang === 'pt' ? 'Ligado' : 'Conectado'}
                           </span>
                         ) : (
                           <button
@@ -325,16 +341,16 @@ export const Header: React.FC<HeaderProps> = ({
                             }}
                             className="px-2 py-0.5 rounded bg-volt text-black text-[9px] font-black uppercase tracking-wider hover:bg-white transition-colors cursor-pointer"
                           >
-                            {lang === 'en' ? 'Sign In' : 'Acceder'}
+                            {lang === 'en' ? 'Sign In' : lang === 'pt' ? 'Entrar' : 'Acceder'}
                           </button>
                         )}
                       </div>
                       <p className="text-xs text-slate-400 truncate mt-0.5 font-mono-code">
-                        {user?.email || (lang === 'en' ? 'Guest session' : 'Sesión como invitado')}
+                        {user?.email || (lang === 'en' ? 'Guest session' : lang === 'pt' ? 'Sessão como convidado' : 'Sesión como invitado')}
                       </p>
                       
                       <div className="flex items-center justify-between mt-2 pt-1 border-t border-white/5">
-                        <span className="text-[10px] text-slate-400">{lang === 'en' ? 'Current plan:' : 'Plan actual:'}</span>
+                        <span className="text-[10px] text-slate-400">{lang === 'en' ? 'Current plan:' : lang === 'pt' ? 'Plano atual:' : 'Plan actual:'}</span>
                         {getPlanBadge()}
                       </div>
                     </div>
@@ -356,7 +372,7 @@ export const Header: React.FC<HeaderProps> = ({
                         </div>
                         <div>
                           <div className="text-xs font-bold text-white flex items-center gap-1.5">
-                            <span>{lang === 'en' ? 'Saved Reports & Profiles' : 'Ver Posiciones Guardadas'}</span>
+                            <span>{lang === 'en' ? 'Saved Reports & Profiles' : lang === 'pt' ? 'Posições Guardadas' : 'Ver Posiciones Guardadas'}</span>
                             {savedCount > 0 && (
                               <span className="px-1.5 py-0.2 text-[9px] font-mono-code font-bold rounded bg-volt text-black">
                                 {savedCount}
@@ -364,7 +380,7 @@ export const Header: React.FC<HeaderProps> = ({
                             )}
                           </div>
                           <p className="text-[11px] text-slate-400">
-                            {lang === 'en' ? 'Review scouting reports and player history' : 'Revisa tus fichas tácticas y evaluaciones'}
+                            {lang === 'en' ? 'Review scouting reports and player history' : lang === 'pt' ? 'Reveja os seus relatórios e avaliações' : 'Revisa tus fichas tácticas y evaluaciones'}
                           </p>
                         </div>
                       </div>
@@ -386,10 +402,10 @@ export const Header: React.FC<HeaderProps> = ({
                         <div>
                           <div className="text-xs font-black text-volt flex items-center gap-1">
                             <Sparkles className="w-3 h-3 text-volt" />
-                            <span>{lang === 'en' ? 'In-Depth Tactical Deep Dive' : 'Examinar a Profundidad'}</span>
+                            <span>{lang === 'en' ? 'In-Depth Tactical Deep Dive' : lang === 'pt' ? 'Examinar em Profundidade' : 'Examinar a Profundidad'}</span>
                           </div>
                           <p className="text-[11px] text-slate-300">
-                            {lang === 'en' ? 'Most effective dribbles & what to copy from pros' : 'Regates más eficaces & en qué copiar a los pros'}
+                            {lang === 'en' ? 'Most effective dribbles & what to copy from pros' : lang === 'pt' ? 'Fintas mais eficazes & o que copiar dos pros' : 'Regates más eficaces & en qué copiar a los pros'}
                           </p>
                         </div>
                       </div>
@@ -410,14 +426,38 @@ export const Header: React.FC<HeaderProps> = ({
                         </div>
                         <div>
                           <div className="text-xs font-black text-emerald-400 flex items-center gap-1">
-                            <span>{lang === 'en' ? 'Academy Mode & Coaches' : 'Modo Academia & Entrenadores'}</span>
+                            <span>{lang === 'en' ? 'Academy Mode & Coaches' : lang === 'pt' ? 'Modo Academia & Treinadores' : 'Modo Academia & Entrenadores'}</span>
                           </div>
                           <p className="text-[11px] text-slate-300">
-                            {lang === 'en' ? 'Roster management, DNA tests & Starting XI' : 'Gestión de alumnos, exámenes y Once Ideal'}
+                            {lang === 'en' ? 'Roster management, DNA tests & Starting XI' : lang === 'pt' ? 'Gestão de plantel, exames e Onze Ideal' : 'Gestión de alumnos, exámenes y Once Ideal'}
                           </p>
                         </div>
                       </div>
                       <ChevronRight className="w-4 h-4 text-emerald-400 group-hover:translate-x-0.5 transition-transform" />
+                    </button>
+
+                    {/* Portal del Canterano y Familia */}
+                    <button
+                      onClick={() => {
+                        setActiveTab('portal');
+                        setIsProfileMenuOpen(false);
+                      }}
+                      className="w-full text-left p-2.5 rounded-xl bg-volt/5 hover:bg-volt/15 border border-volt/20 hover:border-volt/40 transition-all flex items-center justify-between group cursor-pointer"
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 rounded-lg bg-volt/20 border border-volt/30 flex items-center justify-center text-volt font-bold">
+                          <GraduationCap className="w-4 h-4 text-volt" />
+                        </div>
+                        <div>
+                          <div className="text-xs font-black text-volt flex items-center gap-1">
+                            <span>{lang === 'en' ? 'Player & Family Portal' : lang === 'pt' ? 'Portal do Jogador & Família' : 'Portal del Jugador & Familia'}</span>
+                          </div>
+                          <p className="text-[11px] text-slate-300">
+                            {lang === 'en' ? 'Personal tasks, attendance & tactical DNA' : lang === 'pt' ? 'Tarefas, presenças e ADN tático individual' : 'Deberes semanales, asistencias y ADN táctico'}
+                          </p>
+                        </div>
+                      </div>
+                      <ChevronRight className="w-4 h-4 text-volt group-hover:translate-x-0.5 transition-transform" />
                     </button>
 
                     {/* Monetization / Pricing Trigger */}
@@ -435,10 +475,10 @@ export const Header: React.FC<HeaderProps> = ({
                           </div>
                           <div>
                             <div className="text-xs font-bold text-amber-300 flex items-center gap-1">
-                              <span>{lang === 'en' ? 'Plans & Billing (Stripe / PayPal)' : 'Planes & Pagos (Stripe / PayPal)'}</span>
+                              <span>{lang === 'en' ? 'Plans & Billing (Stripe / PayPal)' : lang === 'pt' ? 'Planos & Pagamentos (Stripe / PayPal)' : 'Planes & Pagos (Stripe / PayPal)'}</span>
                             </div>
                             <p className="text-[11px] text-slate-400">
-                              {lang === 'en' ? 'Unlock Pro features & Academy Mode' : 'Desbloquea funciones Pro y Modo Academia'}
+                              {lang === 'en' ? 'Unlock Pro features & Academy Mode' : lang === 'pt' ? 'Desbloqueie funcionalidades Pro e Modo Academia' : 'Desbloquea funciones Pro y Modo Academia'}
                             </p>
                           </div>
                         </div>
@@ -506,25 +546,25 @@ export const Header: React.FC<HeaderProps> = ({
             onClick={() => setActiveTab('hero')}
             className={`py-1 ${activeTab === 'hero' ? 'text-volt' : ''}`}
           >
-            {lang === 'en' ? 'Home' : 'Inicio'}
+            {t.navHome}
           </button>
           <button
             onClick={onStartTest}
             className={`py-1 ${activeTab === 'test' ? 'text-volt' : ''}`}
           >
-            {lang === 'en' ? 'Test' : 'Test'}
+            {t.navTest}
           </button>
           <button
             onClick={() => setActiveTab('drills')}
             className={`py-1 ${activeTab === 'drills' ? 'text-volt' : ''}`}
           >
-            {lang === 'en' ? 'Drills' : 'Ejercicios'}
+            {t.navDrills}
           </button>
           <button
             onClick={() => setActiveTab('tactics')}
             className={`py-1 ${activeTab === 'tactics' ? 'text-volt' : ''}`}
           >
-            {lang === 'en' ? 'Tactics' : 'Pizarra'}
+            {t.navTactics}
           </button>
           <button
             onClick={() => setActiveTab('academy')}

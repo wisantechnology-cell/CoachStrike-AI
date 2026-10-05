@@ -18,7 +18,7 @@ export const Hero: React.FC<HeroProps> = ({ onStartTest, onExploreDrills }) => {
       
       {/* Watermark Logo Backing */}
       <div className="absolute top-0 right-10 opacity-5 uppercase text-9xl font-black italic pointer-events-none select-none text-white font-display hidden md:block">
-        STRIKE
+        COACHSTRIKE
       </div>
 
       <div className="max-w-6xl mx-auto relative z-10">
@@ -105,7 +105,7 @@ export const Hero: React.FC<HeroProps> = ({ onStartTest, onExploreDrills }) => {
             <div className="w-12 h-12 rounded-xl bg-volt-10 border border-volt-30 flex items-center justify-center text-volt mb-4 group-hover:scale-110 transition-transform">
               <Activity className="w-6 h-6" />
             </div>
-            <h2 className="text-xs uppercase font-bold text-volt tracking-[0.2em] mb-1 font-mono-code">PASO 01</h2>
+            <h2 className="text-xs uppercase font-bold text-volt tracking-[0.2em] mb-1 font-mono-code">{t.heroStep1Tag}</h2>
             <h3 className="text-xl font-black italic text-white mb-2 font-display uppercase">
               {t.heroFeature1Title}
             </h3>
@@ -121,7 +121,7 @@ export const Hero: React.FC<HeroProps> = ({ onStartTest, onExploreDrills }) => {
             <div className="w-12 h-12 rounded-xl bg-white/10 border border-white/20 flex items-center justify-center text-white mb-4 group-hover:scale-110 transition-transform">
               <Users className="w-6 h-6" />
             </div>
-            <h2 className="text-xs uppercase font-bold text-volt tracking-[0.2em] mb-1 font-mono-code">PASO 02</h2>
+            <h2 className="text-xs uppercase font-bold text-volt tracking-[0.2em] mb-1 font-mono-code">{t.heroStep2Tag}</h2>
             <h3 className="text-xl font-black italic text-white mb-2 font-display uppercase">
               {t.heroFeature2Title}
             </h3>
@@ -137,7 +137,7 @@ export const Hero: React.FC<HeroProps> = ({ onStartTest, onExploreDrills }) => {
             <div className="w-12 h-12 rounded-xl bg-black/10 flex items-center justify-center text-black mb-4 group-hover:scale-110 transition-transform">
               <Award className="w-6 h-6" />
             </div>
-            <h2 className="text-xs uppercase font-bold tracking-[0.2em] mb-1 text-black/70 font-mono-code">PASO 03</h2>
+            <h2 className="text-xs uppercase font-bold tracking-[0.2em] mb-1 text-black/70 font-mono-code">{t.heroStep3Tag}</h2>
             <h3 className="text-xl font-black italic text-black mb-2 font-display uppercase">
               {t.heroFeature3Title}
             </h3>

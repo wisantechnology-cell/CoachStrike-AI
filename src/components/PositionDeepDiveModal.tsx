@@ -19,7 +19,7 @@ import {
   Layers
 } from 'lucide-react';
 import { AssessmentResult, PositionCategory } from '../types';
-import { POSITION_ANALYSIS_DATA, EffectiveDribble, ProInspirationPlayer } from '../data/positionAnalysisData';
+import { getLocalizedPositionAnalysis, EffectiveDribble, ProInspirationPlayer } from '../data/positionAnalysisData';
 import { useLanguage } from '../context/LanguageContext';
 
 interface PositionDeepDiveModalProps {
@@ -59,7 +59,7 @@ export const PositionDeepDiveModal: React.FC<PositionDeepDiveModalProps> = ({
 
   if (!isOpen) return null;
 
-  const analysis = POSITION_ANALYSIS_DATA[selectedPosition] || POSITION_ANALYSIS_DATA.EXT;
+  const analysis = getLocalizedPositionAnalysis(selectedPosition, lang);
   const dribbles = analysis.effectiveDribbles;
   const inspirations = analysis.proInspirations;
 
@@ -116,11 +116,11 @@ export const PositionDeepDiveModal: React.FC<PositionDeepDiveModalProps> = ({
             <div>
               <div className="flex items-center gap-2">
                 <span className="text-[10px] font-mono-code font-bold uppercase tracking-widest text-volt px-2 py-0.5 rounded bg-volt/10 border border-volt/30">
-                  ANÁLISIS PROFUNDO DE POSICIÓN
+                  {lang === 'en' ? 'IN-DEPTH POSITION ANALYSIS' : lang === 'pt' ? 'ANÁLISE PROFUNDA DE POSIÇÃO' : 'ANÁLISIS PROFUNDO DE POSICIÓN'}
                 </span>
                 {assessmentResult && (
                   <span className="text-[10px] font-mono-code text-slate-400 hidden sm:inline">
-                    Jugador: <strong className="text-white font-bold">{assessmentResult.playerName}</strong>
+                    {lang === 'en' ? 'Player:' : lang === 'pt' ? 'Jogador:' : 'Jugador:'} <strong className="text-white font-bold">{assessmentResult.playerName}</strong>
                   </span>
                 )}
               </div>
@@ -145,7 +145,7 @@ export const PositionDeepDiveModal: React.FC<PositionDeepDiveModalProps> = ({
           {savedProfiles.length > 0 && onSelectProfile && (
             <div className="flex items-center gap-2 overflow-x-auto pb-1 sm:pb-0">
               <span className="text-[11px] font-bold text-slate-400 shrink-0 uppercase tracking-wider">
-                Mis Fichas:
+                {lang === 'en' ? 'My Profiles:' : lang === 'pt' ? 'Os Meus Perfis:' : 'Mis Fichas:'}
               </span>
               <div className="flex items-center gap-1.5">
                 {savedProfiles.map((prof) => (
@@ -173,7 +173,7 @@ export const PositionDeepDiveModal: React.FC<PositionDeepDiveModalProps> = ({
           {/* Quick Position Filter Pills */}
           <div className="flex items-center gap-1.5 overflow-x-auto py-1 sm:py-0">
             <span className="text-[11px] font-bold text-slate-400 shrink-0 uppercase tracking-wider hidden md:inline">
-              Ver Posición:
+              {lang === 'en' ? 'View Position:' : lang === 'pt' ? 'Ver Posição:' : 'Ver Posición:'}
             </span>
             {positionButtons.map((pos) => (
               <button
@@ -257,22 +257,30 @@ export const PositionDeepDiveModal: React.FC<PositionDeepDiveModalProps> = ({
                 <div>
                   <div className="flex items-center gap-2 text-volt font-bold text-xs uppercase tracking-wider font-mono-code">
                     <Zap className="w-4 h-4 text-volt" />
-                    Arsenal de Desequilibrio para {analysis.title}
+                    {lang === 'en' ? `Elite Dribbling Arsenal for ${analysis.title}` : lang === 'pt' ? `Arsenal de Fintas para ${analysis.title}` : `Arsenal de Desequilibrio para ${analysis.title}`}
                   </div>
                   <p className="text-xs text-slate-300 mt-1 max-w-2xl">
-                    Estos no son trucos de exhibición; son los recursos técnicos y regates con mayor tasa de éxito comprobada en el fútbol profesional para superar líneas, proteger posesión y generar ocasiones de gol desde este puesto.
+                    {lang === 'en'
+                      ? 'These are not showboating tricks; they are the high-efficiency technical resources with the highest proven success rate in pro football to break lines and generate scoring chances.'
+                      : lang === 'pt'
+                      ? 'Não são truques de exibição; são os recursos técnicos e fintas com maior taxa de sucesso comprovada no futebol profissional para superar linhas e criar golos.'
+                      : 'Estos no son trucos de exhibición; son los recursos técnicos y regates con mayor tasa de éxito comprobada en el fútbol profesional para superar líneas, proteger posesión y generar ocasiones de gol desde este puesto.'}
                   </p>
                 </div>
                 {onAskCoach && (
                   <button
                     onClick={() => {
                       onClose();
-                      onAskCoach(`¿Cómo puedo perfeccionar y entrenar los regates más eficaces para la posición de ${analysis.title}? En especial ${dribbles[0]?.name}`);
+                      onAskCoach(lang === 'en'
+                        ? `How can I master and train the most effective dribbles for the ${analysis.title} position? Especially ${dribbles[0]?.name}`
+                        : lang === 'pt'
+                        ? `Como posso aperfeiçoar e treinar os dribles mais eficazes para a posição de ${analysis.title}? Em especial ${dribbles[0]?.name}`
+                        : `¿Cómo puedo perfeccionar y entrenar los regates más eficaces para la posición de ${analysis.title}? En especial ${dribbles[0]?.name}`);
                     }}
                     className="px-4 py-2 rounded-xl bg-volt text-black font-black uppercase italic text-xs tracking-wider flex items-center gap-2 shrink-0 hover:bg-white transition-all cursor-pointer font-display"
                   >
                     <MessageSquare className="w-3.5 h-3.5" />
-                    <span>Consultar al Coach AI</span>
+                    <span>{lang === 'en' ? 'Ask AI Coach' : lang === 'pt' ? 'Perguntar ao Coach AI' : 'Consultar al Coach AI'}</span>
                   </button>
                 )}
               </div>
@@ -342,7 +350,11 @@ export const PositionDeepDiveModal: React.FC<PositionDeepDiveModalProps> = ({
                             <div className="p-4 rounded-xl bg-black/40 border border-white/10 space-y-1.5">
                               <div className="text-xs font-bold text-volt uppercase tracking-wider flex items-center gap-1.5 font-mono-code">
                                 <Target className="w-3.5 h-3.5 text-volt" />
-                                ¿Por qué es el regate más letal en esta posición?
+                                {lang === 'en'
+                                  ? 'Why is this the most lethal skill in this position?'
+                                  : lang === 'pt'
+                                  ? 'Por que é o drible mais letal nesta posição?'
+                                  : '¿Por qué es el regate más letal en esta posición?'}
                               </div>
                               <p className="text-xs sm:text-sm text-slate-200 leading-relaxed">
                                 {dribble.whyEffective}
@@ -353,7 +365,11 @@ export const PositionDeepDiveModal: React.FC<PositionDeepDiveModalProps> = ({
                             <div className="space-y-2.5">
                               <div className="text-xs font-bold text-slate-300 uppercase tracking-wider flex items-center gap-2 font-mono-code">
                                 <CheckCircle2 className="w-4 h-4 text-emerald-400" />
-                                Mecánica de Ejecución Paso a Paso:
+                                {lang === 'en'
+                                  ? 'Step-by-Step Technical Execution Mechanics:'
+                                  : lang === 'pt'
+                                  ? 'Mecânica de Execução Técnica Passo a Passo:'
+                                  : 'Mecánica de Ejecución Técnica Paso a Paso:'}
                               </div>
                               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                                 {dribble.stepByStep.map((step, idx) => (
@@ -377,7 +393,7 @@ export const PositionDeepDiveModal: React.FC<PositionDeepDiveModalProps> = ({
                               <div className="p-3.5 rounded-xl bg-emerald-500/5 border border-emerald-500/20 space-y-1">
                                 <div className="text-xs font-bold text-emerald-400 uppercase tracking-wider flex items-center gap-1.5 font-mono-code">
                                   <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
-                                  Momento Óptimo para Usarlo:
+                                  {lang === 'en' ? 'Optimal Moment to Execute:' : lang === 'pt' ? 'Momento Ideal para Executar:' : 'Momento Óptimo para Usarlo:'}
                                 </div>
                                 <p className="text-xs text-slate-300">
                                   {dribble.whenToUse}
@@ -387,7 +403,7 @@ export const PositionDeepDiveModal: React.FC<PositionDeepDiveModalProps> = ({
                               <div className="p-3.5 rounded-xl bg-rose-500/5 border border-rose-500/20 space-y-1">
                                 <div className="text-xs font-bold text-rose-400 uppercase tracking-wider flex items-center gap-1.5 font-mono-code">
                                   <AlertTriangle className="w-3.5 h-3.5 text-rose-400" />
-                                  Error Común a Evitar:
+                                  {lang === 'en' ? 'Common Mistake to Avoid:' : lang === 'pt' ? 'Erro Comum a Evitar:' : 'Error Común a Evitar:'}
                                 </div>
                                 <p className="text-xs text-slate-300">
                                   {dribble.mistakesToAvoid}
@@ -398,11 +414,11 @@ export const PositionDeepDiveModal: React.FC<PositionDeepDiveModalProps> = ({
                             {/* Pro Master footnote */}
                             <div className="flex items-center justify-between text-xs text-slate-400 pt-2 border-t border-white/5 flex-wrap gap-2">
                               <span>
-                                Maestros mundiales de este regate:{' '}
+                                {lang === 'en' ? 'World Masters of this skill:' : lang === 'pt' ? 'Mestres mundiais deste drible:' : 'Maestros mundiales de este regate:'}{' '}
                                 <strong className="text-white font-bold">{dribble.proMaster}</strong>
                               </span>
                               <span className="text-[11px] font-mono-code text-volt">
-                                Requisito clave: {dribble.keySkillRequired}
+                                {lang === 'en' ? 'Key attribute:' : lang === 'pt' ? 'Requisito-chave:' : 'Requisito clave:'} {dribble.keySkillRequired}
                               </span>
                             </div>
                           </motion.div>
@@ -422,10 +438,14 @@ export const PositionDeepDiveModal: React.FC<PositionDeepDiveModalProps> = ({
                 <div>
                   <div className="flex items-center gap-2 text-amber-400 font-bold text-xs uppercase tracking-wider font-mono-code">
                     <Award className="w-4 h-4 text-amber-400" />
-                    Estudio de Patrones Profesionales para {analysis.title}
+                    {lang === 'en' ? `Professional Benchmark Study for ${analysis.title}` : lang === 'pt' ? `Estudo de Padrões Profissionais para ${analysis.title}` : `Estudio de Patrones Profesionales para ${analysis.title}`}
                   </div>
                   <p className="text-xs text-slate-300 mt-1 max-w-2xl">
-                    Aprender de los mejores no significa imitarlos sin sentido. Desglosamos con precisión quirúrgica los hábitos visuales, gestos técnicos y decisiones tácticas que puedes incorporar de inmediato a tus propios partidos.
+                    {lang === 'en'
+                      ? 'Learning from elite stars is about identifying micro-habits. We break down the visual scanning, technical body shapes, and tactical decisions you can apply directly to your next match.'
+                      : lang === 'pt'
+                      ? 'Aprender com os melhores é compreender micro-hábitos. Analisamos os hábitos visuais, gestos técnicos e decisões táticas que podes incorporar de imediato nos teus jogos.'
+                      : 'Aprender de los mejores no significa imitarlos sin sentido. Desglosamos con precisión quirúrgica los hábitos visuales, gestos técnicos y decisiones tácticas que puedes incorporar de inmediato a tus propios partidos.'}
                   </p>
                 </div>
               </div>
@@ -465,7 +485,7 @@ export const PositionDeepDiveModal: React.FC<PositionDeepDiveModalProps> = ({
 
                       <div className="sm:text-right space-y-1">
                         <div className="text-[10px] font-mono-code text-slate-400 uppercase">
-                          Movimiento Característico:
+                          {lang === 'en' ? 'Signature Move:' : lang === 'pt' ? 'Movimento de Marca:' : 'Movimiento Característico:'}
                         </div>
                         <div className="text-xs font-bold text-slate-200">
                           {player.signatureMove}
@@ -478,7 +498,7 @@ export const PositionDeepDiveModal: React.FC<PositionDeepDiveModalProps> = ({
                       <Sparkles className="w-4 h-4 text-volt shrink-0 mt-0.5" />
                       <div>
                         <span className="text-xs font-bold text-volt uppercase tracking-wider font-mono-code">
-                          Superpoder Táctico a Analizar:
+                          {lang === 'en' ? 'Tactical Superpower to Emulate:' : lang === 'pt' ? 'Superpoder Tático a Analisar:' : 'Superpoder Táctico a Analizar:'}
                         </span>
                         <p className="text-xs text-slate-300 mt-0.5">
                           {player.tacticalSuperpower}
@@ -490,7 +510,7 @@ export const PositionDeepDiveModal: React.FC<PositionDeepDiveModalProps> = ({
                     <div className="space-y-3">
                       <div className="text-xs font-black uppercase italic tracking-wider text-white font-display flex items-center gap-2">
                         <Trophy className="w-4 h-4 text-amber-400" />
-                        <span>En Qué Lo Puedes Copiar (Guía Práctica):</span>
+                        <span>{lang === 'en' ? 'Key Patterns to Copy (Practical Guide):' : lang === 'pt' ? 'O Que Podes Copiar (Guia Prático):' : 'En Qué Lo Puedes Copiar (Guía Práctica):'}</span>
                       </div>
 
                       <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
@@ -513,7 +533,7 @@ export const PositionDeepDiveModal: React.FC<PositionDeepDiveModalProps> = ({
 
                             <div className="pt-2 border-t border-white/5">
                               <div className="text-[10px] font-bold text-volt uppercase font-mono-code">
-                                Cómo entrenarlo:
+                                {lang === 'en' ? 'How to train it:' : lang === 'pt' ? 'Como treinar:' : 'Cómo entrenarlo:'}
                               </div>
                               <p className="text-[11px] text-slate-400 mt-0.5">
                                 {item.howToPractice}
@@ -535,7 +555,7 @@ export const PositionDeepDiveModal: React.FC<PositionDeepDiveModalProps> = ({
               <div className="bg-slate-900/60 border border-white/10 rounded-2xl p-6 space-y-4">
                 <div className="flex items-center gap-2 text-sky-400 font-bold text-xs uppercase tracking-wider font-mono-code">
                   <Compass className="w-4 h-4 text-sky-400" />
-                  Identidad Táctica & Exigencias del Puesto
+                  {lang === 'en' ? 'Tactical Identity & Demands of the Role' : lang === 'pt' ? 'Identidade Tática & Exigências da Função' : 'Identidad Táctica & Exigencias del Puesto'}
                 </div>
                 <h3 className="text-2xl font-black italic text-white font-display uppercase">
                   {analysis.title}
@@ -547,7 +567,7 @@ export const PositionDeepDiveModal: React.FC<PositionDeepDiveModalProps> = ({
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
                   <div className="p-4 rounded-xl bg-black/40 border border-white/10 space-y-1">
                     <div className="text-xs font-bold text-volt uppercase font-mono-code">
-                      Misión Principal en el Campo:
+                      {lang === 'en' ? 'Core On-Field Mission:' : lang === 'pt' ? 'Missão Principal no Campo:' : 'Misión Principal en el Campo:'}
                     </div>
                     <p className="text-xs text-slate-300">
                       {analysis.coreMission}
@@ -556,7 +576,7 @@ export const PositionDeepDiveModal: React.FC<PositionDeepDiveModalProps> = ({
 
                   <div className="p-4 rounded-xl bg-black/40 border border-white/10 space-y-1">
                     <div className="text-xs font-bold text-sky-400 uppercase font-mono-code">
-                      Exigencia Física & Fisiológica:
+                      {lang === 'en' ? 'Physical & Physiological Demands:' : lang === 'pt' ? 'Exigência Física & Fisiológica:' : 'Exigencia Física & Fisiológica:'}
                     </div>
                     <p className="text-xs text-slate-300">
                       {analysis.physicalDemand}
@@ -569,7 +589,7 @@ export const PositionDeepDiveModal: React.FC<PositionDeepDiveModalProps> = ({
                 <div className="bg-slate-900/40 border border-white/5 rounded-2xl p-6 space-y-4">
                   <div className="flex items-center justify-between">
                     <h4 className="text-lg font-black italic text-white font-display uppercase">
-                      Compatibilidad de {assessmentResult.playerName}
+                      {lang === 'en' ? `Tactical Fit for ${assessmentResult.playerName}` : lang === 'pt' ? `Compatibilidade de ${assessmentResult.playerName}` : `Compatibilidad de ${assessmentResult.playerName}`}
                     </h4>
                     <span className="px-3 py-1 rounded bg-volt text-black font-black text-xs font-mono-code">
                       {assessmentResult.primaryPosition.matchPercentage}% MATCH
@@ -578,19 +598,19 @@ export const PositionDeepDiveModal: React.FC<PositionDeepDiveModalProps> = ({
 
                   <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-center">
                     <div className="p-3 rounded-xl bg-black/30 border border-white/5">
-                      <div className="text-[10px] text-slate-400 uppercase font-mono-code">Velocidad</div>
+                      <div className="text-[10px] text-slate-400 uppercase font-mono-code">{lang === 'en' ? 'Speed' : lang === 'pt' ? 'Velocidade' : 'Velocidad'}</div>
                       <div className="text-xl font-black text-white font-display">{assessmentResult.skills.speed}/100</div>
                     </div>
                     <div className="p-3 rounded-xl bg-black/30 border border-white/5">
-                      <div className="text-[10px] text-slate-400 uppercase font-mono-code">Técnica</div>
+                      <div className="text-[10px] text-slate-400 uppercase font-mono-code">{lang === 'en' ? 'Technique' : lang === 'pt' ? 'Técnica' : 'Técnica'}</div>
                       <div className="text-xl font-black text-white font-display">{assessmentResult.skills.technique}/100</div>
                     </div>
                     <div className="p-3 rounded-xl bg-black/30 border border-white/5">
-                      <div className="text-[10px] text-slate-400 uppercase font-mono-code">IQ Táctico</div>
+                      <div className="text-[10px] text-slate-400 uppercase font-mono-code">{lang === 'en' ? 'Tactical IQ' : lang === 'pt' ? 'IQ Tático' : 'IQ Táctico'}</div>
                       <div className="text-xl font-black text-white font-display">{assessmentResult.skills.tacticalIQ}/100</div>
                     </div>
                     <div className="p-3 rounded-xl bg-black/30 border border-white/5">
-                      <div className="text-[10px] text-slate-400 uppercase font-mono-code">Físico</div>
+                      <div className="text-[10px] text-slate-400 uppercase font-mono-code">{lang === 'en' ? 'Physical' : lang === 'pt' ? 'Físico' : 'Físico'}</div>
                       <div className="text-xl font-black text-white font-display">{assessmentResult.skills.physical}/100</div>
                     </div>
                   </div>
@@ -605,13 +625,17 @@ export const PositionDeepDiveModal: React.FC<PositionDeepDiveModalProps> = ({
               <div className="bg-slate-900/60 border border-white/10 rounded-2xl p-6 space-y-4">
                 <div className="flex items-center gap-2 text-emerald-400 font-bold text-xs uppercase tracking-wider font-mono-code">
                   <Dumbbell className="w-4 h-4 text-emerald-400" />
-                  Plan de Trabajo para Dominar estos Regates y Hábitos
+                  {lang === 'en' ? 'Training Plan to Master These Skills & Habits' : lang === 'pt' ? 'Plano de Treino para Dominar Estes Dribles e Hábitos' : 'Plan de Trabajo para Dominar estos Regates y Hábitos'}
                 </div>
                 <h3 className="text-xl font-black italic text-white font-display uppercase">
-                  Rutinas Prioritarias de Sesión
+                  {lang === 'en' ? 'Priority Session Routines' : lang === 'pt' ? 'Rotinas Prioritárias de Treino' : 'Rutinas Prioritarias de Sesión'}
                 </h3>
                 <p className="text-xs text-slate-300">
-                  Incorpora estos tres bloques específicos en tus próximos entrenamientos para automatizar los regates clave y la toma de decisiones:
+                  {lang === 'en'
+                    ? 'Incorporate these specific training blocks in your upcoming sessions to automate key skills and lightning-fast decision making:'
+                    : lang === 'pt'
+                    ? 'Incorpora estes três blocos de treino específicos nas tuas sessões para automatizar as fintas-chave e a tomada de decisão:'
+                    : 'Incorpora estos tres bloques específicos en tus próximos entrenamientos para automatizar los regates clave y la toma de decisiones:'}
                 </p>
 
                 <div className="space-y-3 pt-2">
@@ -637,7 +661,11 @@ export const PositionDeepDiveModal: React.FC<PositionDeepDiveModalProps> = ({
         {/* Modal Footer */}
         <div className="bg-slate-900/80 border-t border-white/10 px-5 py-4 sm:px-8 flex items-center justify-between shrink-0 flex-wrap gap-3">
           <div className="text-xs text-slate-400">
-            Metodología de análisis táctico basada en estándares <strong className="text-white">UEFA Pro</strong>
+            {lang === 'en'
+              ? 'Tactical analysis methodology grounded in UEFA Pro Standards'
+              : lang === 'pt'
+              ? 'Metodologia de análise tática baseada nos padrões UEFA Pro'
+              : 'Metodología de análisis táctico basada en estándares UEFA Pro'}
           </div>
 
           <div className="flex items-center gap-2">
@@ -645,12 +673,16 @@ export const PositionDeepDiveModal: React.FC<PositionDeepDiveModalProps> = ({
               <button
                 onClick={() => {
                   onClose();
-                  onAskCoach(`Analicemos a fondo la posición de ${analysis.title}: ¿Qué jugador me recomiendas estudiar para mejorar y qué regate debo priorizar?`);
+                  onAskCoach(lang === 'en'
+                    ? `Let's deep dive into the ${analysis.title} position: Which pro player should I study to elevate my game, and which key dribble should I prioritize?`
+                    : lang === 'pt'
+                    ? `Vamos analisar a fundo a posição de ${analysis.title}: Que jogador me recomendas estudar para evoluir e qual drible devo priorizar?`
+                    : `Analicemos a fondo la posición de ${analysis.title}: ¿Qué jugador me recomiendas estudiar para mejorar y qué regate debo priorizar?`);
                 }}
-                className="px-4 py-2 rounded-xl bg-volt-10 hover:bg-volt text-volt hover:text-black font-black uppercase italic text-xs tracking-wider border border-volt-30 flex items-center gap-2 transition-all cursor-pointer font-display"
+                className="px-4 py-2 rounded-xl bg-volt/10 hover:bg-volt text-volt hover:text-black font-black uppercase italic text-xs tracking-wider border border-volt/30 flex items-center gap-2 transition-all cursor-pointer font-display"
               >
                 <MessageSquare className="w-3.5 h-3.5" />
-                <span>Hablar con Coach AI</span>
+                <span>{lang === 'en' ? 'Chat with AI Coach' : lang === 'pt' ? 'Falar com o Coach AI' : 'Hablar con Coach AI'}</span>
               </button>
             )}
 
@@ -658,7 +690,7 @@ export const PositionDeepDiveModal: React.FC<PositionDeepDiveModalProps> = ({
               onClick={onClose}
               className="px-5 py-2 rounded-xl bg-white/10 hover:bg-white/20 text-white font-bold text-xs uppercase tracking-wider transition-colors cursor-pointer"
             >
-              Cerrar
+              {lang === 'en' ? 'Close' : lang === 'pt' ? 'Fechar' : 'Cerrar'}
             </button>
           </div>
         </div>

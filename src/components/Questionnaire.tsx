@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { ArrowRight, ArrowLeft, CheckCircle2, User, Footprints, Zap, Sparkles, ShieldCheck } from 'lucide-react';
-import { FOOTBALL_QUESTIONS } from '../data/questions';
+import { getLocalizedQuestions } from '../data/questions';
 import { AssessmentResult, AcademyStudent } from '../types';
 import { calculateAssessment } from '../utils/evaluator';
 import { useLanguage } from '../context/LanguageContext';
@@ -17,7 +17,7 @@ export const Questionnaire: React.FC<QuestionnaireProps> = ({
   onCancel,
   studentContext 
 }) => {
-  const { t } = useLanguage();
+  const { t, lang } = useLanguage();
   const [playerName, setPlayerName] = useState(studentContext ? studentContext.name : '');
   const [preferredFoot, setPreferredFoot] = useState<'Diestro' | 'Zurdo' | 'Ambidestro'>(
     studentContext ? studentContext.preferredFoot : 'Diestro'
@@ -32,19 +32,20 @@ export const Questionnaire: React.FC<QuestionnaireProps> = ({
     }
   }, [studentContext]);
 
-  const totalQuestions = FOOTBALL_QUESTIONS.length;
-  const currentQuestion = FOOTBALL_QUESTIONS[step - 1];
+  const questions = getLocalizedQuestions(lang);
+  const totalQuestions = questions.length;
+  const currentQuestion = questions[step - 1];
 
   const handleNext = () => {
     if (step === 0) {
       if (!playerName.trim()) {
-        setPlayerName('Jugador CoachStrike');
+        setPlayerName(lang === 'en' ? 'Strike AI Player' : lang === 'pt' ? 'Jogador Strike AI' : 'Jugador CoachStrike');
       }
       setStep(1);
     } else if (step < totalQuestions) {
       setStep(step + 1);
     } else {
-      const result = calculateAssessment(playerName, preferredFoot, answers);
+      const result = calculateAssessment(playerName, preferredFoot, answers, lang);
       onComplete(result);
     }
   };
@@ -79,10 +80,10 @@ export const Questionnaire: React.FC<QuestionnaireProps> = ({
         <div className="flex items-center justify-between text-xs sm:text-sm text-slate-400 mb-2 font-bold uppercase tracking-wider">
           <span className="flex items-center gap-1.5 text-volt font-mono-code">
             <Zap className="w-4 h-4 fill-black text-volt" />
-            <span>Diagnóstico de ADN</span>
+            <span>{lang === 'en' ? 'DNA Assessment' : lang === 'pt' ? 'Diagnóstico de ADN' : 'Diagnóstico de ADN'}</span>
           </span>
           <span className="font-mono-code text-volt font-bold">
-            {step === 0 ? 'Fase 00' : `${t.stepLabel} ${step}/${totalQuestions}`} ({progressPercentage}%)
+            {step === 0 ? (lang === 'en' ? 'Phase 00' : 'Fase 00') : `${t.stepLabel} ${step}/${totalQuestions}`} ({progressPercentage}%)
           </span>
         </div>
 
@@ -113,11 +114,17 @@ export const Questionnaire: React.FC<QuestionnaireProps> = ({
                 {studentContext ? (
                   <div className="flex items-center gap-2 p-2.5 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs font-bold">
                     <ShieldCheck className="w-4 h-4 text-emerald-400 shrink-0" />
-                    <span>Evaluando Alumno Cantera: #{studentContext.dorsal} {studentContext.name} ({studentContext.category})</span>
+                    <span>
+                      {lang === 'en'
+                        ? `Assessing Academy Student: #${studentContext.dorsal} ${studentContext.name} (${studentContext.category})`
+                        : lang === 'pt'
+                        ? `A avaliar Aluno da Academia: #${studentContext.dorsal} ${studentContext.name} (${studentContext.category})`
+                        : `Evaluando Alumno Cantera: #${studentContext.dorsal} ${studentContext.name} (${studentContext.category})`}
+                    </span>
                   </div>
                 ) : (
                   <span className="px-3 py-1 rounded-full bg-volt-10 text-volt text-xs font-bold font-mono-code uppercase tracking-widest border border-volt-30">
-                    PASO 1: REGISTRO DE FICHA
+                    {t.step1Badge}
                   </span>
                 )}
                 <h2 className="text-3xl font-black italic text-white font-display uppercase tracking-wide">
@@ -139,7 +146,7 @@ export const Questionnaire: React.FC<QuestionnaireProps> = ({
                     type="text"
                     value={playerName}
                     onChange={(e) => setPlayerName(e.target.value)}
-                    placeholder="Ej: Jude Bellingham, Leo, Dani..."
+                    placeholder={lang === 'en' ? 'E.g. Jude Bellingham, Leo, Marcus...' : lang === 'pt' ? 'Ex: Cristiano, Bernardo, Bruno...' : 'Ej: Jude Bellingham, Leo, Dani...'}
                     className="w-full bg-black/60 border border-white/10 focus:border-volt focus:ring-1 focus:ring-volt rounded-xl pl-12 pr-4 py-3.5 text-white placeholder-slate-600 outline-hidden text-sm font-semibold"
                   />
                 </div>

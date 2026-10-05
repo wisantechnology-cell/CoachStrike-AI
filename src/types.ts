@@ -149,11 +149,33 @@ export interface AcademyTask {
   drillId?: string;
 }
 
+export type AttendanceStatus = 'present' | 'late' | 'absent';
+
+export interface AttendanceRecord {
+  id: string;
+  date: string; // YYYY-MM-DD
+  status: AttendanceStatus;
+  timestamp: string;
+  notes?: string;
+}
+
+export interface ClubBrandConfig {
+  clubName: string;
+  clubBadgeUrl?: string;
+  badgePreset?: 'shield_gold' | 'shield_volt' | 'shield_blue' | 'shield_red' | 'shield_emerald' | 'custom';
+  primaryColor?: string;
+  clubMotto?: string;
+  directorName?: string;
+  directorTitle?: string;
+  federationCode?: string;
+  enableWhiteLabelPdf?: boolean;
+}
+
 export interface AcademyStudent {
   id: string;
   name: string;
   age: number;
-  category: 'Sub-12' | 'Sub-14' | 'Sub-16' | 'Sub-18' | 'Senior';
+  category: 'Sub-12' | 'Sub-14' | 'Sub-16' | 'Sub-18' | 'Reserva' | 'Primer Equipo' | 'Senior' | string;
   dorsal: number;
   preferredFoot: 'Diestro' | 'Zurdo' | 'Ambidestro';
   primaryPosition: PositionCategory;
@@ -164,7 +186,10 @@ export interface AcademyStudent {
   lastExamDate?: string;
   assessmentResultId?: string;
   tasks?: AcademyTask[];
+  attendance?: AttendanceRecord[];
   avatarUrl?: string;
+  pinCode?: string;
+  phoneOrParentContact?: string;
   createdAt: string;
 }
 

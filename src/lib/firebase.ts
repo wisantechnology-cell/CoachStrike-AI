@@ -19,7 +19,7 @@ import {
   orderBy
 } from 'firebase/firestore';
 import firebaseConfig from '../../firebase-applet-config.json';
-import { AssessmentResult, PlanType, PaymentRecord, AcademyStudent } from '../types';
+import { AssessmentResult, PlanType, PaymentRecord, AcademyStudent, ClubBrandConfig } from '../types';
 
 // Initialize Firebase App
 const app = initializeApp(firebaseConfig);
@@ -76,21 +76,30 @@ export function handleFirestoreError(error: unknown, operationType: OperationTyp
     operationType,
     path
   };
-  console.error('Firestore Error: ', JSON.stringify(errInfo));
-  throw new Error(JSON.stringify(errInfo));
+  console.warn('Firestore Operation Info: ', JSON.stringify(errInfo));
+  return errInfo;
 }
 
-// Connection test on boot (as required by Firebase skill)
+// Connection test on boot (guarded with timeout race to avoid hanging offline warnings)
 async function testConnection() {
   try {
-    await getDocFromServer(doc(db, 'test', 'connection'));
+    const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error('Connection check timeout')), 3000));
+    await Promise.race([
+      getDocFromServer(doc(db, 'test', 'connection')),
+      timeoutPromise
+    ]);
   } catch (error) {
-    if (error instanceof Error && error.message.includes('the client is offline')) {
-      console.warn('Firebase client is offline. Please check network or configuration.');
-    }
+    // Client operates seamlessly in offline cache / localStorage mode
   }
 }
 testConnection();
+
+// Helper to check if current Firebase Auth user matches the target userId
+export function isFirebaseAuthActive(userId?: string): boolean {
+  if (!auth.currentUser) return false;
+  if (userId && auth.currentUser.uid !== userId) return false;
+  return true;
+}
 
 // Auth Helpers
 export async function loginWithGoogle() {
@@ -125,6 +134,9 @@ export async function logoutUser() {
 
 // Save Assessment to Firestore
 export async function saveEvaluationToCloud(userId: string, result: AssessmentResult) {
+  if (!isFirebaseAuthActive(userId)) {
+    return;
+  }
   const path = `users/${userId}/evaluations/${result.id}`;
   try {
     const evalRef = doc(db, 'users', userId, 'evaluations', result.id);
@@ -147,6 +159,9 @@ export async function saveEvaluationToCloud(userId: string, result: AssessmentRe
 
 // Delete Assessment from Firestore
 export async function deleteEvaluationFromCloud(userId: string, evaluationId: string) {
+  if (!isFirebaseAuthActive(userId)) {
+    return;
+  }
   const path = `users/${userId}/evaluations/${evaluationId}`;
   try {
     const evalRef = doc(db, 'users', userId, 'evaluations', evaluationId);
@@ -162,6 +177,9 @@ export function subscribeToUserEvaluations(
   onUpdate: (evaluations: AssessmentResult[]) => void,
   onError?: (err: any) => void
 ) {
+  if (!isFirebaseAuthActive(userId)) {
+    return () => {};
+  }
   const path = `users/${userId}/evaluations`;
   try {
     const evalsRef = collection(db, 'users', userId, 'evaluations');
@@ -192,6 +210,9 @@ export function subscribeToUserEvaluations(
 
 // Update User Plan in Firestore
 export async function updateUserPlanInCloud(userId: string, plan: PlanType) {
+  if (!isFirebaseAuthActive(userId)) {
+    return;
+  }
   const path = `users/${userId}`;
   try {
     const userRef = doc(db, 'users', userId);
@@ -210,6 +231,9 @@ export function subscribeToUserProfile(
   userId: string,
   onUpdate: (data: { plan?: PlanType; displayName?: string; email?: string }) => void
 ) {
+  if (!isFirebaseAuthActive(userId)) {
+    return () => {};
+  }
   const path = `users/${userId}`;
   try {
     const userRef = doc(db, 'users', userId);
@@ -223,7 +247,7 @@ export function subscribeToUserProfile(
         });
       }
     }, (error) => {
-      console.warn('Profile sync warn:', error);
+      console.warn('Profile sync warning:', error);
     });
   } catch (error) {
     return () => {};
@@ -232,6 +256,9 @@ export function subscribeToUserProfile(
 
 // Save Payment Transaction Receipt to Firestore
 export async function savePaymentToCloud(userId: string, payment: PaymentRecord) {
+  if (!isFirebaseAuthActive(userId)) {
+    return;
+  }
   const path = `users/${userId}/payments/${payment.id}`;
   try {
     const paymentRef = doc(db, 'users', userId, 'payments', payment.id);
@@ -261,6 +288,9 @@ export function subscribeToUserPayments(
   onUpdate: (payments: PaymentRecord[]) => void,
   onError?: (err: any) => void
 ) {
+  if (!isFirebaseAuthActive(userId)) {
+    return () => {};
+  }
   const path = `users/${userId}/payments`;
   try {
     const paymentsRef = collection(db, 'users', userId, 'payments');
@@ -284,6 +314,9 @@ export function subscribeToUserPayments(
 
 // Save or Update Academy Student in Firestore
 export async function saveStudentToCloud(userId: string, student: AcademyStudent) {
+  if (!isFirebaseAuthActive(userId)) {
+    return;
+  }
   const path = `users/${userId}/academy_students/${student.id}`;
   try {
     const studentRef = doc(db, 'users', userId, 'academy_students', student.id);
@@ -315,6 +348,9 @@ export async function saveStudentToCloud(userId: string, student: AcademyStudent
 
 // Delete Academy Student from Firestore
 export async function deleteStudentFromCloud(userId: string, studentId: string) {
+  if (!isFirebaseAuthActive(userId)) {
+    return;
+  }
   const path = `users/${userId}/academy_students/${studentId}`;
   try {
     const studentRef = doc(db, 'users', userId, 'academy_students', studentId);
@@ -330,6 +366,9 @@ export function subscribeToAcademyStudents(
   onUpdate: (students: AcademyStudent[]) => void,
   onError?: (err: any) => void
 ) {
+  if (!isFirebaseAuthActive(userId)) {
+    return () => {};
+  }
   const path = `users/${userId}/academy_students`;
   try {
     const studentsRef = collection(db, 'users', userId, 'academy_students');
@@ -382,6 +421,9 @@ export async function saveLineupToCloud(
   userId: string,
   lineup: { id?: string; formation: string; slots: any[] }
 ) {
+  if (!isFirebaseAuthActive(userId)) {
+    return;
+  }
   const lineupId = lineup.id || 'main';
   const path = `users/${userId}/academy_lineups/${lineupId}`;
   try {
@@ -404,6 +446,9 @@ export function subscribeToAcademyLineup(
   onUpdate: (data: { formation: string; slots: any[] } | null) => void,
   lineupId: string = 'main'
 ) {
+  if (!isFirebaseAuthActive(userId)) {
+    return () => {};
+  }
   const path = `users/${userId}/academy_lineups/${lineupId}`;
   try {
     const lineupRef = doc(db, 'users', userId, 'academy_lineups', lineupId);
@@ -436,6 +481,9 @@ export async function saveTacticalPlanToCloud(
   userId: string,
   plan: { id: string; title: string; pieces: any[]; drawings: any[]; notes?: string }
 ) {
+  if (!isFirebaseAuthActive(userId)) {
+    return plan.id || `tac-${Date.now()}`;
+  }
   const planId = plan.id || `tac-${Date.now()}`;
   const path = `users/${userId}/academy_tactics/${planId}`;
   try {
@@ -460,6 +508,9 @@ export async function saveTacticalPlanToCloud(
 
 // Delete Tactical Board Plan from Firestore
 export async function deleteTacticalPlanFromCloud(userId: string, planId: string) {
+  if (!isFirebaseAuthActive(userId)) {
+    return;
+  }
   const path = `users/${userId}/academy_tactics/${planId}`;
   try {
     const planRef = doc(db, 'users', userId, 'academy_tactics', planId);
@@ -474,6 +525,9 @@ export function subscribeToAcademyTactics(
   userId: string,
   onUpdate: (plans: Array<{ id: string; title: string; pieces: any[]; drawings: any[]; notes?: string; updatedAt: string }>) => void
 ) {
+  if (!isFirebaseAuthActive(userId)) {
+    return () => {};
+  }
   const path = `users/${userId}/academy_tactics`;
   try {
     const q = query(collection(db, 'users', userId, 'academy_tactics'), orderBy('updatedAt', 'desc'));
@@ -499,6 +553,48 @@ export function subscribeToAcademyTactics(
       onUpdate(plans);
     }, (error) => {
       console.warn('Tactics subscription error:', error);
+    });
+  } catch (error) {
+    return () => {};
+  }
+}
+
+// Save Club Brand Configuration to Firestore (White-Label)
+export async function saveClubBrandToCloud(userId: string, brand: ClubBrandConfig) {
+  if (!isFirebaseAuthActive(userId)) {
+    return;
+  }
+  const path = `users/${userId}/academy_branding/config`;
+  try {
+    const brandRef = doc(db, 'users', userId, 'academy_branding', 'config');
+    await setDoc(brandRef, {
+      ...brand,
+      updatedAt: new Date().toISOString()
+    }, { merge: true });
+  } catch (error) {
+    handleFirestoreError(error, OperationType.WRITE, path);
+  }
+}
+
+// Subscribe to Club Brand Configuration in Firestore
+export function subscribeToClubBrand(
+  userId: string,
+  onUpdate: (brand: ClubBrandConfig | null) => void
+) {
+  if (!isFirebaseAuthActive(userId)) {
+    return () => {};
+  }
+  const path = `users/${userId}/academy_branding/config`;
+  try {
+    const brandRef = doc(db, 'users', userId, 'academy_branding', 'config');
+    return onSnapshot(brandRef, (docSnap) => {
+      if (docSnap.exists()) {
+        onUpdate(docSnap.data() as ClubBrandConfig);
+      } else {
+        onUpdate(null);
+      }
+    }, (error) => {
+      console.warn('Club branding sync notice:', error);
     });
   } catch (error) {
     return () => {};

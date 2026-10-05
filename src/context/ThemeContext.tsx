@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import { Language } from '../data/translations';
 
 export type ThemeBackground = 'obsidian' | 'turf' | 'cyber' | 'slate';
 export type AccentColor = 'volt' | 'blue' | 'lime' | 'orange' | 'red' | 'purple' | 'cyan' | 'emerald' | 'magenta';
@@ -100,6 +101,42 @@ export const ACCENT_PALETTE: Record<string, AccentConfig> = {
 
 export const DISPLAY_ACCENTS: AccentColor[] = ['volt', 'blue', 'lime', 'orange', 'red', 'purple'];
 
+export const LOCALIZED_ACCENT_NAMES: Record<Language, Record<AccentColor, { name: string; shortLabel: string }>> = {
+  en: {
+    volt: { name: 'Neon Yellow (Volt)', shortLabel: 'Volt Yellow' },
+    blue: { name: 'Electric Blue (#4E92F2)', shortLabel: 'Electric Blue' },
+    lime: { name: 'Neon Lime', shortLabel: 'Neon Lime' },
+    orange: { name: 'Flame Orange', shortLabel: 'Flame Orange' },
+    red: { name: 'Power Red', shortLabel: 'Power Red' },
+    purple: { name: 'Tactical Violet', shortLabel: 'Tactical Violet' },
+    cyan: { name: 'Electric Blue (#4E92F2)', shortLabel: 'Electric Blue' },
+    emerald: { name: 'Neon Lime', shortLabel: 'Neon Lime' },
+    magenta: { name: 'Power Red', shortLabel: 'Power Red' }
+  },
+  pt: {
+    volt: { name: 'Amarelo Neon (Volt)', shortLabel: 'Amarelo Volt' },
+    blue: { name: 'Azul Elétrico (#4E92F2)', shortLabel: 'Azul (4E92F2)' },
+    lime: { name: 'Verde Lima Neon', shortLabel: 'Verde Lima' },
+    orange: { name: 'Laranja Fogo', shortLabel: 'Laranja Fogo' },
+    red: { name: 'Vermelho Intenso', shortLabel: 'Vermelho' },
+    purple: { name: 'Violeta Tático', shortLabel: 'Violeta' },
+    cyan: { name: 'Azul Elétrico (#4E92F2)', shortLabel: 'Azul (4E92F2)' },
+    emerald: { name: 'Verde Lima Neon', shortLabel: 'Verde Lima' },
+    magenta: { name: 'Vermelho Intenso', shortLabel: 'Vermelho' }
+  },
+  es: {
+    volt: { name: 'Amarillo Neón (Volt)', shortLabel: 'Amarillo Volt' },
+    blue: { name: 'Azul Eléctrico (#4E92F2)', shortLabel: 'Azul (4E92F2)' },
+    lime: { name: 'Verde Limón (Neon Lime)', shortLabel: 'Verde Limón' },
+    orange: { name: 'Naranja Fuego (Flame Orange)', shortLabel: 'Naranja Fuego' },
+    red: { name: 'Rojo Intenso (Power Red)', shortLabel: 'Rojo' },
+    purple: { name: 'Púrpura Táctico (Tactical Violet)', shortLabel: 'Púrpura' },
+    cyan: { name: 'Azul Eléctrico (#4E92F2)', shortLabel: 'Azul (4E92F2)' },
+    emerald: { name: 'Verde Limón (Neon Lime)', shortLabel: 'Verde Limón' },
+    magenta: { name: 'Rojo Intenso (Power Red)', shortLabel: 'Rojo' }
+  }
+};
+
 export const THEME_BACKGROUNDS: Record<ThemeBackground, { id: ThemeBackground; name: string; bgClass: string; hex: string }> = {
   obsidian: {
     id: 'obsidian',
@@ -126,6 +163,37 @@ export const THEME_BACKGROUNDS: Record<ThemeBackground, { id: ThemeBackground; n
     hex: '#0f172a'
   }
 };
+
+export const LOCALIZED_THEME_NAMES: Record<Language, Record<ThemeBackground, string>> = {
+  en: {
+    obsidian: 'Night Pitch (Obsidian)',
+    turf: 'Tactical Turf (Dark Green)',
+    cyber: 'Cyber Night Blue',
+    slate: 'Classic Slate'
+  },
+  pt: {
+    obsidian: 'Preto Noite (Obsidian)',
+    turf: 'Relvado Tático (Verde Escuro)',
+    cyber: 'Azul Ciber Noite',
+    slate: 'Cinza Ardósia Clássico'
+  },
+  es: {
+    obsidian: 'Negro Noche (Obsidian)',
+    turf: 'Verde Césped Táctico (Tactical Turf)',
+    cyber: 'Azul Noche Ciber (Cyber Night)',
+    slate: 'Gris Pizarra (Classic Slate)'
+  }
+};
+
+export function getLocalizedAccentLabel(accentId: AccentColor, lang: Language = 'en'): { name: string; shortLabel: string } {
+  const langTable = LOCALIZED_ACCENT_NAMES[lang] || LOCALIZED_ACCENT_NAMES.en;
+  return langTable[accentId] || langTable.blue;
+}
+
+export function getLocalizedThemeName(themeId: ThemeBackground, lang: Language = 'en'): string {
+  const langTable = LOCALIZED_THEME_NAMES[lang] || LOCALIZED_THEME_NAMES.en;
+  return langTable[themeId] || langTable.obsidian;
+}
 
 interface ThemeContextType {
   themeBg: ThemeBackground;

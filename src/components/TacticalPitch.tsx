@@ -1,5 +1,6 @@
 import React from 'react';
 import { TacticalZone } from '../types';
+import { useLanguage } from '../context/LanguageContext';
 
 interface TacticalPitchProps {
   zones: TacticalZone[];
@@ -7,15 +8,25 @@ interface TacticalPitchProps {
 }
 
 export const TacticalPitch: React.FC<TacticalPitchProps> = ({ zones, positionTitle }) => {
+  const { lang } = useLanguage();
+
   return (
     <div className="bg-slate-900 border border-slate-800 rounded-2xl p-4 sm:p-5 relative overflow-hidden">
       <div className="flex items-center justify-between mb-3">
         <h3 className="text-base font-bold text-white font-['Barlow_Semi_Condensed'] uppercase tracking-wider flex items-center gap-2">
           <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-          Mapa de Posicionamiento & Cobertura Táctica
+          {lang === 'en'
+            ? 'Pitch Positioning & Tactical Coverage Map'
+            : lang === 'pt'
+            ? 'Mapa de Posicionamento & Cobertura Tática'
+            : 'Mapa de Posicionamiento & Cobertura Táctica'}
         </h3>
         <span className="text-xs text-slate-400 bg-slate-800 px-2.5 py-1 rounded-full border border-slate-700">
-          Vista Terreno Completo
+          {lang === 'en'
+            ? 'Full Pitch View'
+            : lang === 'pt'
+            ? 'Vista Campo Completo'
+            : 'Vista Terreno Completo'}
         </span>
       </div>
 
@@ -57,7 +68,13 @@ export const TacticalPitch: React.FC<TacticalPitchProps> = ({ zones, positionTit
             </marker>
           </defs>
           <line x1="420" y1="35" x2="580" y2="35" stroke="#10b981" strokeWidth="2.5" markerEnd="url(#arrow)" strokeDasharray="6 3" />
-          <text x="500" y="28" fill="#10b981" fontSize="12" fontWeight="bold" textAnchor="middle">DIRECCIÓN DE ATAQUE →</text>
+          <text x="500" y="28" fill="#10b981" fontSize="12" fontWeight="bold" textAnchor="middle">
+            {lang === 'en'
+              ? 'ATTACK DIRECTION →'
+              : lang === 'pt'
+              ? 'DIREÇÃO DE ATAQUE →'
+              : 'DIRECCIÓN DE ATAQUE →'}
+          </text>
         </svg>
 
         {/* Heatmaps & Tactical Zones Overlays */}

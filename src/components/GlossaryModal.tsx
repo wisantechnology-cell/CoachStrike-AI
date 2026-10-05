@@ -17,6 +17,15 @@ export const GlossaryModal: React.FC<GlossaryModalProps> = ({ isOpen, onClose })
 
   if (!isOpen) return null;
 
+  const categoryLabels: Record<string, { en: string; es: string; pt: string }> = {
+    'Todas': { en: 'All Terms', es: 'Todas', pt: 'Todas' },
+    'Táctica': { en: 'Tactics', es: 'Táctica', pt: 'Tática' },
+    'Posición': { en: 'Position', es: 'Posición', pt: 'Posição' },
+    'Ataque': { en: 'Attacking', es: 'Ataque', pt: 'Ataque' },
+    'Defensa': { en: 'Defending', es: 'Defensa', pt: 'Defesa' },
+    'Físico': { en: 'Physical', es: 'Físico', pt: 'Físico' }
+  };
+
   const categories = ['Todas', 'Táctica', 'Posición', 'Ataque', 'Defensa', 'Físico'];
 
   const filteredTerms = footballTerms.filter((term) => {
@@ -82,7 +91,7 @@ export const GlossaryModal: React.FC<GlossaryModalProps> = ({ isOpen, onClose })
                     : 'bg-black/40 text-slate-400 border border-white/10 hover:text-white'
                 }`}
               >
-                {cat}
+                {categoryLabels[cat]?.[lang] || cat}
               </button>
             ))}
           </div>
@@ -107,7 +116,7 @@ export const GlossaryModal: React.FC<GlossaryModalProps> = ({ isOpen, onClose })
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
                     <span className="text-[10px] font-mono-code uppercase px-2 py-0.5 rounded bg-volt text-black font-black">
-                      {term.category}
+                      {categoryLabels[term.category]?.[lang] || term.category}
                     </span>
                     <ChevronRight className="w-4 h-4 text-slate-500 group-hover:text-volt transition-colors" />
                   </div>
@@ -121,7 +130,7 @@ export const GlossaryModal: React.FC<GlossaryModalProps> = ({ isOpen, onClose })
 
                 <div className="pt-2 border-t border-white/5 text-[10px] text-volt font-mono-code font-bold flex items-center gap-1">
                   <Info className="w-3 h-3" />
-                  <span>Haz clic para ver análisis & ejemplo práctico</span>
+                  <span>{lang === 'en' ? 'Click to view breakdown & practical drill' : lang === 'pt' ? 'Clique para ver análise & exemplo prático' : 'Haz clic para ver análisis & ejemplo práctico'}</span>
                 </div>
               </motion.div>
             );
@@ -141,7 +150,7 @@ export const GlossaryModal: React.FC<GlossaryModalProps> = ({ isOpen, onClose })
                 <div className="flex items-start justify-between gap-4 border-b border-white/10 pb-4">
                   <div>
                     <span className="text-[10px] font-mono-code uppercase px-2.5 py-1 rounded bg-volt text-black font-black">
-                      {activeTerm.category}
+                      {categoryLabels[activeTerm.category]?.[lang] || activeTerm.category}
                     </span>
                     <h3 className="text-3xl font-black italic text-white font-display uppercase tracking-wide mt-2">
                       {activeTerm.title[lang] || activeTerm.title.es}
@@ -182,7 +191,7 @@ export const GlossaryModal: React.FC<GlossaryModalProps> = ({ isOpen, onClose })
                     onClick={() => setActiveTerm(null)}
                     className="px-5 py-2.5 rounded-xl bg-volt text-black font-black uppercase italic text-xs tracking-wider hover:bg-white transition-all cursor-pointer"
                   >
-                    Volver al Glosario
+                    {lang === 'en' ? 'Back to Glossary' : lang === 'pt' ? 'Voltar ao Glossário' : 'Volver al Glosario'}
                   </button>
                 </div>
               </motion.div>

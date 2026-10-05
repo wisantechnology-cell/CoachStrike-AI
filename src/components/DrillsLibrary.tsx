@@ -1,21 +1,36 @@
 import React, { useState } from 'react';
 import { motion } from 'motion/react';
 import { BookOpen, Search, Filter, Clock, Dumbbell, Award, Target, CheckCircle2, X } from 'lucide-react';
-import { DRILLS_DATABASE } from '../data/drills';
+import { getLocalizedDrills } from '../data/drills';
 import { Drill } from '../types';
 import { useLanguage } from '../context/LanguageContext';
 import { TacticalTerm } from './TacticalTerm';
 
 export const DrillsLibrary: React.FC = () => {
-  const { t } = useLanguage();
+  const { t, lang } = useLanguage();
   const [selectedCategory, setSelectedCategory] = useState<string>('Todas');
   const [searchQuery, setSearchQuery] = useState('');
   const [activeDrillModal, setActiveDrillModal] = useState<Drill | null>(null);
 
   const categories = ['Todas', 'Técnica', 'Físico', 'Finalización', 'Táctica', 'Visión'];
 
-  const filteredDrills = DRILLS_DATABASE.filter((drill) => {
-    const matchesCategory = selectedCategory === 'Todas' || drill.category === selectedCategory;
+  const categoryLabels: Record<string, { en: string; es: string; pt: string }> = {
+    'Todas': { en: 'All Categories', es: 'Todas', pt: 'Todas' },
+    'Técnica': { en: 'Technique', es: 'Técnica', pt: 'Técnica' },
+    'Físico': { en: 'Physical', es: 'Físico', pt: 'Físico' },
+    'Finalización': { en: 'Finishing', es: 'Finalización', pt: 'Finalização' },
+    'Táctica': { en: 'Tactics', es: 'Táctica', pt: 'Tática' },
+    'Visión': { en: 'Vision', es: 'Visión', pt: 'Visão' }
+  };
+
+  const localizedDrills = getLocalizedDrills(lang);
+
+  const filteredDrills = localizedDrills.filter((drill) => {
+    // Check original or mapped category
+    const matchesCategory = 
+      selectedCategory === 'Todas' || 
+      drill.category === selectedCategory ||
+      drill.category === categoryLabels[selectedCategory]?.[lang];
     const matchesSearch =
       drill.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
       drill.description.toLowerCase().includes(searchQuery.toLowerCase());
@@ -56,19 +71,22 @@ export const DrillsLibrary: React.FC = () => {
 
       {/* Category Tabs */}
       <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-none border-b border-white/10">
-        {categories.map((cat) => (
-          <button
-            key={cat}
-            onClick={() => setSelectedCategory(cat)}
-            className={`px-4 py-2 rounded-xl text-xs font-black italic uppercase tracking-wider transition-all shrink-0 cursor-pointer ${
-              selectedCategory === cat
-                ? 'bg-volt text-black shadow-md shadow-volt/20 font-display'
-                : 'bg-black/40 text-slate-400 border border-white/10 hover:text-white'
-            }`}
-          >
-            {cat === 'Todas' ? t.allCategories : cat}
-          </button>
-        ))}
+        {categories.map((cat) => {
+          const label = categoryLabels[cat]?.[lang] || cat;
+          return (
+            <button
+              key={cat}
+              onClick={() => setSelectedCategory(cat)}
+              className={`px-4 py-2 rounded-xl text-xs font-black italic uppercase tracking-wider transition-all shrink-0 cursor-pointer ${
+                selectedCategory === cat
+                  ? 'bg-volt text-black shadow-md shadow-volt/20 font-display'
+                  : 'bg-black/40 text-slate-400 border border-white/10 hover:text-white'
+              }`}
+            >
+              {label}
+            </button>
+          );
+        })}
       </div>
 
       {/* Drills Grid */}
@@ -101,8 +119,8 @@ export const DrillsLibrary: React.FC = () => {
 
             <div className="space-y-3 pt-3 border-t border-white/10">
               <div className="flex items-center justify-between text-[11px] text-slate-400 font-mono-code">
-                <span>Dificultad: <strong className="text-volt">{drill.difficulty}</strong></span>
-                <span>{drill.sets} x {drill.reps}</span>
+                <span>{lang === 'en' ? 'Difficulty:' : lang === 'pt' ? 'Dificuldade:' : 'Dificultad:'} <strong className="text-volt">{drill.difficulty}</strong></span>
+                <span>{drill.sets} • {drill.reps}</span>
               </div>
 
               <button
@@ -129,7 +147,7 @@ export const DrillsLibrary: React.FC = () => {
                 <span className="px-2.5 py-0.5 rounded bg-volt text-black font-black text-[10px] font-mono-code uppercase">
                   {activeDrillModal.category} • {activeDrillModal.difficulty}
                 </span>
-                <h3 className="text-3xl font-black italic text-white font-display uppercase tracking-wide mt-2">
+                <h3 className="text-2xl sm:text-3xl font-black italic text-white font-display uppercase tracking-wide mt-2">
                   {activeDrillModal.title}
                 </h3>
               </div>
@@ -141,13 +159,13 @@ export const DrillsLibrary: React.FC = () => {
               </button>
             </div>
 
-            <p className="text-xs text-slate-300 leading-relaxed font-medium">
+            <p className="text-xs sm:text-sm text-slate-300 leading-relaxed font-medium">
               {activeDrillModal.description}
             </p>
 
             <div className="space-y-2">
               <h4 className="text-xs font-bold text-volt uppercase tracking-wider font-mono-code">
-                Pasos de Ejecución UEFA:
+                {lang === 'en' ? 'UEFA Pro Execution Steps:' : lang === 'pt' ? 'Passos de Execução UEFA Pro:' : 'Pasos de Ejecución UEFA Pro:'}
               </h4>
               <ol className="space-y-2 text-xs text-slate-300">
                 {activeDrillModal.steps.map((step, idx) => (
@@ -161,9 +179,9 @@ export const DrillsLibrary: React.FC = () => {
               </ol>
             </div>
 
-            <div className="p-4 rounded-xl bg-volt-10 border border-volt-30 text-xs space-y-1">
+            <div className="p-4 rounded-xl bg-volt/10 border border-volt/30 text-xs space-y-1">
               <span className="text-volt font-bold uppercase tracking-wider text-[10px] font-mono-code block">
-                💡 Consejo del Director Técnico:
+                💡 {lang === 'en' ? 'Head Coach Pro Tip:' : lang === 'pt' ? 'Conselho do Diretor Técnico:' : 'Consejo del Director Técnico:'}
               </span>
               <p className="text-slate-200 italic font-medium">
                 "{activeDrillModal.proTip}"

@@ -3,6 +3,7 @@ export type Language = 'es' | 'en' | 'pt';
 export interface Translations {
   // Navigation
   navBrand: string;
+  navHome: string;
   navTest: string;
   navTactics: string;
   navDrills: string;
@@ -28,10 +29,13 @@ export interface Translations {
   heroStat2Lbl: string;
   heroStat3Val: string;
   heroStat3Lbl: string;
+  heroStep1Tag: string;
   heroFeature1Title: string;
   heroFeature1Desc: string;
+  heroStep2Tag: string;
   heroFeature2Title: string;
   heroFeature2Desc: string;
+  heroStep3Tag: string;
   heroFeature3Title: string;
   heroFeature3Desc: string;
 
@@ -41,6 +45,7 @@ export interface Translations {
   prevQuestion: string;
   nextQuestion: string;
   finishTest: string;
+  step1Badge: string;
   namePromptTitle: string;
   namePromptSub: string;
   nameLabel: string;
@@ -115,6 +120,7 @@ export interface Translations {
   languageSectionTitle: string;
   themeSectionTitle: string;
   accentSectionTitle: string;
+  accentSubtitle: string;
   resetDefaults: string;
   close: string;
 }
@@ -122,6 +128,7 @@ export interface Translations {
 export const translations: Record<Language, Translations> = {
   es: {
     navBrand: 'COACHSTRIKE AI',
+    navHome: 'Inicio',
     navTest: 'Evaluación ADN',
     navTactics: 'Pizarra Táctica',
     navDrills: 'Biblioteca Ejercicios',
@@ -146,10 +153,13 @@ export const translations: Record<Language, Translations> = {
     heroStat2Lbl: 'Atributos Medidos',
     heroStat3Val: 'UEFA Pro',
     heroStat3Lbl: 'Algoritmo Táctico',
+    heroStep1Tag: 'PASO 01',
     heroFeature1Title: 'Análisis Multidimensional',
     heroFeature1Desc: 'Evaluamos toma de decisiones bajo presión, perfilación corporal y lectura de juego.',
+    heroStep2Tag: 'PASO 02',
     heroFeature2Title: 'Radar de Habilidades Elite',
     heroFeature2Desc: 'Genera una gráfica completa comparativa contra estándares del fútbol europeo.',
+    heroStep3Tag: 'PASO 03',
     heroFeature3Title: 'Asistente Táctico AI 24/7',
     heroFeature3Desc: 'Resuelve tus dudas sobre formaciones, bloques defensivos y movimientos sin balón.',
 
@@ -158,6 +168,7 @@ export const translations: Record<Language, Translations> = {
     prevQuestion: 'Anterior',
     nextQuestion: 'Siguiente',
     finishTest: 'Generar Ficha Scouting',
+    step1Badge: 'PASO 1: REGISTRO DE FICHA',
     namePromptTitle: '¡Bienvenido al Test de ADN Futbolístico!',
     namePromptSub: 'Para personalizar tu informe scouting y recomendaciones del Coach AI, ingresa tus datos básicos:',
     nameLabel: 'Tu Nombre / Nombre de Jugador:',
@@ -225,11 +236,13 @@ export const translations: Record<Language, Translations> = {
     languageSectionTitle: 'Idioma de la Aplicación',
     themeSectionTitle: 'Tema de Fondo',
     accentSectionTitle: 'Color Neón de Acento (Resaltados y Botones)',
+    accentSubtitle: 'Cambia el color de los textos destacados, bordes, medidores e indicadores neón en toda la aplicación:',
     resetDefaults: 'Restaurar Valores por Defecto',
     close: 'Cerrar'
   },
   en: {
     navBrand: 'COACHSTRIKE AI',
+    navHome: 'Home',
     navTest: 'DNA Assessment',
     navTactics: 'Tactical Board',
     navDrills: 'Drills Library',
@@ -254,10 +267,13 @@ export const translations: Record<Language, Translations> = {
     heroStat2Lbl: 'Measured Attributes',
     heroStat3Val: 'UEFA Pro',
     heroStat3Lbl: 'Tactical Engine',
+    heroStep1Tag: 'STEP 01',
     heroFeature1Title: 'Multidimensional Analysis',
     heroFeature1Desc: 'We evaluate decision-making under pressure, body orientation, and game reading.',
+    heroStep2Tag: 'STEP 02',
     heroFeature2Title: 'Elite Skills Radar',
     heroFeature2Desc: 'Generates a full radar chart comparing your profile with top European football standards.',
+    heroStep3Tag: 'STEP 03',
     heroFeature3Title: '24/7 AI Tactical Assistant',
     heroFeature3Desc: 'Answers all your questions regarding formations, defensive blocks, and off-the-ball runs.',
 
@@ -266,6 +282,7 @@ export const translations: Record<Language, Translations> = {
     prevQuestion: 'Previous',
     nextQuestion: 'Next',
     finishTest: 'Generate Scouting Card',
+    step1Badge: 'STEP 1: PLAYER PROFILE',
     namePromptTitle: 'Welcome to Football DNA Assessment!',
     namePromptSub: 'Enter your basic details to customize your scouting report and AI Coach recommendations:',
     nameLabel: 'Your Name / Player Name:',
@@ -333,11 +350,13 @@ export const translations: Record<Language, Translations> = {
     languageSectionTitle: 'Application Language',
     themeSectionTitle: 'Background Theme',
     accentSectionTitle: 'Accent Neon Color (Highlights & Buttons)',
+    accentSubtitle: 'Change neon accent colors for highlighted text, borders, skill meters, and buttons across the entire app:',
     resetDefaults: 'Reset to Defaults',
     close: 'Close'
   },
   pt: {
     navBrand: 'COACHSTRIKE AI',
+    navHome: 'Início',
     navTest: 'Avaliação de ADN',
     navTactics: 'Prancheta Tática',
     navDrills: 'Biblioteca de Exercícios',
@@ -362,10 +381,13 @@ export const translations: Record<Language, Translations> = {
     heroStat2Lbl: 'Atributos Avaliados',
     heroStat3Val: 'UEFA Pro',
     heroStat3Lbl: 'Algoritmo Tático',
+    heroStep1Tag: 'PASSO 01',
     heroFeature1Title: 'Análise Multidimensional',
     heroFeature1Desc: 'Avaliamos tomada de decisão sob pressão, perfilamento corporal e leitura de jogo.',
+    heroStep2Tag: 'PASSO 02',
     heroFeature2Title: 'Radar de Habilidades Elite',
     heroFeature2Desc: 'Gera um gráfico comparativo completo com os padrões do futebol europeu.',
+    heroStep3Tag: 'PASSO 03',
     heroFeature3Title: 'Assistente Tático AI 24/7',
     heroFeature3Desc: 'Tire dúvidas sobre formações, blocos defensivos e movimentações sem bola.',
 
@@ -374,6 +396,7 @@ export const translations: Record<Language, Translations> = {
     prevQuestion: 'Anterior',
     nextQuestion: 'Próxima',
     finishTest: 'Gerar Ficha de Scouting',
+    step1Badge: 'PASSO 1: REGISTO DE FICHA',
     namePromptTitle: 'Bem-vindo ao Teste de ADN do Futebol!',
     namePromptSub: 'Insira os seus dados básicos para personalizar o seu relatório de scouting e recomendações:',
     nameLabel: 'Seu Nome / Nome de Jogador:',
@@ -406,7 +429,7 @@ export const translations: Record<Language, Translations> = {
     dutyCardTitle: 'Ficha da Posição Tática',
     roleLabel: 'Função',
 
-    drillsTag: 'PLAYBOOK TÁTICO E METODOLOGIA',
+    drillsTag: 'PLAYBOOK TÁCTICO E METODOLOGÍA',
     drillsTitle: 'Biblioteca de Exercícios',
     drillsSubtitle: 'Rotinas criadas para aperfeiçoar técnica, velocidade de reação e tomada de decisão.',
     searchDrillPlaceholder: 'Buscar exercício ou qualidade...',
@@ -441,6 +464,7 @@ export const translations: Record<Language, Translations> = {
     languageSectionTitle: 'Idioma da Aplicação',
     themeSectionTitle: 'Tema de Fundo',
     accentSectionTitle: 'Cor de Destaque Neón (Texto e Botões)',
+    accentSubtitle: 'Altere a cor de destaque néon para textos, bordas, medidores e botões em toda a aplicação:',
     resetDefaults: 'Restaurar Padrões',
     close: 'Fechar'
   }

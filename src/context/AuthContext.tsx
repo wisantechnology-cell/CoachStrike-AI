@@ -41,7 +41,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   });
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
-  const [plan, setPlanState] = useState<PlanType>('free');
+  const [plan, setPlanState] = useState<PlanType>(() => {
+    try {
+      const stored = localStorage.getItem('coachstrike_plan');
+      if (stored === 'pro' || stored === 'academy' || stored === 'academy_basic' || stored === 'academy_elite') {
+        return stored as PlanType;
+      }
+    } catch {}
+    return 'free';
+  });
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
@@ -57,13 +65,25 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           if (stored) {
             setUser(JSON.parse(stored));
           } else {
-            setUser(null);
-            setPlanState('free');
-            localStorage.removeItem('coachstrike_plan');
+            // Check if there is an active paid plan in localStorage
+            const localPlan = localStorage.getItem('coachstrike_plan');
+            if (localPlan === 'pro' || localPlan === 'academy' || localPlan === 'academy_basic' || localPlan === 'academy_elite') {
+              const autoMember: CustomUserProfile = {
+                uid: 'usr_local_member',
+                displayName: 'Miembro VIP Strike AI',
+                email: 'member@coachstrike.ai',
+                photoURL: null,
+                role: 'coach',
+                isCustomProfile: true
+              };
+              setUser(autoMember);
+              localStorage.setItem('coachstrike_custom_user', JSON.stringify(autoMember));
+            } else {
+              setUser(null);
+            }
           }
         } catch {
           setUser(null);
-          setPlanState('free');
         }
       }
       setLoading(false);
@@ -79,10 +99,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   // Sync plan with cloud when user is logged in
   useEffect(() => {
     if (!user) {
-      setPlanState('free');
-      try {
-        localStorage.removeItem('coachstrike_plan');
-      } catch {}
       return;
     }
 
@@ -91,19 +107,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setPlanState(profile.plan);
         try {
           localStorage.setItem('coachstrike_plan', profile.plan);
+          localStorage.setItem(`coachstrike_plan_${user.uid}`, profile.plan);
         } catch {}
       } else {
-        // If user document has no plan, check local storage for this specific user
+        // If cloud profile has no plan, check local storage
         try {
-          const cached = localStorage.getItem(`coachstrike_plan_${user.uid}`);
+          const cached = localStorage.getItem(`coachstrike_plan_${user.uid}`) || localStorage.getItem('coachstrike_plan');
           if (cached === 'pro' || cached === 'academy' || cached === 'academy_basic' || cached === 'academy_elite') {
             setPlanState(cached as PlanType);
-          } else {
-            setPlanState('free');
           }
-        } catch {
-          setPlanState('free');
-        }
+        } catch {}
       }
     });
     return () => {
@@ -112,21 +125,38 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, [user]);
 
   const updatePlan = async (newPlan: PlanType) => {
-    if (!user) {
-      setPlanState('free');
-      return;
-    }
-
     setPlanState(newPlan);
     try {
       localStorage.setItem('coachstrike_plan', newPlan);
-      localStorage.setItem(`coachstrike_plan_${user.uid}`, newPlan);
     } catch {}
 
-    try {
-      await updateUserPlanInCloud(user.uid, newPlan);
-    } catch (err) {
-      console.error('Failed to sync plan to cloud:', err);
+    let activeUser = user;
+    if (!activeUser && newPlan !== 'free') {
+      const memberProfile: CustomUserProfile = {
+        uid: `usr_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
+        displayName: 'Miembro Strike AI',
+        email: 'member@coachstrike.ai',
+        photoURL: null,
+        role: 'coach',
+        isCustomProfile: true
+      };
+      setUser(memberProfile);
+      activeUser = memberProfile;
+      try {
+        localStorage.setItem('coachstrike_custom_user', JSON.stringify(memberProfile));
+      } catch {}
+    }
+
+    if (activeUser) {
+      try {
+        localStorage.setItem(`coachstrike_plan_${activeUser.uid}`, newPlan);
+      } catch {}
+
+      try {
+        await updateUserPlanInCloud(activeUser.uid, newPlan);
+      } catch (err) {
+        console.error('Failed to sync plan to cloud:', err);
+      }
     }
   };
 
@@ -180,11 +210,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  // Strictly require authenticated user for paid plans
-  const effectivePlan: PlanType = user ? plan : 'free';
-  const isPro = Boolean(user && (effectivePlan === 'pro' || effectivePlan === 'academy' || effectivePlan === 'academy_basic' || effectivePlan === 'academy_elite'));
-  const isAcademy = Boolean(user && (effectivePlan === 'academy' || effectivePlan === 'academy_basic' || effectivePlan === 'academy_elite'));
-  const isAcademyElite = Boolean(user && effectivePlan === 'academy_elite');
+  const effectivePlan: PlanType = plan;
+  const isPro = Boolean(effectivePlan === 'pro' || effectivePlan === 'academy' || effectivePlan === 'academy_basic' || effectivePlan === 'academy_elite');
+  const isAcademy = Boolean(effectivePlan === 'academy' || effectivePlan === 'academy_basic' || effectivePlan === 'academy_elite');
+  const isAcademyElite = Boolean(effectivePlan === 'academy_elite');
 
   return (
     <AuthContext.Provider
@@ -194,7 +223,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         login,
         loginAsGuestProfile,
         logout,
-        isCloudActive: true,
+        isCloudActive: Boolean(auth.currentUser),
         error,
         plan: effectivePlan,
         isPro,

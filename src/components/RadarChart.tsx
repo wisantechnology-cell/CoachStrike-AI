@@ -1,5 +1,6 @@
 import React from 'react';
 import { SkillScores } from '../types';
+import { useLanguage } from '../context/LanguageContext';
 
 interface RadarChartProps {
   playerScores: SkillScores;
@@ -12,21 +13,45 @@ export const RadarChart: React.FC<RadarChartProps> = ({
   proScores,
   proPlayerName
 }) => {
+  const { lang } = useLanguage();
   const size = 320;
   const center = size / 2;
   const radius = size * 0.38;
 
-  const labels: { key: keyof SkillScores; label: string }[] = [
-    { key: 'speed', label: 'Velocidad' },
-    { key: 'technique', label: 'Técnica' },
-    { key: 'finishing', label: 'Remate' },
-    { key: 'passing', label: 'Pase' },
-    { key: 'defending', label: 'Defensa' },
-    { key: 'physical', label: 'Físico' },
-    { key: 'tacticalIQ', label: 'Táctica' },
-    { key: 'mental', label: 'Mental' }
-  ];
+  const labelsMap: Record<string, { key: keyof SkillScores; label: string }[]> = {
+    en: [
+      { key: 'speed', label: 'Pace' },
+      { key: 'technique', label: 'Technique' },
+      { key: 'finishing', label: 'Finishing' },
+      { key: 'passing', label: 'Passing' },
+      { key: 'defending', label: 'Defending' },
+      { key: 'physical', label: 'Physical' },
+      { key: 'tacticalIQ', label: 'Tactics' },
+      { key: 'mental', label: 'Mental' }
+    ],
+    pt: [
+      { key: 'speed', label: 'Velocidade' },
+      { key: 'technique', label: 'Técnica' },
+      { key: 'finishing', label: 'Remate' },
+      { key: 'passing', label: 'Passe' },
+      { key: 'defending', label: 'Defesa' },
+      { key: 'physical', label: 'Físico' },
+      { key: 'tacticalIQ', label: 'Tática' },
+      { key: 'mental', label: 'Mental' }
+    ],
+    es: [
+      { key: 'speed', label: 'Velocidad' },
+      { key: 'technique', label: 'Técnica' },
+      { key: 'finishing', label: 'Remate' },
+      { key: 'passing', label: 'Pase' },
+      { key: 'defending', label: 'Defensa' },
+      { key: 'physical', label: 'Físico' },
+      { key: 'tacticalIQ', label: 'Táctica' },
+      { key: 'mental', label: 'Mental' }
+    ]
+  };
 
+  const labels = labelsMap[lang] || labelsMap.en;
   const totalAxes = labels.length;
 
   const getCoordinates = (index: number, value: number) => {
@@ -162,7 +187,9 @@ export const RadarChart: React.FC<RadarChartProps> = ({
       <div className="flex items-center gap-4 mt-2 text-xs font-bold uppercase tracking-wider">
         <div className="flex items-center gap-1.5">
           <span className="w-3 h-3 rounded-full bg-[#ccff00] shadow-md shadow-[#ccff00]/50" />
-          <span className="text-white">Tu ADN Jugador</span>
+          <span className="text-white">
+            {lang === 'en' ? 'Your Player DNA' : lang === 'pt' ? 'O Seu ADN Jogador' : 'Tu ADN Jugador'}
+          </span>
         </div>
         {proScores && proPlayerName && (
           <div className="flex items-center gap-1.5">

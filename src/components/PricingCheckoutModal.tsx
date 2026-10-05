@@ -107,6 +107,8 @@ const PRICING_TEXTS = {
     trialEndLbl: 'Trial End Date:',
     gatewayLbl: 'Secure Gateway:',
     startUsingBtn: 'Start Using Now',
+    changePlanBtn: 'Change Plan / View Other Plans',
+    switchPlanBtn: 'Change & Activate {plan}',
     upgradeToAcademy: 'Upgrade to Academy Mode',
     upgradeToAcademyDesc: 'You are Pro. Upgrade to Academy Basic (30 students) or Elite (200 students) with 3 days free.',
     viewAcademy: 'View Academy'
@@ -190,6 +192,8 @@ const PRICING_TEXTS = {
     trialEndLbl: 'Fecha Fin de Prueba:',
     gatewayLbl: 'Pasarela Segura:',
     startUsingBtn: 'Comenzar a Usar Ahora',
+    changePlanBtn: 'Cambiar de Plan / Ver Otros Planes',
+    switchPlanBtn: 'Cambiar y Activar {plan}',
     upgradeToAcademy: 'Upgrade a Modo Academia',
     upgradeToAcademyDesc: 'Ya eres Pro. Pasa a Academia Básico (30 alumnos) o Élite (200 alumnos) con 3 días gratis.',
     viewAcademy: 'Ver Academia'
@@ -273,6 +277,8 @@ const PRICING_TEXTS = {
     trialEndLbl: 'Data Fim do Teste:',
     gatewayLbl: 'Plataforma Segura:',
     startUsingBtn: 'Começar a Utilizar Agora',
+    changePlanBtn: 'Alterar Plano / Ver Outros Planos',
+    switchPlanBtn: 'Alterar e Ativar {plan}',
     upgradeToAcademy: 'Upgrade para Modo Academia',
     upgradeToAcademyDesc: 'Já é Pro. Passe para Academia Básico (30 alunos) ou Elite (200 alunos) com 3 dias grátis.',
     viewAcademy: 'Ver Academia'
@@ -301,13 +307,16 @@ export const PricingCheckoutModal: React.FC<PricingCheckoutModalProps> = ({
 
   const txt = PRICING_TEXTS[lang] || PRICING_TEXTS.en;
 
-  // Automatically select the most relevant plan on modal open
+  // Automatically select the most relevant plan on modal open & reset receipts
   useEffect(() => {
     if (isOpen) {
+      setSuccessReceipt(null);
       if (initialPlan === 'academy_elite') {
         setSelectedPlan('academy_elite');
       } else if (initialPlan === 'academy' || initialPlan === 'academy_basic') {
         setSelectedPlan('academy_basic');
+      } else if (initialPlan === 'pro') {
+        setSelectedPlan('pro');
       } else if (currentPlan === 'pro') {
         setSelectedPlan('academy_basic');
       } else if (currentPlan === 'academy' || currentPlan === 'academy_basic') {
@@ -315,7 +324,7 @@ export const PricingCheckoutModal: React.FC<PricingCheckoutModalProps> = ({
       } else if (currentPlan === 'academy_elite') {
         setSelectedPlan('academy_elite');
       } else {
-        setSelectedPlan(initialPlan || 'pro');
+        setSelectedPlan('pro');
       }
     }
   }, [isOpen, currentPlan, initialPlan]);
@@ -579,13 +588,23 @@ export const PricingCheckoutModal: React.FC<PricingCheckoutModalProps> = ({
               </div>
             </div>
 
-            <button
-              onClick={onClose}
-              className="w-full py-3 rounded-xl bg-volt hover:bg-white text-black font-black uppercase italic tracking-wider shadow-lg shadow-volt/20 transition-all cursor-pointer flex items-center justify-center gap-2"
-            >
-              <span>{txt.startUsingBtn}</span>
-              <ArrowRight className="w-4 h-4" />
-            </button>
+            <div className="space-y-2">
+              <button
+                onClick={onClose}
+                className="w-full py-3 rounded-xl bg-volt hover:bg-white text-black font-black uppercase italic tracking-wider shadow-lg shadow-volt/20 transition-all cursor-pointer flex items-center justify-center gap-2"
+              >
+                <span>{txt.startUsingBtn}</span>
+                <ArrowRight className="w-4 h-4" />
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setSuccessReceipt(null)}
+                className="w-full py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold uppercase text-xs tracking-wider transition-all cursor-pointer border border-white/10"
+              >
+                {txt.changePlanBtn}
+              </button>
+            </div>
           </div>
         ) : (
           /* Plans & Checkout Selection */
@@ -876,10 +895,10 @@ export const PricingCheckoutModal: React.FC<PricingCheckoutModalProps> = ({
                       </div>
                       <div className="min-w-0">
                         <span className="text-xs font-bold text-white block truncate leading-tight">
-                          {user.displayName || (lang === 'en' ? 'Registered User' : 'Usuario Registrado')}
+                          {user.displayName || (lang === 'en' ? 'Registered User' : lang === 'pt' ? 'Utilizador Registado' : 'Usuario Registrado')}
                         </span>
                         <span className="text-[10px] text-emerald-400 font-mono block truncate leading-tight">
-                          {user.email || (lang === 'en' ? 'Active Account' : 'Cuenta Activa')}
+                          {user.email || (lang === 'en' ? 'Active Account' : lang === 'pt' ? 'Conta Ativa' : 'Cuenta Activa')}
                         </span>
                       </div>
                     </div>
@@ -1079,6 +1098,11 @@ export const PricingCheckoutModal: React.FC<PricingCheckoutModalProps> = ({
                       </>
                     ) : selectedPlan === 'free' ? (
                       <span>{txt.confirmFreeBtn}</span>
+                    ) : currentPlan !== 'free' ? (
+                      <>
+                        <Sparkles className="w-3.5 h-3.5" />
+                        <span>{txt.switchPlanBtn.replace('{plan}', getPlanDisplayName(selectedPlan))}</span>
+                      </>
                     ) : (
                       <>
                         <Lock className="w-3.5 h-3.5" />
