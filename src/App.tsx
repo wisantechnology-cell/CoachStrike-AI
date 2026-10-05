@@ -9,7 +9,6 @@ import { TacticalBoard } from './components/TacticalBoard';
 import { AICoachChat } from './components/AICoachChat';
 import { SavedProfiles } from './components/SavedProfiles';
 import { AcademyDashboard } from './components/AcademyDashboard';
-import { PlayerPortal } from './components/PlayerPortal';
 import { PricingCheckoutModal } from './components/PricingCheckoutModal';
 import { PrivacyPolicyModal } from './components/PrivacyPolicyModal';
 import { AssessmentResult, PlanType, AcademyStudent, ClubBrandConfig } from './types';
@@ -31,6 +30,7 @@ function AppContent() {
   const [evaluatingStudent, setEvaluatingStudent] = useState<AcademyStudent | null>(null);
   const [isSharedLinkView, setIsSharedLinkView] = useState<boolean>(false);
   const [portalStudentId, setPortalStudentId] = useState<string | null>(null);
+  const [academySubTab, setAcademySubTab] = useState<'roster' | 'attendance' | 'classes' | 'lineup' | 'tasks' | 'tactics' | 'portal'>('roster');
   const [academyStudents, setAcademyStudents] = useState<AcademyStudent[]>(() => {
     try {
       const stored = localStorage.getItem('coachstrike_academy_students');
@@ -77,7 +77,8 @@ function AppContent() {
         const playerPortalParam = params.get('player') || params.get('student') || params.get('portal');
         if (playerPortalParam) {
           setPortalStudentId(playerPortalParam);
-          setActiveTab('portal');
+          setAcademySubTab('portal');
+          setActiveTab('academy');
           window.scrollTo({ top: 0, behavior: 'smooth' });
         }
       }
@@ -195,6 +196,7 @@ function AppContent() {
           window.scrollTo({ top: 0, behavior: 'smooth' });
         }}
         onOpenPricing={() => handleOpenPricing()}
+        onSelectAcademySubTab={(subTab) => setAcademySubTab(subTab)}
       />
 
       {/* Main Content View with Motion Transitions */}
@@ -271,6 +273,8 @@ function AppContent() {
               exit={{ opacity: 0, y: -15 }}
             >
               <AcademyDashboard
+                initialSubTab={academySubTab}
+                initialStudentId={portalStudentId}
                 onStartStudentExam={(student) => {
                   setEvaluatingStudent(student);
                   setActiveTab('test');
@@ -288,23 +292,15 @@ function AppContent() {
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -15 }}
             >
-              <PlayerPortal
-                students={(() => {
-                  try {
-                    const stored = localStorage.getItem('coachstrike_academy_students');
-                    if (stored) return JSON.parse(stored);
-                  } catch {}
-                  return academyStudents;
-                })()}
+              <AcademyDashboard
+                initialSubTab="portal"
                 initialStudentId={portalStudentId}
-                clubBrand={(() => {
-                  try {
-                    const stored = localStorage.getItem('coachstrike_club_brand');
-                    if (stored) return JSON.parse(stored);
-                  } catch {}
-                  return clubBrand;
-                })()}
-                onBackToAcademy={() => setActiveTab('academy')}
+                onStartStudentExam={(student) => {
+                  setEvaluatingStudent(student);
+                  setActiveTab('test');
+                  window.scrollTo({ top: 0, behavior: 'smooth' });
+                }}
+                onOpenPricing={(preferred) => handleOpenPricing(preferred || 'academy_basic')}
               />
             </motion.div>
           )}

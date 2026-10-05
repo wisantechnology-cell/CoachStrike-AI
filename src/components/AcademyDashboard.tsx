@@ -168,6 +168,8 @@ interface AcademyDashboardProps {
   onStartStudentExam: (student: AcademyStudent) => void;
   onOpenPricing: (preferredPlan?: PlanType) => void;
   onOpenDrill?: (drillTitle: string) => void;
+  initialSubTab?: 'roster' | 'attendance' | 'classes' | 'lineup' | 'tasks' | 'tactics' | 'portal';
+  initialStudentId?: string | null;
 }
 
 // Default initial starter roster for coaches
@@ -454,16 +456,30 @@ const INITIAL_STUDENTS: AcademyStudent[] = [
 
 export const AcademyDashboard: React.FC<AcademyDashboardProps> = ({
   onStartStudentExam,
-  onOpenPricing
+  onOpenPricing,
+  initialSubTab = 'roster',
+  initialStudentId = null
 }) => {
   const { user, isAcademy, isAcademyElite, plan } = useAuth();
   const { lang } = useLanguage();
   const tAcad = ACADEMY_TRANSLATIONS[lang] || ACADEMY_TRANSLATIONS.es;
-  const [activeSubTab, setActiveSubTab] = useState<'roster' | 'attendance' | 'classes' | 'lineup' | 'tasks' | 'tactics' | 'portal'>('roster');
+  const [activeSubTab, setActiveSubTab] = useState<'roster' | 'attendance' | 'classes' | 'lineup' | 'tasks' | 'tactics' | 'portal'>(initialSubTab);
   const [cloudSyncStatus, setCloudSyncStatus] = useState<'synced' | 'syncing' | 'local'>('local');
   const [selectedSquadCategory, setSelectedSquadCategory] = useState<string>('all');
-  const [activePortalStudentId, setActivePortalStudentId] = useState<string | null>(null);
+  const [activePortalStudentId, setActivePortalStudentId] = useState<string | null>(initialStudentId);
   const [copiedStudentId, setCopiedStudentId] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (initialSubTab) {
+      setActiveSubTab(initialSubTab);
+    }
+  }, [initialSubTab]);
+
+  useEffect(() => {
+    if (initialStudentId) {
+      setActivePortalStudentId(initialStudentId);
+    }
+  }, [initialStudentId]);
 
   // White-Label Club Brand Config state
   const [clubBrand, setClubBrand] = useState<ClubBrandConfig>(() => {
@@ -2611,32 +2627,34 @@ export const AcademyDashboard: React.FC<AcademyDashboardProps> = ({
       )}
 
       {/* APARTADO ABAJO: PIZARRA TÁCTICA INTERACTIVA DEL MÍSTER */}
-      <div className="pt-8 border-t border-white/10 mt-10">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
-          <div>
-            <div className="flex items-center gap-2">
-              <span className="w-2.5 h-2.5 rounded-full bg-volt animate-pulse" />
-              <h2 className="text-xl font-black italic uppercase text-white tracking-tight flex items-center gap-2">
-                {tAcad.whiteboardTitle}
-              </h2>
+      {activeSubTab !== 'portal' && (
+        <div className="pt-8 border-t border-white/10 mt-10">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="w-2.5 h-2.5 rounded-full bg-volt animate-pulse" />
+                <h2 className="text-xl font-black italic uppercase text-white tracking-tight flex items-center gap-2">
+                  {tAcad.whiteboardTitle}
+                </h2>
+              </div>
+              <p className="text-xs text-slate-400 mt-1">
+                {tAcad.whiteboardSubtitle}
+              </p>
             </div>
-            <p className="text-xs text-slate-400 mt-1">
-              {tAcad.whiteboardSubtitle}
-            </p>
+
+            <div className="flex items-center gap-2 text-xs">
+              <span className="px-2.5 py-1 rounded-full bg-rose-500/20 text-rose-300 border border-rose-500/40 font-mono text-[11px] font-bold">
+                {tAcad.redChips}
+              </span>
+              <span className="px-2.5 py-1 rounded-full bg-blue-500/20 text-blue-300 border border-blue-500/40 font-mono text-[11px] font-bold">
+                {tAcad.blueChips}
+              </span>
+            </div>
           </div>
 
-          <div className="flex items-center gap-2 text-xs">
-            <span className="px-2.5 py-1 rounded-full bg-rose-500/20 text-rose-300 border border-rose-500/40 font-mono text-[11px] font-bold">
-              {tAcad.redChips}
-            </span>
-            <span className="px-2.5 py-1 rounded-full bg-blue-500/20 text-blue-300 border border-blue-500/40 font-mono text-[11px] font-bold">
-              {tAcad.blueChips}
-            </span>
-          </div>
+          <TacticalWhiteboard students={students} />
         </div>
-
-        <TacticalWhiteboard students={students} />
-      </div>
+      )}
 
       {/* MODAL: ADD STUDENT */}
       {isAddStudentOpen && (

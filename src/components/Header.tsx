@@ -38,6 +38,7 @@ interface HeaderProps {
   savedProfiles?: AssessmentResult[];
   onSelectProfile?: (profile: AssessmentResult) => void;
   onOpenPricing?: () => void;
+  onSelectAcademySubTab?: (subTab: 'roster' | 'attendance' | 'classes' | 'lineup' | 'tasks' | 'tactics' | 'portal') => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -47,7 +48,8 @@ export const Header: React.FC<HeaderProps> = ({
   onStartTest,
   savedProfiles = [],
   onSelectProfile,
-  onOpenPricing
+  onOpenPricing,
+  onSelectAcademySubTab
 }) => {
   const { lang, t } = useLanguage();
   const { user, logout, isCloudActive, plan, isPro, isAcademy } = useAuth();
@@ -204,16 +206,6 @@ export const Header: React.FC<HeaderProps> = ({
               ) : (
                 <Lock className="w-3 h-3 text-slate-500" />
               )}
-            </button>
-
-            <button
-              onClick={() => setActiveTab('portal')}
-              className={`pb-1 transition-colors cursor-pointer flex items-center gap-1.5 ${
-                activeTab === 'portal' ? 'text-volt border-b-2 border-volt' : 'hover:text-white'
-              }`}
-            >
-              <GraduationCap className="w-3.5 h-3.5" />
-              <span>{lang === 'en' ? 'Player Portal' : lang === 'pt' ? 'Portal Jogador' : 'Portal Jugador'}</span>
             </button>
 
             <button
@@ -436,10 +428,11 @@ export const Header: React.FC<HeaderProps> = ({
                       <ChevronRight className="w-4 h-4 text-emerald-400 group-hover:translate-x-0.5 transition-transform" />
                     </button>
 
-                    {/* Portal del Canterano y Familia */}
+                    {/* Portal del Canterano y Familia (Dentro de Modo Academia) */}
                     <button
                       onClick={() => {
-                        setActiveTab('portal');
+                        onSelectAcademySubTab?.('portal');
+                        setActiveTab('academy');
                         setIsProfileMenuOpen(false);
                       }}
                       className="w-full text-left p-2.5 rounded-xl bg-volt/5 hover:bg-volt/15 border border-volt/20 hover:border-volt/40 transition-all flex items-center justify-between group cursor-pointer"
@@ -449,8 +442,11 @@ export const Header: React.FC<HeaderProps> = ({
                           <GraduationCap className="w-4 h-4 text-volt" />
                         </div>
                         <div>
-                          <div className="text-xs font-black text-volt flex items-center gap-1">
+                          <div className="text-xs font-black text-volt flex items-center gap-1.5">
                             <span>{lang === 'en' ? 'Player & Family Portal' : lang === 'pt' ? 'Portal do Jogador & Família' : 'Portal del Jugador & Familia'}</span>
+                            <span className="text-[9px] font-mono font-bold uppercase px-1.5 py-0.2 rounded bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
+                              {lang === 'en' ? 'In Academy' : lang === 'pt' ? 'Na Academia' : 'En Academia'}
+                            </span>
                           </div>
                           <p className="text-[11px] text-slate-300">
                             {lang === 'en' ? 'Personal tasks, attendance & tactical DNA' : lang === 'pt' ? 'Tarefas, presenças e ADN tático individual' : 'Deberes semanales, asistencias y ADN táctico'}
