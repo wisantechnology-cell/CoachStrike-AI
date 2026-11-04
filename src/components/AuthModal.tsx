@@ -43,7 +43,15 @@ const AUTH_TEXTS = {
     googleAuthTitle: 'Google Authentication',
     googleAuthDesc: 'Automatically sync your tactical assessments, training routines and history to your account.',
     googleConnecting: 'Connecting to Google...',
-    googleBtn: 'Sign In with Google',
+    googleBtn: 'Sign In with Google (Popup)',
+    googleRedirectBtn: 'Sign In with Redirect (No Popups)',
+    googleRedirectNotice: 'Bypasses browser popup blockers by navigating directly to Google.',
+    popupBlockedTitle: 'Google Popup Blocked by Browser',
+    popupBlockedDesc: 'Your browser prevented the Google login window from opening. Click below to sign in directly via redirect (no popups needed).',
+    allowPopupTip: 'Tip: You can also allow popups by clicking the 🚫 icon in your browser URL bar.',
+    unauthorizedDomainTitle: 'Firebase Domain Authorization Required',
+    unauthorizedDomainDesc: 'This domain needs to be added to Firebase Console Authorized Domains. You can sign in immediately using Direct Coach Access.',
+    useDirectInstead: '⚡ Or use Instant Coach / Email Access (No Google Required)',
     termsNotice: 'By signing in, you agree to our terms and secure storage of tactical scouting data.',
     // OTP step translations
     otpTitle: 'Verify Your Email Address',
@@ -80,7 +88,15 @@ const AUTH_TEXTS = {
     googleAuthTitle: 'Autenticación con Google',
     googleAuthDesc: 'Guarda automáticamente tus exámenes tácticos, planes de entrenamiento e historial en tu cuenta personal.',
     googleConnecting: 'Conectando con Google...',
-    googleBtn: 'Iniciar Sesión con Google',
+    googleBtn: 'Iniciar Sesión con Google (Ventana)',
+    googleRedirectBtn: 'Iniciar con Redirección Directa (Sin Popups)',
+    googleRedirectNotice: 'Evita bloqueos de ventanas emergentes navegando directamente a Google.',
+    popupBlockedTitle: 'Ventana Emergente Bloqueada por el Navegador',
+    popupBlockedDesc: 'Tu navegador bloqueó la ventana emergente de Google. Haz clic abajo para iniciar sesión directamente con redirección (no usa popups).',
+    allowPopupTip: 'Consejo: También puedes permitir popups haciendo clic en el icono 🚫 o candado en la barra de direcciones de tu navegador.',
+    unauthorizedDomainTitle: 'Dominio Requiere Autorización en Firebase',
+    unauthorizedDomainDesc: 'Este dominio de vista previa necesita añadirse a los Dominios Autorizados de Firebase. Puedes acceder de inmediato con el Perfil de Entrenador.',
+    useDirectInstead: '⚡ O ingresa al instante con tu correo o Perfil DT (Sin Google)',
     termsNotice: 'Al identificarte aceptas los términos y el almacenamiento seguro de tus análisis deportivos.',
     // OTP step translations
     otpTitle: 'Verifica tu Correo Electrónico',
@@ -117,7 +133,15 @@ const AUTH_TEXTS = {
     googleAuthTitle: 'Autenticação Google',
     googleAuthDesc: 'Guarde automaticamente as suas avaliações táticas, planos de treino e histórico na sua conta pessoal.',
     googleConnecting: 'A ligar ao Google...',
-    googleBtn: 'Iniciar Sessão com o Google',
+    googleBtn: 'Iniciar Sessão com o Google (Janela)',
+    googleRedirectBtn: 'Iniciar com Redirecionamento Direto (Sem Popups)',
+    googleRedirectNotice: 'Evita bloqueios de pop-up navegando diretamente para o Google.',
+    popupBlockedTitle: 'Janela Pop-up Bloqueada pelo Navegador',
+    popupBlockedDesc: 'O seu navegador bloqueou a janela pop-up do Google. Clique abaixo para iniciar sessão via redirecionamento (sem pop-ups).',
+    allowPopupTip: 'Dica: Pode também permitir pop-ups clicando no ícone 🚫 na barra de endereços.',
+    unauthorizedDomainTitle: 'Domínio Requer Autorização no Firebase',
+    unauthorizedDomainDesc: 'Este domínio de teste precisa de ser adicionado aos Domínios Autorizados no Firebase. Pode entrar de imediato pelo Acesso de Treinador.',
+    useDirectInstead: '⚡ Ou use o Perfil Direto de Treinador (Sem conta Google)',
     termsNotice: 'Ao autenticar-se aceita os termos e o armazenamento seguro dos seus relatórios desportivos.',
     // OTP step translations
     otpTitle: 'Verifique o seu Endereço de Email',
@@ -141,8 +165,10 @@ interface AuthModalProps {
 
 export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess }) => {
   const { lang } = useLanguage();
-  const { login, loginAsGuestProfile, error: authError } = useAuth();
+  const { login, loginWithRedirect, loginAsGuestProfile, error: authError } = useAuth();
   const [activeTab, setActiveTab] = useState<'direct' | 'google'>('direct');
+  const [isRedirecting, setIsRedirecting] = useState(false);
+  const [blockedType, setBlockedType] = useState<'popup' | 'domain' | 'closed' | null>(null);
   
   // Step state: 'form' | 'verify_otp'
   const [step, setStep] = useState<'form' | 'verify_otp'>('form');
@@ -294,6 +320,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess
   const handleGoogleLogin = async () => {
     setIsLoading(true);
     setErrorMessage(null);
+    setBlockedType(null);
     try {
       await login();
       if (onSuccess) onSuccess();
@@ -301,19 +328,41 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess
     } catch (err: any) {
       console.warn('Google sign-in exception:', err);
       const errorStr = String(err?.code || err?.message || '');
-      if (errorStr.includes('unauthorized-domain') || errorStr.includes('popup-closed') || errorStr.includes('cancelled') || errorStr.includes('blocked')) {
+      if (errorStr.includes('popup-blocked') || errorStr.includes('blocked')) {
+        setBlockedType('popup');
+        setErrorMessage(txt.popupBlockedDesc);
+      } else if (errorStr.includes('unauthorized-domain')) {
+        setBlockedType('domain');
+        setErrorMessage(txt.unauthorizedDomainDesc);
+      } else if (errorStr.includes('popup-closed') || errorStr.includes('cancelled')) {
+        setBlockedType('closed');
         setErrorMessage(lang === 'en'
-          ? 'Google popup was blocked or closed. Direct coach access is activated below for instant sign in.'
-          : 'La ventana de Google se cerró o tu navegador bloqueó la ventana emergente en el preview. Se activó el Acceso Directo de Entrenador para que ingreses de inmediato.');
-        setActiveTab('direct');
+          ? 'The Google window was closed before completing sign-in. You can retry or use direct redirect.'
+          : 'La ventana de Google se cerró antes de completar el acceso. Puedes reintentar o usar redirección.');
       } else {
-        setErrorMessage(lang === 'en'
-          ? 'Browser popup restriction detected. Please use Direct Access below to proceed.'
-          : 'Se detectó una restricción de ventana en el navegador. Usa el Acceso Directo a continuación para entrar de inmediato.');
-        setActiveTab('direct');
+        setErrorMessage(err?.message || 'Error al conectar con Google');
       }
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleGoogleRedirectLogin = async () => {
+    setIsRedirecting(true);
+    setErrorMessage(null);
+    setBlockedType(null);
+    try {
+      await loginWithRedirect();
+    } catch (err: any) {
+      console.warn('Google redirect exception:', err);
+      const errorStr = String(err?.code || err?.message || '');
+      if (errorStr.includes('unauthorized-domain')) {
+        setBlockedType('domain');
+        setErrorMessage(txt.unauthorizedDomainDesc);
+      } else {
+        setErrorMessage(err?.message || 'Error al iniciar redirección');
+      }
+      setIsRedirecting(false);
     }
   };
 
@@ -563,9 +612,9 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess
                 </div>
               ) : (
                 <div className="space-y-4 text-center">
-                  <div className="p-5 rounded-2xl bg-black/40 border border-white/10 space-y-3">
-                    <div className="w-12 h-12 rounded-2xl bg-volt/10 border border-volt/30 flex items-center justify-center mx-auto text-volt">
-                      <ShieldCheck className="w-6 h-6" />
+                  <div className="p-4 rounded-2xl bg-black/40 border border-white/10 space-y-2.5">
+                    <div className="w-10 h-10 rounded-xl bg-volt/10 border border-volt/30 flex items-center justify-center mx-auto text-volt">
+                      <ShieldCheck className="w-5 h-5" />
                     </div>
                     <h4 className="text-sm font-bold text-white">{txt.googleAuthTitle}</h4>
                     <p className="text-xs text-slate-400">
@@ -573,10 +622,73 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess
                     </p>
                   </div>
 
+                  {/* Browser Popup Blocked Guidance & Immediate Solution */}
+                  {blockedType === 'popup' && (
+                    <div className="p-3.5 rounded-xl bg-amber-500/15 border border-amber-500/40 text-left space-y-2.5">
+                      <div className="flex items-start gap-2">
+                        <AlertCircle className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
+                        <div>
+                          <h5 className="text-xs font-black text-amber-300 uppercase tracking-wide">
+                            {txt.popupBlockedTitle}
+                          </h5>
+                          <p className="text-xs text-amber-100/90 mt-0.5 leading-relaxed">
+                            {txt.popupBlockedDesc}
+                          </p>
+                        </div>
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={handleGoogleRedirectLogin}
+                        disabled={isRedirecting}
+                        className="w-full py-2.5 rounded-lg bg-volt hover:bg-white text-black font-black text-xs uppercase italic tracking-wider flex items-center justify-center gap-2 shadow-md transition-all cursor-pointer"
+                      >
+                        {isRedirecting ? (
+                          <Loader2 className="w-4 h-4 animate-spin text-black" />
+                        ) : (
+                          <RefreshCw className="w-4 h-4 text-black" />
+                        )}
+                        <span>{txt.googleRedirectBtn}</span>
+                      </button>
+
+                      <p className="text-[11px] text-slate-400 leading-snug">
+                        {txt.allowPopupTip}
+                      </p>
+                    </div>
+                  )}
+
+                  {/* Unauthorized Domain Warning */}
+                  {blockedType === 'domain' && (
+                    <div className="p-3.5 rounded-xl bg-rose-500/15 border border-rose-500/30 text-left space-y-2">
+                      <div className="flex items-start gap-2">
+                        <AlertCircle className="w-4 h-4 text-rose-400 shrink-0 mt-0.5" />
+                        <div>
+                          <h5 className="text-xs font-black text-rose-300 uppercase">
+                            {txt.unauthorizedDomainTitle}
+                          </h5>
+                          <p className="text-xs text-rose-200 mt-0.5">
+                            {txt.unauthorizedDomainDesc}
+                          </p>
+                          <p className="text-[10px] text-slate-400 font-mono mt-1">
+                            Host: {typeof window !== 'undefined' ? window.location.hostname : 'run.app'}
+                          </p>
+                        </div>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setActiveTab('direct')}
+                        className="w-full py-2 rounded-lg bg-white/10 hover:bg-white/20 text-white font-bold text-xs cursor-pointer"
+                      >
+                        {txt.useDirectInstead}
+                      </button>
+                    </div>
+                  )}
+
+                  {/* Primary Google Button (Popup flow) */}
                   <button
                     type="button"
                     onClick={handleGoogleLogin}
-                    disabled={isLoading}
+                    disabled={isLoading || isRedirecting}
                     className="w-full py-3.5 rounded-xl bg-white hover:bg-slate-100 text-black font-bold text-sm flex items-center justify-center gap-3 shadow-lg shadow-white/10 transition-all cursor-pointer hover:scale-[1.01] active:scale-[0.99] disabled:opacity-50"
                   >
                     {isLoading ? (
@@ -608,6 +720,33 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess
                       </>
                     )}
                   </button>
+
+                  {/* Secondary: Direct Redirect button (always visible as alternative that bypasses popups) */}
+                  <button
+                    type="button"
+                    onClick={handleGoogleRedirectLogin}
+                    disabled={isLoading || isRedirecting}
+                    className="w-full py-2.5 rounded-xl bg-black/50 hover:bg-white/10 border border-white/15 text-slate-300 hover:text-white text-xs font-bold flex items-center justify-center gap-2 transition-all cursor-pointer"
+                    title={txt.googleRedirectNotice}
+                  >
+                    {isRedirecting ? (
+                      <Loader2 className="w-3.5 h-3.5 animate-spin text-volt" />
+                    ) : (
+                      <RefreshCw className="w-3.5 h-3.5 text-volt" />
+                    )}
+                    <span>{txt.googleRedirectBtn}</span>
+                  </button>
+
+                  {/* Immediate Direct Access Fallback */}
+                  <div className="pt-1">
+                    <button
+                      type="button"
+                      onClick={() => setActiveTab('direct')}
+                      className="text-xs text-slate-400 hover:text-volt underline transition-colors cursor-pointer"
+                    >
+                      {txt.useDirectInstead}
+                    </button>
+                  </div>
                 </div>
               )}
             </>

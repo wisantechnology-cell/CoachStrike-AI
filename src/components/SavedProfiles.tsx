@@ -109,7 +109,7 @@ export const SavedProfiles: React.FC<SavedProfilesProps> = ({
 
         {!user && (
           <button
-            onClick={login}
+            onClick={() => window.dispatchEvent(new CustomEvent('coachstrike:open-auth'))}
             className="px-4 py-2 rounded-xl bg-white/10 hover:bg-white/20 border border-white/20 text-white font-bold text-xs uppercase tracking-wider flex items-center gap-2 transition-all shrink-0 cursor-pointer"
           >
             <LogIn className="w-3.5 h-3.5 text-volt" />

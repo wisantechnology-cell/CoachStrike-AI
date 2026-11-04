@@ -145,7 +145,7 @@ export interface AcademyDashboardTranslations {
 
 export const ACADEMY_TRANSLATIONS: Record<Language, AcademyDashboardTranslations> = {
   es: {
-    bannerBadge: 'MODO ACADEMIA UEFA PRO',
+    bannerBadge: 'MODO ACADEMIA STRIKE PRO',
     previewBadge: 'Vista Previa / Modo Demo',
     bannerTitle: 'Cantera & Plantilla de Entrenadores',
     bannerSubtitle: 'Gestiona los perfiles de tus futbolistas, realiza exámenes de ADN táctico, sugiere técnicas personalizadas y diseña tu Once Ideal en pizarra interactiva.',
@@ -278,7 +278,7 @@ export const ACADEMY_TRANSLATIONS: Record<Language, AcademyDashboardTranslations
     filterAllCategories: 'Todas las Categorías'
   },
   en: {
-    bannerBadge: 'UEFA PRO ACADEMY MODE',
+    bannerBadge: 'STRIKE PRO ACADEMY MODE',
     previewBadge: 'Preview / Demo Mode',
     bannerTitle: 'Squad & Coach Academy Roster',
     bannerSubtitle: 'Manage player profiles, conduct tactical DNA tests, assign customized drills, and construct your Starting XI on the interactive whiteboard.',
@@ -411,7 +411,7 @@ export const ACADEMY_TRANSLATIONS: Record<Language, AcademyDashboardTranslations
     filterAllCategories: 'All Categories'
   },
   pt: {
-    bannerBadge: 'MODO ACADEMIA UEFA PRO',
+    bannerBadge: 'MODO ACADEMIA STRIKE PRO',
     previewBadge: 'Prévia / Modo Demo',
     bannerTitle: 'Plantel & Academia de Treinadores',
     bannerSubtitle: 'Gira os perfis dos seus atletas, execute testes de ADN tático, atribua exercícios personalizados e monte o seu Onze Ideal.',

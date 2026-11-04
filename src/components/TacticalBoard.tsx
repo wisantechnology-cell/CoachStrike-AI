@@ -957,7 +957,7 @@ export const TacticalBoard: React.FC = () => {
               {t.tacticsTag}
             </span>
             <span className="px-2.5 py-0.5 rounded-full bg-white/10 text-slate-300 text-[10px] font-mono font-bold uppercase">
-              11 vs 11 UEFA Pro
+              11 vs 11 Strike Pro
             </span>
           </div>
           <h1 className="text-2xl sm:text-4xl font-black italic text-white font-display uppercase tracking-tight mt-2">
@@ -1187,7 +1187,7 @@ export const TacticalBoard: React.FC = () => {
 
               return (
                 <motion.div
-                  key={p.id}
+                  key={`${activeFormationId}-${p.id}-${currentPos.x}-${currentPos.y}`}
                   drag
                   dragConstraints={pitchRef}
                   dragElastic={0.05}
@@ -1197,18 +1197,19 @@ export const TacticalBoard: React.FC = () => {
                     setSelectedPlayerId(p.id);
                   }}
                   onDragEnd={(_, info) => handleTokenDragEnd(p.id, info)}
-                  onClick={() => setSelectedPlayerId(p.id)}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    if (!isDraggingToken) {
+                      setSelectedPlayerId(p.id);
+                    }
+                  }}
+                  className={`absolute -translate-x-1/2 -translate-y-1/2 cursor-grab active:cursor-grabbing z-20 group ${
+                    isSelected ? 'scale-115 z-30' : 'hover:scale-110'
+                  }`}
                   style={{
                     left: `${currentPos.x}%`,
                     top: `${currentPos.y}%`
                   }}
-                  animate={{
-                    left: `${currentPos.x}%`,
-                    top: `${currentPos.y}%`,
-                    scale: isSelected ? 1.15 : 1
-                  }}
-                  transition={{ type: 'spring', stiffness: 350, damping: 28 }}
-                  className={`absolute -translate-x-1/2 -translate-y-1/2 cursor-grab active:cursor-grabbing z-20 group`}
                 >
                   {/* Selected Ripple Pulse Glow Ring */}
                   {isSelected && (
@@ -1220,7 +1221,7 @@ export const TacticalBoard: React.FC = () => {
                     className={`relative w-11 h-11 sm:w-13 sm:h-13 rounded-full flex flex-col items-center justify-center transition-all shadow-xl ${
                       isSelected
                         ? 'bg-black text-white ring-4 ring-volt border-2 border-white shadow-2xl shadow-volt/50 z-30'
-                        : 'bg-slate-950/95 text-white border-2 border-white/40 hover:border-volt hover:scale-105 group-hover:shadow-lg'
+                        : 'bg-slate-950/95 text-white border-2 border-white/40 hover:border-volt group-hover:shadow-lg'
                     }`}
                   >
                     {/* Role Color Accent Top Arc */}

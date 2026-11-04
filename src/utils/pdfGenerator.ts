@@ -36,7 +36,7 @@ export function generatePdfReport(
   const t = {
     en: {
       brand: 'COACHSTRIKE AI',
-      subtitle: 'UEFA PRO TACTICAL DNA SCOUTING REPORT',
+      subtitle: 'STRIKE PRO TACTICAL DNA SCOUTING REPORT',
       ref: 'REF ID:',
       date: 'DATE:',
       playerLabel: 'PLAYER PROFILE',
@@ -63,7 +63,7 @@ export function generatePdfReport(
     },
     es: {
       brand: 'COACHSTRIKE AI',
-      subtitle: 'INFORME SCOUTING DE ADN TÁCTICO UEFA PRO',
+      subtitle: 'INFORME SCOUTING DE ADN TÁCTICO STRIKE PRO',
       ref: 'REF ID:',
       date: 'FECHA:',
       playerLabel: 'PERFIL DEL JUGADOR',
@@ -90,7 +90,7 @@ export function generatePdfReport(
     },
     pt: {
       brand: 'COACHSTRIKE AI',
-      subtitle: 'RELATÓRIO DE SCOUTING TÁTICO UEFA PRO',
+      subtitle: 'RELATÓRIO DE SCOUTING TÁTICO STRIKE PRO',
       ref: 'REF ID:',
       date: 'DATA:',
       playerLabel: 'PERFIL DO JOGADOR',
@@ -117,7 +117,7 @@ export function generatePdfReport(
     }
   }[lang] || {
     brand: 'COACHSTRIKE AI',
-    subtitle: 'UEFA PRO TACTICAL DNA SCOUTING REPORT',
+    subtitle: 'STRIKE PRO TACTICAL DNA SCOUTING REPORT',
     ref: 'REF ID:',
     date: 'DATE:',
     playerLabel: 'PLAYER PROFILE',
@@ -411,7 +411,39 @@ export function generatePdfReport(
   doc.setTextColor(mutedText[0], mutedText[1], mutedText[2]);
   doc.text(t.confidential, pageWidth / 2, pageHeight - 4.5, { align: 'center' });
 
-  // Save the PDF
-  const sanitizedName = result.playerName.replace(/[^a-zA-Z0-9_-]/g, '_');
-  doc.save(`CoachStrike_Report_${sanitizedName}.pdf`);
+  // Save the PDF with mobile WebView and iOS Safari compatibility
+  const sanitizedName = (result.playerName || 'Player').replace(/[^a-zA-Z0-9_-]/g, '_');
+  const fileName = `CoachStrike_Report_${sanitizedName}.pdf`;
+
+  try {
+    const isMobileDevice = typeof navigator !== 'undefined' && (
+      /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent) ||
+      (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1)
+    );
+
+    if (isMobileDevice) {
+      // In iOS Safari and Android in-app browsers, direct doc.save can be silently suppressed
+      const pdfBlob = doc.output('blob');
+      const blobUrl = URL.createObjectURL(pdfBlob);
+      const downloadLink = document.createElement('a');
+      downloadLink.href = blobUrl;
+      downloadLink.download = fileName;
+      downloadLink.target = '_blank';
+      downloadLink.rel = 'noopener noreferrer';
+      document.body.appendChild(downloadLink);
+      downloadLink.click();
+      setTimeout(() => {
+        try {
+          document.body.removeChild(downloadLink);
+          URL.revokeObjectURL(blobUrl);
+        } catch {}
+      }, 4000);
+    } else {
+      doc.save(fileName);
+    }
+  } catch (err) {
+    console.warn('Fallback to standard doc.save:', err);
+    doc.save(fileName);
+  }
 }
+

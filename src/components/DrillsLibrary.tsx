@@ -165,7 +165,7 @@ export const DrillsLibrary: React.FC = () => {
 
             <div className="space-y-2">
               <h4 className="text-xs font-bold text-volt uppercase tracking-wider font-mono-code">
-                {lang === 'en' ? 'UEFA Pro Execution Steps:' : lang === 'pt' ? 'Passos de Execução UEFA Pro:' : 'Pasos de Ejecución UEFA Pro:'}
+                {lang === 'en' ? 'Strike Pro Execution Steps:' : lang === 'pt' ? 'Passos de Execução Strike Pro:' : 'Pasos de Ejecución Strike Pro:'}
               </h4>
               <ol className="space-y-2 text-xs text-slate-300">
                 {activeDrillModal.steps.map((step, idx) => (

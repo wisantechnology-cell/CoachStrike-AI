@@ -8,14 +8,15 @@ import { DrillsLibrary } from './components/DrillsLibrary';
 import { TacticalBoard } from './components/TacticalBoard';
 import { AICoachChat } from './components/AICoachChat';
 import { SavedProfiles } from './components/SavedProfiles';
-import { AcademyDashboard } from './components/AcademyDashboard';
+import { AcademyDashboard, INITIAL_STUDENTS } from './components/AcademyDashboard';
+import { PlayerPortal } from './components/PlayerPortal';
 import { PricingCheckoutModal } from './components/PricingCheckoutModal';
 import { PrivacyPolicyModal } from './components/PrivacyPolicyModal';
 import { AssessmentResult, PlanType, AcademyStudent, ClubBrandConfig } from './types';
 import { LanguageProvider, useLanguage } from './context/LanguageContext';
 import { ThemeProvider } from './context/ThemeContext';
 import { AuthProvider, useAuth } from './context/AuthContext';
-import { saveEvaluationToCloud, deleteEvaluationFromCloud, subscribeToUserEvaluations } from './lib/firebase';
+import { saveEvaluationToCloud, deleteEvaluationFromCloud, subscribeToUserEvaluations, saveStudentToCloud } from './lib/firebase';
 import { decodeReportFromUrl } from './utils/shareLink';
 
 function AppContent() {
@@ -30,13 +31,17 @@ function AppContent() {
   const [evaluatingStudent, setEvaluatingStudent] = useState<AcademyStudent | null>(null);
   const [isSharedLinkView, setIsSharedLinkView] = useState<boolean>(false);
   const [portalStudentId, setPortalStudentId] = useState<string | null>(null);
+  const [tacticalPromptForAI, setTacticalPromptForAI] = useState<string | null>(null);
   const [academySubTab, setAcademySubTab] = useState<'roster' | 'attendance' | 'classes' | 'lineup' | 'tasks' | 'tactics' | 'portal'>('roster');
   const [academyStudents, setAcademyStudents] = useState<AcademyStudent[]>(() => {
     try {
       const stored = localStorage.getItem('coachstrike_academy_students');
-      if (stored) return JSON.parse(stored);
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      }
     } catch {}
-    return [];
+    return INITIAL_STUDENTS;
   });
   const [clubBrand, setClubBrand] = useState<ClubBrandConfig | null>(() => {
     try {
@@ -77,8 +82,8 @@ function AppContent() {
         const playerPortalParam = params.get('player') || params.get('student') || params.get('portal');
         if (playerPortalParam) {
           setPortalStudentId(playerPortalParam);
-          setAcademySubTab('portal');
-          setActiveTab('academy');
+          setActiveTab('portal');
+          setIsSharedLinkView(true);
           window.scrollTo({ top: 0, behavior: 'smooth' });
         }
       }
@@ -171,6 +176,37 @@ function AppContent() {
   const handleCompleteTest = (result: AssessmentResult) => {
     setCurrentResult(result);
     setIsSharedLinkView(false);
+
+    if (evaluatingStudent) {
+      const updatedStudent: AcademyStudent = {
+        ...evaluatingStudent,
+        preferredFoot: result.preferredFoot,
+        primaryPosition: result.primaryPosition.code,
+        secondaryPosition: result.secondaryPositions?.[0]?.code || evaluatingStudent.secondaryPosition,
+        matchPercentage: result.primaryPosition.matchPercentage,
+        skills: result.skills,
+        lastExamDate: new Date().toISOString().split('T')[0],
+        assessmentResultId: result.id
+      };
+
+      setEvaluatingStudent(updatedStudent);
+      setAcademyStudents((prev) => {
+        const nextList = prev.map((s) => (s.id === updatedStudent.id ? updatedStudent : s));
+        try {
+          localStorage.setItem('coachstrike_academy_students', JSON.stringify(nextList));
+        } catch (e) {
+          console.error('Error updating academy student in localStorage:', e);
+        }
+        return nextList;
+      });
+
+      if (user) {
+        saveStudentToCloud(user.uid, updatedStudent).catch((e) =>
+          console.error('Error syncing evaluated student to Firestore:', e)
+        );
+      }
+    }
+
     setActiveTab('result');
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
@@ -292,15 +328,30 @@ function AppContent() {
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -15 }}
             >
-              <AcademyDashboard
-                initialSubTab="portal"
+              <PlayerPortal
+                students={academyStudents.length > 0 ? academyStudents : INITIAL_STUDENTS}
                 initialStudentId={portalStudentId}
-                onStartStudentExam={(student) => {
-                  setEvaluatingStudent(student);
-                  setActiveTab('test');
-                  window.scrollTo({ top: 0, behavior: 'smooth' });
+                clubBrand={clubBrand}
+                isDirectSharedLink={isSharedLinkView}
+                onBackToAcademy={() => {
+                  setActiveTab('hero');
+                  setIsSharedLinkView(false);
                 }}
-                onOpenPricing={(preferred) => handleOpenPricing(preferred || 'academy_basic')}
+                onUpdateStudentTask={(studentId, taskId, completed) => {
+                  setAcademyStudents((prev) => {
+                    const updated = prev.map((s) => {
+                      if (s.id !== studentId) return s;
+                      const updatedTasks = (s.tasks || []).map((t) =>
+                        t.id === taskId ? { ...t, status: completed ? ('completed' as const) : ('pending' as const) } : t
+                      );
+                      return { ...s, tasks: updatedTasks };
+                    });
+                    try {
+                      localStorage.setItem('coachstrike_academy_students', JSON.stringify(updated));
+                    } catch {}
+                    return updated;
+                  });
+                }}
               />
             </motion.div>
           )}
@@ -334,7 +385,11 @@ function AppContent() {
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -15 }}
             >
-              <AICoachChat playerProfile={currentResult} />
+              <AICoachChat
+                playerProfile={currentResult}
+                initialPrompt={tacticalPromptForAI}
+                onPromptConsumed={() => setTacticalPromptForAI(null)}
+              />
             </motion.div>
           )}
 
@@ -392,10 +447,10 @@ function AppContent() {
             <span className="text-slate-600">|</span>
             <span className="text-slate-500">
               {lang === 'en'
-                ? 'Inspired by UEFA Pro professional tactical analysis methodologies.'
+                ? 'Inspired by Strike Pro professional tactical analysis methodologies.'
                 : lang === 'pt'
-                ? 'Inspirado em metodologias de análise tática profissional da UEFA.'
-                : 'Inspirado en metodologías de análisis táctico profesional de la UEFA.'}
+                ? 'Inspirado em metodologias de análise tática profissional Strike Pro.'
+                : 'Inspirado en metodologías de análisis táctico profesional Strike Pro.'}
             </span>
           </div>
         </div>

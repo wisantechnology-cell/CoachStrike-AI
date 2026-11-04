@@ -150,7 +150,7 @@ export const TacticalWhiteboard: React.FC<TacticalWhiteboardProps> = ({ students
   const handlePiecePointerDown = (e: React.PointerEvent, piece: TacticalPiece) => {
     if (activeTool !== 'move') return;
     e.stopPropagation();
-    e.currentTarget.setPointerCapture(e.pointerId);
+    (e.target as HTMLElement).setPointerCapture(e.pointerId);
 
     const coords = getPitchCoordinates(e.clientX, e.clientY);
     setDraggingPieceId(piece.id);
@@ -166,8 +166,8 @@ export const TacticalWhiteboard: React.FC<TacticalWhiteboardProps> = ({ students
     e.stopPropagation();
 
     const coords = getPitchCoordinates(e.clientX, e.clientY);
-    const newX = Math.max(2, Math.min(98, coords.x - dragOffset.x));
-    const newY = Math.max(3, Math.min(97, coords.y - dragOffset.y));
+    const newX = Math.max(2, Math.min(98, Math.round((coords.x - dragOffset.x) * 10) / 10));
+    const newY = Math.max(3, Math.min(97, Math.round((coords.y - dragOffset.y) * 10) / 10));
 
     setPieces((prev) =>
       prev.map((p) => (p.id === draggingPieceId ? { ...p, x: newX, y: newY } : p))
@@ -177,7 +177,7 @@ export const TacticalWhiteboard: React.FC<TacticalWhiteboardProps> = ({ students
   const handlePiecePointerUp = (e: React.PointerEvent) => {
     if (draggingPieceId) {
       try {
-        e.currentTarget.releasePointerCapture(e.pointerId);
+        (e.target as HTMLElement).releasePointerCapture(e.pointerId);
       } catch {}
       setDraggingPieceId(null);
     }

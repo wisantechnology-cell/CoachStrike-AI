@@ -418,7 +418,7 @@ export const ShareReportModal: React.FC<ShareReportModalProps> = ({
 
             {/* Footer Branding inside the shareable image */}
             <div className="mt-4 pt-3 border-t border-white/5 flex items-center justify-between text-[9px] font-mono text-slate-400">
-              <span className="text-volt font-bold">COACHSTRIKE AI • UEFA PRO SCOUTING</span>
+              <span className="text-volt font-bold">COACHSTRIKE AI • STRIKE PRO SCOUTING</span>
               <span>coachstrike.ai</span>
             </div>
           </div>

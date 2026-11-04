@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { motion } from 'motion/react';
-import { Send, Bot, User, HelpCircle, BookOpen, AlertCircle } from 'lucide-react';
+import { Send, Bot, User, HelpCircle, BookOpen, AlertCircle, Copy, Check, RotateCcw } from 'lucide-react';
 import { ChatMessage, AssessmentResult } from '../types';
 import { useLanguage } from '../context/LanguageContext';
 import { useAuth } from '../context/AuthContext';
@@ -9,9 +9,11 @@ import { detectLanguage } from '../utils/languageDetector';
 
 interface AICoachChatProps {
   playerProfile?: AssessmentResult | null;
+  initialPrompt?: string | null;
+  onPromptConsumed?: () => void;
 }
 
-export const AICoachChat: React.FC<AICoachChatProps> = ({ playerProfile }) => {
+export const AICoachChat: React.FC<AICoachChatProps> = ({ playerProfile, initialPrompt, onPromptConsumed }) => {
   const { lang, setLang, detectAndSetLanguage, t, interpolate } = useLanguage();
   const { plan, isPro } = useAuth();
   const weeklyLimit = isPro ? 10 : 3;
@@ -65,6 +67,7 @@ export const AICoachChat: React.FC<AICoachChatProps> = ({ playerProfile }) => {
 
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
+  const [isCopiedTranscript, setIsCopiedTranscript] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const scrollToBottom = () => {
@@ -74,6 +77,50 @@ export const AICoachChat: React.FC<AICoachChatProps> = ({ playerProfile }) => {
   useEffect(() => {
     scrollToBottom();
   }, [messages, loading]);
+
+  // Copy full conversation transcript to clipboard
+  const handleCopyTranscript = () => {
+    const text = messages
+      .filter((m) => m.sender !== 'system')
+      .map((m) => `${m.sender === 'ai' ? '🤖 CoachStrike AI' : '⚽ Entrenador / Jugador'} [${m.timestamp}]:\n${m.text}\n`)
+      .join('\n');
+    navigator.clipboard.writeText(text);
+    setIsCopiedTranscript(true);
+    setTimeout(() => setIsCopiedTranscript(false), 2500);
+  };
+
+  // Reset conversation to initial state
+  const handleClearChat = () => {
+    setMessages([
+      {
+        id: `welcome-${Date.now()}`,
+        sender: 'ai',
+        text: getInitialWelcomeMessage(),
+        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+      }
+    ]);
+  };
+
+  // Auto-send initial prompt if provided as prop
+  useEffect(() => {
+    if (initialPrompt && initialPrompt.trim()) {
+      handleSendMessage(initialPrompt.trim());
+      if (onPromptConsumed) {
+        onPromptConsumed();
+      }
+    }
+  }, [initialPrompt]);
+
+  // Listen for custom event coachstrike:consult-ai
+  useEffect(() => {
+    const handleConsultEvent = (e: any) => {
+      if (e.detail?.prompt) {
+        handleSendMessage(e.detail.prompt);
+      }
+    };
+    window.addEventListener('coachstrike:consult-ai', handleConsultEvent);
+    return () => window.removeEventListener('coachstrike:consult-ai', handleConsultEvent);
+  }, []);
 
   // Update initial message if language or profile changes
   useEffect(() => {
@@ -105,10 +152,10 @@ export const AICoachChat: React.FC<AICoachChatProps> = ({ playerProfile }) => {
     const currentUsage = getWeeklyUsage();
     if (currentUsage >= weeklyLimit) {
       const limitNotice = currentLang === 'en'
-        ? `⚠️ You have reached your weekly AI message limit (${currentUsage}/${weeklyLimit} for your ${isPro ? 'Pro / Academy' : 'Free'} plan). Upgrade your plan in the top menu to keep consulting with the UEFA Pro Tactical Assistant.`
+        ? `⚠️ You have reached your weekly AI message limit (${currentUsage}/${weeklyLimit} for your ${isPro ? 'Pro / Academy' : 'Free'} plan). Upgrade your plan in the top menu to keep consulting with the Striker Pro Tactical Assistant.`
         : currentLang === 'pt'
-        ? `⚠️ Atingiu o seu limite semanal de mensagens de IA (${currentUsage}/${weeklyLimit} para o seu plano ${isPro ? 'Pro / Academia' : 'Gratuito'}). Atualize o seu plano no menu superior para continuar a consultar o Assistente Tático UEFA Pro.`
-        : `⚠️ Has alcanzado tu límite semanal de mensajes con la IA (${currentUsage}/${weeklyLimit} para tu plan ${isPro ? 'Pro / Academia' : 'Gratuito'}). Actualiza tu plan en el menú superior para continuar consultando con el Asistente Táctico UEFA Pro.`;
+        ? `⚠️ Atingiu o seu limite semanal de mensagens de IA (${currentUsage}/${weeklyLimit} para o seu plano ${isPro ? 'Pro / Academia' : 'Gratuito'}). Atualize o seu plano no menu superior para continuar a consultar o Assistente Tático Striker Pro.`
+        : `⚠️ Has alcanzado tu límite semanal de mensajes con la IA (${currentUsage}/${weeklyLimit} para tu plan ${isPro ? 'Pro / Academia' : 'Gratuito'}). Actualiza tu plan en el menú superior para continuar consultando con el Asistente Táctico Striker Pro.`;
 
       setMessages((prev) => [
         ...prev,
@@ -224,9 +271,28 @@ export const AICoachChat: React.FC<AICoachChatProps> = ({ playerProfile }) => {
                 </span>
               </div>
               <p className="text-xs text-slate-400">
-                UEFA Pro Tactical Assistant & Live Scouting Advisor
+                Striker Pro Tactical Assistant & Live Scouting Advisor
               </p>
             </div>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <button
+              onClick={handleCopyTranscript}
+              className="p-1.5 px-2.5 rounded-lg bg-white/5 hover:bg-slate-800 border border-white/10 text-slate-300 hover:text-volt text-xs font-bold flex items-center gap-1.5 transition-colors cursor-pointer"
+              title={lang === 'en' ? 'Copy Chat Transcript' : 'Copiar Conversación'}
+            >
+              {isCopiedTranscript ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
+              <span className="hidden sm:inline">{isCopiedTranscript ? '¡Copiado!' : (lang === 'en' ? 'Copy' : 'Copiar')}</span>
+            </button>
+
+            <button
+              onClick={handleClearChat}
+              className="p-1.5 rounded-lg bg-white/5 hover:bg-slate-800 border border-white/10 text-slate-400 hover:text-rose-400 text-xs font-bold flex items-center gap-1 transition-colors cursor-pointer"
+              title={lang === 'en' ? 'Reset Conversation' : 'Reiniciar Chat'}
+            >
+              <RotateCcw className="w-3.5 h-3.5" />
+            </button>
           </div>
         </div>
 

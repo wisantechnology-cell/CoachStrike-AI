@@ -2,6 +2,8 @@ import { initializeApp } from 'firebase/app';
 import { 
   getAuth, 
   signInWithPopup, 
+  signInWithRedirect,
+  getRedirectResult,
   GoogleAuthProvider, 
   signOut, 
   onAuthStateChanged,
@@ -101,25 +103,58 @@ export function isFirebaseAuthActive(userId?: string): boolean {
   return true;
 }
 
+// User Profile Syncer in Firestore
+export async function syncUserProfile(user: User) {
+  try {
+    const userRef = doc(db, 'users', user.uid);
+    const nowIso = new Date().toISOString();
+    await setDoc(userRef, {
+      id: user.uid,
+      displayName: user.displayName || 'Director Técnico / Jugador',
+      email: user.email || '',
+      photoURL: user.photoURL || '',
+      createdAt: user.metadata?.creationTime ? new Date(user.metadata.creationTime).toISOString() : nowIso,
+      updatedAt: nowIso
+    }, { merge: true });
+  } catch (error) {
+    console.warn('Profile sync notice:', error);
+  }
+}
+
 // Auth Helpers
 export async function loginWithGoogle() {
   try {
     const result = await signInWithPopup(auth, googleProvider);
     if (result.user) {
-      // Sync user profile to Firestore
-      const userRef = doc(db, 'users', result.user.uid);
-      await setDoc(userRef, {
-        id: result.user.uid,
-        displayName: result.user.displayName || 'Jugador',
-        email: result.user.email || '',
-        photoURL: result.user.photoURL || '',
-        createdAt: new Date().toISOString()
-      }, { merge: true });
+      await syncUserProfile(result.user);
     }
     return result.user;
   } catch (error) {
     console.error('Login error:', error);
     throw error;
+  }
+}
+
+export async function loginWithGoogleRedirect() {
+  try {
+    await signInWithRedirect(auth, googleProvider);
+  } catch (error) {
+    console.error('Redirect sign-in error:', error);
+    throw error;
+  }
+}
+
+export async function checkRedirectAuthResult(): Promise<User | null> {
+  try {
+    const result = await getRedirectResult(auth);
+    if (result && result.user) {
+      await syncUserProfile(result.user);
+      return result.user;
+    }
+    return null;
+  } catch (error) {
+    console.warn('Redirect auth result notice:', error);
+    return null;
   }
 }
 
@@ -336,6 +371,7 @@ export async function saveStudentToCloud(userId: string, student: AcademyStudent
       dataJson: JSON.stringify({
         skills: student.skills,
         tasks: student.tasks || [],
+        attendance: student.attendance || [],
         avatarUrl: student.avatarUrl || ''
       }),
       createdAt: student.createdAt || new Date().toISOString(),
@@ -401,6 +437,7 @@ export function subscribeToAcademyStudents(
             defending: 70, physical: 75, tacticalIQ: 75, mental: 75
           },
           tasks: parsedData.tasks || [],
+          attendance: parsedData.attendance || [],
           avatarUrl: parsedData.avatarUrl,
           createdAt: d.createdAt
         });

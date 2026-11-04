@@ -76,6 +76,13 @@ export const Header: React.FC<HeaderProps> = ({
     };
   }, [isProfileMenuOpen]);
 
+  // Global listener to trigger AuthModal from any screen
+  useEffect(() => {
+    const handleOpenAuth = () => setIsAuthModalOpen(true);
+    window.addEventListener('coachstrike:open-auth', handleOpenAuth);
+    return () => window.removeEventListener('coachstrike:open-auth', handleOpenAuth);
+  }, []);
+
   const langFlags: Record<string, string> = {
     es: '🇪🇸 ES',
     en: '🇺🇸 EN',

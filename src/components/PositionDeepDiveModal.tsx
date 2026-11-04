@@ -662,10 +662,10 @@ export const PositionDeepDiveModal: React.FC<PositionDeepDiveModalProps> = ({
         <div className="bg-slate-900/80 border-t border-white/10 px-5 py-4 sm:px-8 flex items-center justify-between shrink-0 flex-wrap gap-3">
           <div className="text-xs text-slate-400">
             {lang === 'en'
-              ? 'Tactical analysis methodology grounded in UEFA Pro Standards'
+              ? 'Tactical analysis methodology grounded in Strike Pro Standards'
               : lang === 'pt'
-              ? 'Metodologia de análise tática baseada nos padrões UEFA Pro'
-              : 'Metodología de análisis táctico basada en estándares UEFA Pro'}
+              ? 'Metodologia de análise tática baseada nos padrões Strike Pro'
+              : 'Metodología de análisis táctico basada en estándares Strike Pro'}
           </div>
 
           <div className="flex items-center gap-2">

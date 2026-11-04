@@ -41,7 +41,7 @@ const PRICING_TEXTS = {
     proFeatures: [
       'Unlimited DNA assessments',
       'In-depth dribbling analysis',
-      'UEFA PDF Scouting Report',
+      'Strike Pro PDF Scouting Report',
       '24/7 AI Tactical Coach'
     ],
     academyBasic: 'Academy Basic',
@@ -126,7 +126,7 @@ const PRICING_TEXTS = {
     proFeatures: [
       'Evaluaciones ilimitadas',
       'Análisis profundo de regates',
-      'Ficha Scouting PDF UEFA',
+      'Ficha Scouting PDF Strike Pro',
       'Coach AI Táctico 24/7'
     ],
     academyBasic: 'Academia Básico',
@@ -211,7 +211,7 @@ const PRICING_TEXTS = {
     proFeatures: [
       'Avaliações ilimitadas',
       'Análise aprofundada de dribles',
-      'Relatório Scouting PDF UEFA',
+      'Relatório Scouting PDF Strike Pro',
       'Treinador AI Tático 24/7'
     ],
     academyBasic: 'Academia Básico',

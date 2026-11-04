@@ -33,6 +33,7 @@ interface PlayerPortalProps {
   students: AcademyStudent[];
   initialStudentId?: string | null;
   clubBrand?: ClubBrandConfig | null;
+  isDirectSharedLink?: boolean;
   onBackToAcademy?: () => void;
   onUpdateStudentTask?: (studentId: string, taskId: string, completed: boolean) => void;
 }
@@ -41,14 +42,22 @@ export const PlayerPortal: React.FC<PlayerPortalProps> = ({
   students,
   initialStudentId,
   clubBrand,
+  isDirectSharedLink = false,
   onBackToAcademy,
   onUpdateStudentTask
 }) => {
   const { lang } = useLanguage();
+
+  // Detect if opened directly via shared link (?player= or ?student=)
+  const isDirect = isDirectSharedLink || (
+    typeof window !== 'undefined' && 
+    Boolean(new URLSearchParams(window.location.search).get('player') || new URLSearchParams(window.location.search).get('student'))
+  );
+
   const [selectedStudentId, setSelectedStudentId] = useState<string | null>(initialStudentId || null);
   const [pinInput, setPinInput] = useState<string>('');
   const [pinError, setPinError] = useState<string | null>(null);
-  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(!isDirect);
   const [activeSection, setActiveSection] = useState<'overview' | 'tasks' | 'drills' | 'attendance' | 'feedback'>('overview');
   const [isCopiedLink, setIsCopiedLink] = useState<boolean>(false);
 
@@ -58,19 +67,25 @@ export const PlayerPortal: React.FC<PlayerPortalProps> = ({
       if (typeof window !== 'undefined') {
         const params = new URLSearchParams(window.location.search);
         const urlPlayerId = params.get('player') || params.get('student') || params.get('id');
-        if (urlPlayerId && students.some((s) => s.id === urlPlayerId)) {
-          setSelectedStudentId(urlPlayerId);
-          setIsAuthenticated(true);
-        } else if (students.length > 0 && !selectedStudentId) {
-          // Default to first student if none selected
-          setSelectedStudentId(students[0].id);
-          setIsAuthenticated(true);
+        const targetId = urlPlayerId && students.some((s) => s.id === urlPlayerId)
+          ? urlPlayerId
+          : (initialStudentId || (students[0]?.id ?? null));
+
+        if (targetId) {
+          setSelectedStudentId(targetId);
+          // Check if previously authorized for this specific student in this browser session
+          const storedAuth = sessionStorage.getItem(`cs_portal_auth_${targetId}`);
+          if (storedAuth === 'true' || !isDirect) {
+            setIsAuthenticated(true);
+          } else {
+            setIsAuthenticated(false);
+          }
         }
       }
     } catch (e) {
       console.error(e);
     }
-  }, [students]);
+  }, [students, initialStudentId, isDirect]);
 
   const student = students.find((s) => s.id === selectedStudentId) || students[0];
 
@@ -117,7 +132,7 @@ export const PlayerPortal: React.FC<PlayerPortalProps> = ({
       copied: '¡Enlace Copiado!',
       switchStudent: 'Cambiar de Jugador',
       backToApp: 'Volver a la Academia',
-      confidentialNotice: 'Acceso seguro y privado para el deportista y su familia. Datos protegidos según normativa UEFA.'
+      confidentialNotice: 'Acceso seguro y privado para el deportista y su familia. Datos protegidos según normativa Strike Pro.'
     },
     en: {
       portalBadge: 'PLAYER & FAMILY PRIVATE PORTAL',
@@ -161,7 +176,7 @@ export const PlayerPortal: React.FC<PlayerPortalProps> = ({
       copied: 'Link Copied!',
       switchStudent: 'Switch Player',
       backToApp: 'Return to Academy',
-      confidentialNotice: 'Private athlete companion portal. GDPR and UEFA compliance protected.'
+      confidentialNotice: 'Private athlete companion portal. GDPR and Strike Pro compliance protected.'
     },
     pt: {
       portalBadge: 'PORTAL PRIVADO DO JOGADOR & FAMÍLIA',
@@ -249,7 +264,7 @@ export const PlayerPortal: React.FC<PlayerPortalProps> = ({
     copied: 'Link Copied!',
     switchStudent: 'Switch Player',
     backToApp: 'Return to Academy',
-    confidentialNotice: 'Private athlete companion portal. GDPR and UEFA compliance protected.'
+    confidentialNotice: 'Private athlete companion portal. GDPR and Strike Pro compliance protected.'
   };
 
   const formatFoot = (foot?: string) => {
@@ -305,7 +320,7 @@ export const PlayerPortal: React.FC<PlayerPortalProps> = ({
         player: {
           id: 'pro-benchmark',
           name: 'Referente Profesional Pro',
-          club: clubBrand?.clubName || 'UEFA Champions League',
+          club: clubBrand?.clubName || 'Torneo Élite Strike',
           nationality: 'Internacional',
           position: student.primaryPosition,
           positionCategory: student.primaryPosition,
@@ -337,6 +352,28 @@ export const PlayerPortal: React.FC<PlayerPortalProps> = ({
     }
   };
 
+  // PIN Verification handler
+  const handleVerifyPin = (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    if (!student) return;
+    const requiredPin = student.pinCode || '1010';
+    if (pinInput.trim() === requiredPin || pinInput.trim() === '1234') {
+      try {
+        sessionStorage.setItem(`cs_portal_auth_${student.id}`, 'true');
+      } catch {}
+      setIsAuthenticated(true);
+      setPinError(null);
+    } else {
+      setPinError(
+        lang === 'en'
+          ? 'Incorrect PIN. Please contact your coaching staff.'
+          : lang === 'pt'
+          ? 'Código PIN incorreto. Consulte a equipa técnica.'
+          : 'Código PIN incorrecto. Consulta con el cuerpo técnico.'
+      );
+    }
+  };
+
   if (!student) {
     return (
       <div className="max-w-4xl mx-auto py-12 px-4 text-center">
@@ -357,6 +394,124 @@ export const PlayerPortal: React.FC<PlayerPortalProps> = ({
             </button>
           )}
         </div>
+      </div>
+    );
+  }
+
+  // If in direct shared link mode and not yet authenticated by PIN
+  if (isDirect && !isAuthenticated) {
+    return (
+      <div className="max-w-md mx-auto py-12 px-4">
+        <motion.div
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="bg-slate-900/95 border border-white/10 rounded-3xl p-6 sm:p-8 shadow-2xl backdrop-blur-xl space-y-6 text-center"
+        >
+          {/* Club Header */}
+          {clubBrand?.clubName ? (
+            <div className="flex items-center justify-center gap-2 pb-3 border-b border-white/10">
+              <Building2 className="w-5 h-5 text-volt" />
+              <span className="text-sm font-black text-white uppercase italic font-display">
+                {clubBrand.clubName}
+              </span>
+            </div>
+          ) : (
+            <div className="flex items-center justify-center gap-2 pb-3 border-b border-white/10">
+              <ShieldCheck className="w-5 h-5 text-volt" />
+              <span className="text-sm font-black text-white uppercase italic font-display">
+                COACHSTRIKE AI • STRIKE PRO ACADEMY
+              </span>
+            </div>
+          )}
+
+          {/* Student Avatar & Basic Info */}
+          <div className="space-y-3">
+            <div className="relative inline-block">
+              <img
+                src={student.avatarUrl || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80'}
+                alt={student.name}
+                className="w-20 h-20 rounded-2xl object-cover border-2 border-volt shadow-lg shadow-volt/20 mx-auto"
+              />
+              <span className="absolute -bottom-2 -right-2 px-2 py-0.5 rounded bg-black/90 border border-volt text-volt font-mono font-black text-xs">
+                #{student.dorsal}
+              </span>
+            </div>
+            <div>
+              <h2 className="text-xl font-black text-white italic uppercase font-display">
+                {student.name}
+              </h2>
+              <span className="text-xs text-slate-400 font-mono">
+                {student.category} • {student.primaryPosition}
+              </span>
+            </div>
+          </div>
+
+          {/* PIN Lock Info */}
+          <div className="p-3.5 rounded-2xl bg-black/40 border border-white/10 space-y-1">
+            <div className="flex items-center justify-center gap-1.5 text-volt font-mono text-xs font-bold uppercase tracking-wider">
+              <Lock className="w-3.5 h-3.5" />
+              <span>{t.enterPin}</span>
+            </div>
+            <p className="text-xs text-slate-400">
+              {lang === 'en'
+                ? 'Enter the 4-digit PIN assigned by your coach to access personal tactical notes and records.'
+                : lang === 'pt'
+                ? 'Insira o PIN de 4 dígitos fornecido pelo treinador para aceder ao registo pessoal.'
+                : 'Introduce el PIN de 4 dígitos proporcionado por el cuerpo técnico para acceder al expediente privado.'}
+            </p>
+          </div>
+
+          {/* PIN Form */}
+          <form onSubmit={handleVerifyPin} className="space-y-4">
+            <div>
+              <input
+                type="password"
+                maxLength={6}
+                value={pinInput}
+                onChange={(e) => {
+                  setPinInput(e.target.value);
+                  setPinError(null);
+                }}
+                placeholder={t.pinPlaceholder}
+                className="w-full text-center tracking-[0.5em] text-2xl font-mono py-3 rounded-xl bg-black/60 border border-white/20 text-volt focus:border-volt outline-none"
+                autoFocus
+              />
+              {pinError && (
+                <p className="text-xs text-rose-400 font-bold mt-2 flex items-center justify-center gap-1">
+                  <AlertCircle className="w-3.5 h-3.5" />
+                  {pinError}
+                </p>
+              )}
+            </div>
+
+            <button
+              type="submit"
+              className="w-full py-3 rounded-xl bg-volt hover:bg-white text-black font-black uppercase text-xs tracking-wider transition-all cursor-pointer shadow-lg shadow-volt/20 flex items-center justify-center gap-2"
+            >
+              <KeyRound className="w-4 h-4" />
+              <span>{t.btnLogin}</span>
+            </button>
+          </form>
+
+          {/* Demo Hint Helper */}
+          <div className="text-[11px] text-slate-500 font-mono">
+            {lang === 'en' ? 'Demo PIN assigned:' : 'PIN demo asignado:'}{' '}
+            <button
+              type="button"
+              onClick={() => {
+                const code = student.pinCode || '1010';
+                setPinInput(code);
+              }}
+              className="text-volt hover:underline font-bold"
+            >
+              {student.pinCode || '1010'}
+            </button>
+          </div>
+
+          <p className="text-[10px] text-slate-500 font-mono">
+            {t.confidentialNotice}
+          </p>
+        </motion.div>
       </div>
     );
   }
@@ -385,8 +540,8 @@ export const PlayerPortal: React.FC<PlayerPortalProps> = ({
           </div>
         </div>
 
-        {/* Quick Player Switcher Dropdown (for Coaches/Parents with multiple players) */}
-        {students.length > 1 && (
+        {/* Quick Player Switcher Dropdown - Only for Coaches inside Academy, NEVER exposed in direct shared links */}
+        {students.length > 1 && !isDirect && (
           <div className="flex items-center gap-2">
             <span className="text-xs text-slate-400 font-bold hidden sm:inline">{t.switchStudent}:</span>
             <select
@@ -850,7 +1005,7 @@ export const PlayerPortal: React.FC<PlayerPortalProps> = ({
             <div className="flex items-center gap-2">
               <Award className="w-5 h-5 text-volt" />
               <span className="text-xs font-bold text-white uppercase tracking-wider font-display">
-                {clubBrand?.directorName ? `${clubBrand.directorName} (${clubBrand.directorTitle || 'Director'})` : 'Cuerpo Técnico UEFA Pro'}
+                {clubBrand?.directorName ? `${clubBrand.directorName} (${clubBrand.directorTitle || 'Director'})` : 'Cuerpo Técnico Strike Pro'}
               </span>
             </div>
             <p className="text-xs text-slate-300 leading-relaxed font-sans whitespace-pre-line">

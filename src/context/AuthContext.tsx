@@ -1,6 +1,14 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { User, onAuthStateChanged } from 'firebase/auth';
-import { auth, loginWithGoogle, logoutUser, updateUserPlanInCloud, subscribeToUserProfile } from '../lib/firebase';
+import { 
+  auth, 
+  loginWithGoogle, 
+  loginWithGoogleRedirect, 
+  checkRedirectAuthResult, 
+  logoutUser, 
+  updateUserPlanInCloud, 
+  subscribeToUserProfile 
+} from '../lib/firebase';
 import { PlanType } from '../types';
 
 export interface CustomUserProfile {
@@ -17,6 +25,7 @@ interface AuthContextType {
   user: User | CustomUserProfile | null;
   loading: boolean;
   login: () => Promise<void>;
+  loginWithRedirect: () => Promise<void>;
   loginAsGuestProfile: (name: string, email: string, role?: 'coach' | 'player', clubName?: string) => void;
   logout: () => Promise<void>;
   isCloudActive: boolean;
@@ -52,6 +61,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   });
 
   useEffect(() => {
+    // Check if returning from Google redirect sign-in
+    checkRedirectAuthResult().then((redirectUser) => {
+      if (redirectUser) {
+        setUser(redirectUser);
+        try {
+          localStorage.removeItem('coachstrike_custom_user');
+        } catch {}
+      }
+    }).catch((err) => {
+      console.warn('Redirect auth check notice:', err);
+    });
+
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
       if (currentUser) {
         setUser(currentUser);
@@ -177,6 +198,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
+  const loginWithRedirect = async () => {
+    setError(null);
+    try {
+      await loginWithGoogleRedirect();
+    } catch (err: any) {
+      console.error('Google Redirect failed:', err);
+      setError(err.message || 'Error al iniciar redirección con Google');
+      throw err;
+    }
+  };
+
   const loginAsGuestProfile = (name: string, email: string, role: 'coach' | 'player' = 'coach', clubName?: string) => {
     const customUser: CustomUserProfile = {
       uid: `usr_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
@@ -221,6 +253,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         user,
         loading,
         login,
+        loginWithRedirect,
         loginAsGuestProfile,
         logout,
         isCloudActive: Boolean(auth.currentUser),

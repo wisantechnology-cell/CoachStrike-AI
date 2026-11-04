@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
   Users, 
@@ -58,7 +58,9 @@ import {
   Share2,
   Palette,
   Check,
-  GraduationCap
+  GraduationCap,
+  FileSpreadsheet,
+  Download
 } from 'lucide-react';
 import { 
   saveStudentToCloud, 
@@ -173,11 +175,12 @@ interface AcademyDashboardProps {
 }
 
 // Default initial starter roster for coaches
-const INITIAL_STUDENTS: AcademyStudent[] = [
+export const INITIAL_STUDENTS: AcademyStudent[] = [
   {
     id: 'std-1',
     name: 'Mateo Díaz',
     age: 15,
+    pinCode: '1010',
     category: 'Sub-16',
     dorsal: 10,
     preferredFoot: 'Diestro',
@@ -488,11 +491,11 @@ export const AcademyDashboard: React.FC<AcademyDashboardProps> = ({
       if (stored) return JSON.parse(stored);
     } catch {}
     return {
-      clubName: 'ACADEMIA UEFA PRO',
+      clubName: 'ACADEMIA STRIKE PRO',
       clubMotto: 'DESARROLLO INTEGRAL Y ALTO RENDIMIENTO',
       primaryColor: '#ccff00',
       directorName: 'Director de Metodología',
-      directorTitle: 'Entrenador Licencia UEFA Pro',
+      directorTitle: 'Entrenador Licencia Strike Pro',
       badgePreset: 'shield_volt',
       enableWhiteLabelPdf: true
     };
@@ -543,6 +546,9 @@ export const AcademyDashboard: React.FC<AcademyDashboardProps> = ({
   ]);
   const [newClassName, setNewClassName] = useState('');
   const [newClassCategory, setNewClassCategory] = useState<'Sub-12' | 'Sub-14' | 'Sub-16' | 'Sub-18' | 'Senior'>('Sub-16');
+  const [copiedClassId, setCopiedClassId] = useState<string | null>(null);
+  const [createdClassBanner, setCreatedClassBanner] = useState<string | null>(null);
+  const [elitePlusToast, setElitePlusToast] = useState<boolean>(false);
   const [accountRole, setAccountRole] = useState<'teacher' | 'institutional_student'>('teacher');
   const [elitePlusPacks, setElitePlusPacks] = useState<number>(() => {
     try {
@@ -656,10 +662,10 @@ export const AcademyDashboard: React.FC<AcademyDashboardProps> = ({
   // Save Club Brand
   const handleSaveBrand = async () => {
     const updated: ClubBrandConfig = {
-      clubName: brandClubName.trim() || 'ACADEMIA UEFA PRO',
+      clubName: brandClubName.trim() || 'ACADEMIA STRIKE PRO',
       clubMotto: brandMotto.trim() || 'DESARROLLO INTEGRAL Y ALTO RENDIMIENTO',
       directorName: brandDirector.trim() || 'Director de Metodología',
-      directorTitle: brandDirectorTitle.trim() || 'Entrenador Licencia UEFA Pro',
+      directorTitle: brandDirectorTitle.trim() || 'Entrenador Licencia Strike Pro',
       primaryColor: brandColor,
       badgePreset: brandPreset as any,
       enableWhiteLabelPdf: true
@@ -676,6 +682,64 @@ export const AcademyDashboard: React.FC<AcademyDashboardProps> = ({
       }
     }
     setIsBrandModalOpen(false);
+  };
+
+  // Export Roster to CSV (Excel compatible with UTF-8 BOM)
+  const handleExportRosterCSV = () => {
+    if (!students || students.length === 0) return;
+    const headers = ['Dorsal', 'Nombre', 'Categoria', 'Edad', 'Pie', 'Posicion_Principal', 'Afinidad_Pct', 'Asistencia_Pct', 'Tareas_Completadas', 'Notas_Scouting'];
+    const rows = students.map((s) => {
+      const attList = s.attendance || [];
+      const presentCount = attList.filter((a) => a.status === 'present').length;
+      const totalAtt = attList.length;
+      const attRate = totalAtt > 0 ? Math.round((presentCount / totalAtt) * 100) : 100;
+      const completedTasks = (s.tasks || []).filter((t) => t.status === 'completed').length;
+      const escapeCsv = (str: string | number | undefined) => `"${String(str || '').replace(/"/g, '""')}"`;
+      return [
+        escapeCsv(s.dorsal),
+        escapeCsv(s.name),
+        escapeCsv(s.category),
+        escapeCsv(s.age),
+        escapeCsv(s.preferredFoot),
+        escapeCsv(s.primaryPosition),
+        escapeCsv(`${s.matchPercentage}%`),
+        escapeCsv(`${attRate}%`),
+        escapeCsv(`${completedTasks}/${(s.tasks || []).length}`),
+        escapeCsv(s.coachNotes)
+      ].join(',');
+    });
+    const csvContent = '\uFEFF' + [headers.join(','), ...rows].join('\n');
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    const clubSafe = (clubBrand?.clubName || 'Plantilla').replace(/[^a-zA-Z0-9_-]/g, '_');
+    link.download = `Plantilla_${clubSafe}_${new Date().toISOString().slice(0, 10)}.csv`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
+
+  // Export Full Academy Backup JSON
+  const handleExportBackupJSON = () => {
+    const backupData = {
+      version: '2.0',
+      exportedAt: new Date().toISOString(),
+      clubBrand,
+      studentsCount: students.length,
+      students
+    };
+    const blob = new Blob([JSON.stringify(backupData, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    const clubSafe = (clubBrand?.clubName || 'Academia').replace(/[^a-zA-Z0-9_-]/g, '_');
+    link.download = `Backup_${clubSafe}_${new Date().toISOString().slice(0, 10)}.json`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
   };
 
   // Toggle student task status
@@ -718,7 +782,8 @@ export const AcademyDashboard: React.FC<AcademyDashboardProps> = ({
     try {
       localStorage.setItem('coachstrike_elite_plus', String(updated));
     } catch {}
-    alert(`¡Pack Pro de 20 alumnos adquirido exitosamente ($40/mes extra)! Capacidad Pro ampliada en +20 alumnos.`);
+    setElitePlusToast(true);
+    setTimeout(() => setElitePlusToast(false), 3000);
   };
 
   const handleAddStudent = async (e: React.FormEvent) => {
@@ -1017,11 +1082,11 @@ export const AcademyDashboard: React.FC<AcademyDashboardProps> = ({
 
           <h1 className="text-3xl sm:text-5xl font-black text-white uppercase italic tracking-tight font-display max-w-3xl mx-auto leading-tight">
             {lang === 'en' ? (
-              <>Unlock <span className="text-emerald-400">Academy Mode</span> UEFA Pro</>
+              <>Unlock <span className="text-emerald-400">Academy Mode</span> Strike Pro</>
             ) : lang === 'pt' ? (
-              <>Desbloqueie o <span className="text-emerald-400">Modo Academia</span> UEFA Pro</>
+              <>Desbloqueie o <span className="text-emerald-400">Modo Academia</span> Strike Pro</>
             ) : (
-              <>Desbloquea el <span className="text-emerald-400">Modo Academia</span> UEFA Pro</>
+              <>Desbloquea el <span className="text-emerald-400">Modo Academia</span> Strike Pro</>
             )}
           </h1>
 
@@ -1434,6 +1499,24 @@ export const AcademyDashboard: React.FC<AcademyDashboardProps> = ({
 
           {activeSubTab === 'roster' && (
             <div className="flex items-center gap-2">
+              <button
+                onClick={handleExportRosterCSV}
+                className="px-2.5 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 border border-white/10 text-white text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer shadow-sm hover:border-emerald-500/40"
+                title={lang === 'en' ? 'Export Squad Roster to Excel/CSV' : lang === 'pt' ? 'Exportar Plantel para Excel/CSV' : 'Exportar Plantilla a Excel/CSV'}
+              >
+                <FileSpreadsheet className="w-3.5 h-3.5 text-emerald-400" />
+                <span className="hidden md:inline">{lang === 'en' ? 'Export CSV' : lang === 'pt' ? 'Exportar CSV' : 'Exportar CSV'}</span>
+              </button>
+
+              <button
+                onClick={handleExportBackupJSON}
+                className="px-2.5 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 border border-white/10 text-slate-300 hover:text-white text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer shadow-sm"
+                title={lang === 'en' ? 'Export Complete Academy JSON Backup' : lang === 'pt' ? 'Exportar Backup JSON da Academia' : 'Descargar Respaldo JSON Completo'}
+              >
+                <Download className="w-3.5 h-3.5" />
+                <span className="hidden md:inline">{lang === 'en' ? 'Backup' : 'Copia'}</span>
+              </button>
+
               {isLimitReached && !isAcademyElite && (
                 <button
                   onClick={() => onOpenPricing('academy_elite')}
@@ -1600,7 +1683,7 @@ export const AcademyDashboard: React.FC<AcademyDashboardProps> = ({
                   className="px-4 py-2 rounded-xl bg-amber-400 hover:bg-white text-black font-black uppercase italic text-xs tracking-wider shadow-lg shadow-amber-400/20 transition-all cursor-pointer flex items-center gap-1.5"
                 >
                   <Sparkles className="w-4 h-4 fill-black" />
-                  <span>{tAcad.plusBtn}</span>
+                  <span>{elitePlusToast ? '¡+20 Cupos Activados!' : tAcad.plusBtn}</span>
                 </button>
               </div>
             </div>
@@ -1627,7 +1710,8 @@ export const AcademyDashboard: React.FC<AcademyDashboardProps> = ({
                   };
                   setClassesList((prev) => [newClass, ...prev]);
                   setNewClassName('');
-                  alert(`¡Código de invitación generado: ${newClass.inviteCode}!`);
+                  setCreatedClassBanner(newClass.inviteCode);
+                  setTimeout(() => setCreatedClassBanner(null), 4000);
                 }}
                 className="space-y-3"
               >
@@ -1661,6 +1745,11 @@ export const AcademyDashboard: React.FC<AcademyDashboardProps> = ({
                 >
                   {tAcad.generateClassBtn}
                 </button>
+                {createdClassBanner && (
+                  <div className="p-2.5 rounded-xl bg-emerald-500/15 border border-emerald-500/40 text-emerald-300 text-xs font-mono text-center">
+                    ¡Clase creada! Código: <strong className="text-volt">{createdClassBanner}</strong>
+                  </div>
+                )}
               </form>
             </div>
 
@@ -1691,11 +1780,16 @@ export const AcademyDashboard: React.FC<AcademyDashboardProps> = ({
                       <button
                         onClick={() => {
                           navigator.clipboard.writeText(`https://coachstrike.ai/join/${cls.inviteCode}`);
-                          alert(`¡Código ${cls.inviteCode} copiado!`);
+                          setCopiedClassId(cls.id);
+                          setTimeout(() => setCopiedClassId(null), 2500);
                         }}
-                        className="px-3 py-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-white text-xs font-bold transition-colors cursor-pointer"
+                        className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-colors cursor-pointer ${
+                          copiedClassId === cls.id
+                            ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40'
+                            : 'bg-white/10 hover:bg-white/20 text-white'
+                        }`}
                       >
-                        {tAcad.copyLinkBtn}
+                        {copiedClassId === cls.id ? '¡Copiado!' : tAcad.copyLinkBtn}
                       </button>
                     </div>
                   </div>
@@ -2220,7 +2314,7 @@ export const AcademyDashboard: React.FC<AcademyDashboardProps> = ({
               </div>
 
               {/* Pitch Canvas with Realistic Grass & Markings */}
-              <div className="relative w-full aspect-[16/10] bg-emerald-950 border-2 border-white/20 rounded-xl overflow-hidden shadow-inner flex items-center justify-center select-none">
+              <div className="relative w-full aspect-[16/10] bg-emerald-950 border-2 border-white/20 rounded-xl overflow-hidden shadow-inner flex items-center justify-center">
                 {/* Field Grass Stripes */}
                 <div className="absolute inset-0 bg-[linear-gradient(to_right,rgba(255,255,255,0.03)_50%,transparent_50%)] bg-[length:10%_100%]" />
 
@@ -2255,12 +2349,14 @@ export const AcademyDashboard: React.FC<AcademyDashboardProps> = ({
                     return (
                       <motion.div
                         key={slotTemplate.slotId}
+                        layout
+                        initial={{ scale: 0.85, opacity: 0 }}
+                        animate={{ scale: 1, opacity: 1 }}
+                        transition={{ duration: 0.25 }}
                         onClick={() => setSelectedLineupSlotId(slotTemplate.slotId)}
-                        whileHover={{ scale: 1.15 }}
-                        whileTap={{ scale: 0.95 }}
                         style={{ left: `${slotTemplate.x}%`, top: `${slotTemplate.y}%` }}
-                        className={`absolute -translate-x-1/2 -translate-y-1/2 cursor-pointer z-10 transition-all flex flex-col items-center ${
-                          isSelected ? 'z-30' : ''
+                        className={`absolute -translate-x-1/2 -translate-y-1/2 cursor-pointer z-10 flex flex-col items-center group transition-transform ${
+                          isSelected ? 'z-30' : 'hover:scale-110'
                         }`}
                       >
                         {/* Token Circular Chip (Tactical Board Style) */}
@@ -2621,6 +2717,7 @@ export const AcademyDashboard: React.FC<AcademyDashboardProps> = ({
           students={students}
           initialStudentId={activePortalStudentId}
           clubBrand={clubBrand}
+          isDirectSharedLink={false}
           onBackToAcademy={() => setActiveSubTab('roster')}
           onUpdateStudentTask={handleToggleStudentTask}
         />
@@ -2948,7 +3045,7 @@ export const AcademyDashboard: React.FC<AcademyDashboardProps> = ({
                     type="text"
                     value={brandDirectorTitle}
                     onChange={(e) => setBrandDirectorTitle(e.target.value)}
-                    placeholder="Ej. Director Metodología UEFA Pro"
+                    placeholder="Ej. Director Metodología Strike Pro"
                     className="w-full bg-slate-950 border border-white/15 rounded-xl px-3 py-2 text-white focus:outline-none focus:border-volt"
                   />
                 </div>
@@ -2988,8 +3085,8 @@ export const AcademyDashboard: React.FC<AcademyDashboardProps> = ({
                   {lang === 'en' ? 'Live PDF Header Preview:' : 'Vista Previa en PDF & Informes:'}
                 </span>
                 <div className="flex items-center justify-between text-xs font-bold text-white pt-1">
-                  <span>{brandClubName || 'ACADEMIA UEFA PRO'}</span>
-                  <span className="text-[10px] font-mono text-slate-400">#STK-UEFA-PRO</span>
+                  <span>{brandClubName || 'ACADEMIA STRIKE PRO'}</span>
+                  <span className="text-[10px] font-mono text-slate-400">#STK-STRIKE-PRO</span>
                 </div>
                 <div className="text-[10px] text-slate-400 italic">
                   {brandMotto || 'DESARROLLO INTEGRAL Y ALTO RENDIMIENTO'}

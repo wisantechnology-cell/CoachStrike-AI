@@ -16,10 +16,10 @@ service cloud.firestore {
     }
 
     function isValidUser(data) {
-      return data.keys().hasAll(['id', 'createdAt']) &&
+      return data.keys().hasAll(['id']) &&
         data.id is string &&
         data.id == request.auth.uid &&
-        data.createdAt is string &&
+        (!('createdAt' in data) || (data.createdAt is string && data.createdAt.size() <= 50)) &&
         (!('displayName' in data) || (data.displayName is string && data.displayName.size() <= 100)) &&
         (!('email' in data) || (data.email is string && data.email.size() <= 150)) &&
         (!('photoURL' in data) || (data.photoURL is string && data.photoURL.size() <= 500)) &&
@@ -97,6 +97,20 @@ service cloud.firestore {
         data.updatedAt is string;
     }
 
+    function isValidBranding(data) {
+      return data.keys().hasAll(['clubName']) &&
+        data.clubName is string && data.clubName.size() >= 1 && data.clubName.size() <= 120 &&
+        (!('clubMotto' in data) || (data.clubMotto is string && data.clubMotto.size() <= 200)) &&
+        (!('directorName' in data) || (data.directorName is string && data.directorName.size() <= 120)) &&
+        (!('directorTitle' in data) || (data.directorTitle is string && data.directorTitle.size() <= 120)) &&
+        (!('primaryColor' in data) || (data.primaryColor is string && data.primaryColor.size() <= 30)) &&
+        (!('badgePreset' in data) || (data.badgePreset is string && data.badgePreset.size() <= 40)) &&
+        (!('clubBadgeUrl' in data) || (data.clubBadgeUrl is string && data.clubBadgeUrl.size() <= 1000)) &&
+        (!('federationCode' in data) || (data.federationCode is string && data.federationCode.size() <= 60)) &&
+        (!('enableWhiteLabelPdf' in data) || data.enableWhiteLabelPdf is bool) &&
+        (!('updatedAt' in data) || (data.updatedAt is string && data.updatedAt.size() <= 50));
+    }
+
     // User Profile
     match /users/{userId} {
       allow get: if isSignedIn() && request.auth.uid == userId;
@@ -141,6 +155,13 @@ service cloud.firestore {
         allow create: if isSignedIn() && request.auth.uid == userId && isValidId(tacticId) && isValidTactic(request.resource.data);
         allow update: if isSignedIn() && request.auth.uid == userId && isValidId(tacticId) && isValidTactic(request.resource.data) && request.resource.data.userId == resource.data.userId;
         allow delete: if isSignedIn() && request.auth.uid == userId && isValidId(tacticId);
+      }
+
+      // User's Academy White-Label Branding
+      match /academy_branding/{brandId} {
+        allow get, list: if isSignedIn() && request.auth.uid == userId;
+        allow create, update: if isSignedIn() && request.auth.uid == userId && isValidId(brandId) && isValidBranding(request.resource.data);
+        allow delete: if isSignedIn() && request.auth.uid == userId && isValidId(brandId);
       }
     }
   }

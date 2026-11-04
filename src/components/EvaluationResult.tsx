@@ -280,7 +280,7 @@ export const EvaluationResult: React.FC<EvaluationResultProps> = ({
               onClick={handleDownloadPdf}
               disabled={isDownloadingPdf}
               className="px-3.5 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 border border-white/10 text-white font-bold text-xs uppercase tracking-wider flex items-center gap-2 transition-all cursor-pointer shadow-sm hover:border-white/30 whitespace-nowrap shrink-0"
-              title={lang === 'en' ? 'Download Official UEFA Pro PDF Scouting Report' : lang === 'pt' ? 'Descarregar Relatório Oficial PDF' : 'Descargar Informe Oficial PDF UEFA Pro'}
+              title={lang === 'en' ? 'Download Official Strike Pro PDF Scouting Report' : lang === 'pt' ? 'Descarregar Relatório Oficial PDF' : 'Descargar Informe Oficial PDF Strike Pro'}
             >
               <FileDown className={`w-4 h-4 text-volt ${isDownloadingPdf ? 'animate-bounce' : ''}`} />
               <span>{isDownloadingPdf ? (lang === 'en' ? 'Creating PDF...' : lang === 'pt' ? 'A gerar PDF...' : 'Generando PDF...') : (lang === 'en' ? 'PDF Report' : lang === 'pt' ? 'Ficha PDF' : 'Informe PDF')}</span>
@@ -594,10 +594,10 @@ export const EvaluationResult: React.FC<EvaluationResultProps> = ({
                 <ShieldCheck className="w-5 h-5 text-emerald-400" />
                 <span className="text-slate-200">
                   {lang === 'en'
-                    ? 'UEFA Pro Academy Membership active. Full access to roster files and Starting XI line-up builder.'
+                    ? 'Strike Pro Academy Membership active. Full access to roster files and Starting XI line-up builder.'
                     : lang === 'pt'
-                    ? 'Subscrição Modo Academia UEFA Pro ativa. Acesso total a fichas de alunos e Onze Ideal.'
-                    : 'Membresía Modo Academia UEFA Pro activa. Acceso total a cantera y armado de once.'}
+                    ? 'Subscrição Modo Academia Strike Pro ativa. Acesso total a fichas de alunos e Onze Ideal.'
+                    : 'Membresía Modo Academia Strike Pro activa. Acceso total a cantera y armado de once.'}
                 </span>
               </div>
             </div>
