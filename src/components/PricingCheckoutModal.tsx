@@ -599,6 +599,47 @@ export const PricingCheckoutModal: React.FC<PricingCheckoutModalProps> = ({
 
               <button
                 type="button"
+                onClick={() => {
+                  const receiptLines = [
+                    '====================================================',
+                    '        COACHSTRIKE AI • OFFICIAL B2B/B2C RECEIPT   ',
+                    '====================================================',
+                    `${txt.txId} ${successReceipt.transactionId}`,
+                    `${txt.selectedPlanLbl} ${getPlanDisplayName(successReceipt.plan)}`,
+                    `${txt.chargedToday} ${txt.chargedZero}`,
+                    `${txt.regularCharge} $${successReceipt.amount} USD (${billingCycle === 'monthly' ? txt.month : txt.year})`,
+                    `${txt.trialEndLbl} ${successReceipt.trialEndsAt}`,
+                    `${txt.gatewayLbl} ${successReceipt.provider.toUpperCase()}`,
+                    `Customer: ${user?.email || 'Verified Member'}`,
+                    `Date: ${new Date().toISOString()}`,
+                    '====================================================',
+                    '14-Day Money-Back Guarantee • Strike Pro Methodology',
+                    '===================================================='
+                  ].join('\n');
+                  const blob = new Blob([receiptLines], { type: 'text/plain;charset=utf-8' });
+                  const url = URL.createObjectURL(blob);
+                  const a = document.createElement('a');
+                  a.href = url;
+                  a.download = `Invoice_CoachStrike_${successReceipt.transactionId}.txt`;
+                  document.body.appendChild(a);
+                  a.click();
+                  document.body.removeChild(a);
+                  URL.revokeObjectURL(url);
+                }}
+                className="w-full py-2.5 rounded-xl bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-300 font-bold uppercase text-xs tracking-wider transition-all cursor-pointer border border-emerald-500/30 flex items-center justify-center gap-2"
+              >
+                <FileText className="w-4 h-4" />
+                <span>
+                  {lang === 'en'
+                    ? 'Download Official Receipt / Invoice'
+                    : lang === 'pt'
+                    ? 'Descarregar Recibo / Fatura Oficial'
+                    : 'Descargar Comprobante / Factura Oficial'}
+                </span>
+              </button>
+
+              <button
+                type="button"
                 onClick={() => setSuccessReceipt(null)}
                 className="w-full py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold uppercase text-xs tracking-wider transition-all cursor-pointer border border-white/10"
               >
@@ -1121,6 +1162,19 @@ export const PricingCheckoutModal: React.FC<PricingCheckoutModalProps> = ({
                     {txt.freeForever}
                   </p>
                 )}
+
+                <div className="pt-2 border-t border-white/5 flex flex-wrap items-center justify-center gap-3 text-[10px] text-slate-400 font-mono">
+                  <span className="flex items-center gap-1 text-emerald-400">
+                    <ShieldCheck className="w-3.5 h-3.5" />
+                    {lang === 'en' ? '14-Day Refund Guarantee' : lang === 'pt' ? 'Garantia Reembolso 14 Dias' : 'Garantía Reembolso 14 Días'}
+                  </span>
+                  <span>•</span>
+                  <span>
+                    {lang === 'en' ? '1-Click Cancel' : lang === 'pt' ? 'Cancelamento 1 Clique' : 'Cancelación en 1 Clic'}
+                  </span>
+                  <span>•</span>
+                  <span>COPPA & RGPD</span>
+                </div>
               </div>
             </div>
           </div>

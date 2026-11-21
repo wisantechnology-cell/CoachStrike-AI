@@ -21,7 +21,7 @@ import {
   orderBy
 } from 'firebase/firestore';
 import firebaseConfig from '../../firebase-applet-config.json';
-import { AssessmentResult, PlanType, PaymentRecord, AcademyStudent, ClubBrandConfig } from '../types';
+import { AssessmentResult, PlanType, PaymentRecord, AcademyStudent, ClubBrandConfig, AcademyClass, UserTestimonial } from '../types';
 
 // Initialize Firebase App
 const app = initializeApp(firebaseConfig);
@@ -372,6 +372,9 @@ export async function saveStudentToCloud(userId: string, student: AcademyStudent
         skills: student.skills,
         tasks: student.tasks || [],
         attendance: student.attendance || [],
+        skillHistory: student.skillHistory || [],
+        classCode: student.classCode || '',
+        pinCode: student.pinCode || '1010',
         avatarUrl: student.avatarUrl || ''
       }),
       createdAt: student.createdAt || new Date().toISOString(),
@@ -438,6 +441,9 @@ export function subscribeToAcademyStudents(
           },
           tasks: parsedData.tasks || [],
           attendance: parsedData.attendance || [],
+          skillHistory: parsedData.skillHistory || [],
+          classCode: parsedData.classCode || undefined,
+          pinCode: parsedData.pinCode || '1010',
           avatarUrl: parsedData.avatarUrl,
           createdAt: d.createdAt
         });
@@ -637,3 +643,405 @@ export function subscribeToClubBrand(
     return () => {};
   }
 }
+
+// Save Academy Class (Classroom) to Firestore
+export async function saveAcademyClassToCloud(userId: string, cls: AcademyClass) {
+  if (!isFirebaseAuthActive(userId)) {
+    return;
+  }
+  const path = `users/${userId}/academy_classes/${cls.id}`;
+  try {
+    const classRef = doc(db, 'users', userId, 'academy_classes', cls.id);
+    await setDoc(classRef, {
+      id: cls.id,
+      userId,
+      name: cls.name,
+      category: cls.category,
+      inviteCode: cls.inviteCode,
+      studentCount: Number(cls.studentCount) || 0,
+      createdAt: cls.createdAt || new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    }, { merge: true });
+  } catch (error) {
+    handleFirestoreError(error, OperationType.WRITE, path);
+  }
+}
+
+// Delete Academy Class from Firestore
+export async function deleteAcademyClassFromCloud(userId: string, classId: string) {
+  if (!isFirebaseAuthActive(userId)) {
+    return;
+  }
+  const path = `users/${userId}/academy_classes/${classId}`;
+  try {
+    const classRef = doc(db, 'users', userId, 'academy_classes', classId);
+    await deleteDoc(classRef);
+  } catch (error) {
+    handleFirestoreError(error, OperationType.DELETE, path);
+  }
+}
+
+// Subscribe to Academy Classes in Firestore
+export function subscribeToAcademyClasses(
+  userId: string,
+  onUpdate: (classes: AcademyClass[]) => void
+) {
+  if (!isFirebaseAuthActive(userId)) {
+    return () => {};
+  }
+  const path = `users/${userId}/academy_classes`;
+  try {
+    const classesRef = collection(db, 'users', userId, 'academy_classes');
+    return onSnapshot(classesRef, (snapshot) => {
+      const list: AcademyClass[] = [];
+      snapshot.forEach((docSnap) => {
+        const d = docSnap.data();
+        list.push({
+          id: d.id,
+          name: d.name,
+          category: d.category,
+          inviteCode: d.inviteCode,
+          studentCount: Number(d.studentCount) || 0,
+          createdAt: d.createdAt
+        });
+      });
+      onUpdate(list);
+    }, (error) => {
+      handleFirestoreError(error, OperationType.LIST, path);
+    });
+  } catch (error) {
+    return () => {};
+  }
+}
+
+// ============================================================================
+// REAL COMMUNITY TESTIMONIALS & 50% SINGLE-EVALUATION PRO UNLOCK REWARD
+// ============================================================================
+
+const LOCAL_TESTIMONIALS_KEY = 'coachstrike_real_testimonials_v1';
+const TESTIMONIAL_REWARD_KEY = 'coachstrike_testimonial_reward_v1';
+
+export interface TestimonialRewardState {
+  hasSubmittedReview: boolean;
+  unlockedEvaluationId: string | null; // Bound strictly to 1 single evaluation ID (or 'PENDING_NEXT_EVAL' until bound)
+  testimonialId?: string;
+  claimedAt?: string;
+}
+
+export function getTestimonialRewardState(): TestimonialRewardState {
+  if (typeof window === 'undefined') {
+    return { hasSubmittedReview: false, unlockedEvaluationId: null };
+  }
+  try {
+    const raw = localStorage.getItem(TESTIMONIAL_REWARD_KEY);
+    if (!raw) return { hasSubmittedReview: false, unlockedEvaluationId: null };
+    const parsed = JSON.parse(raw);
+    return {
+      hasSubmittedReview: Boolean(parsed.hasSubmittedReview),
+      unlockedEvaluationId: parsed.unlockedEvaluationId || null,
+      testimonialId: parsed.testimonialId,
+      claimedAt: parsed.claimedAt
+    };
+  } catch {
+    return { hasSubmittedReview: false, unlockedEvaluationId: null };
+  }
+}
+
+export function grantTestimonialSingleEvalReward(targetEvaluationId?: string | null, testimonialId?: string): TestimonialRewardState {
+  const current = getTestimonialRewardState();
+  // Explicitly enforce 1 evaluation per review: if already bound to a concrete evaluation ID, keep it
+  const evalToUnlock =
+    current.unlockedEvaluationId && current.unlockedEvaluationId !== 'PENDING_NEXT_EVAL'
+      ? current.unlockedEvaluationId
+      : targetEvaluationId || 'PENDING_NEXT_EVAL';
+
+  const nextState: TestimonialRewardState = {
+    hasSubmittedReview: true,
+    unlockedEvaluationId: evalToUnlock,
+    testimonialId: testimonialId || current.testimonialId,
+    claimedAt: current.claimedAt || new Date().toISOString()
+  };
+
+  if (typeof window !== 'undefined') {
+    try {
+      localStorage.setItem(TESTIMONIAL_REWARD_KEY, JSON.stringify(nextState));
+      window.dispatchEvent(new CustomEvent('coachstrike_testimonial_updated'));
+    } catch (e) {
+      console.warn('Could not save testimonial reward state:', e);
+    }
+  }
+  return nextState;
+}
+
+export function bindPendingRewardToEvaluation(evaluationId: string): TestimonialRewardState {
+  const current = getTestimonialRewardState();
+  if (current.hasSubmittedReview && current.unlockedEvaluationId === 'PENDING_NEXT_EVAL' && evaluationId) {
+    const updated: TestimonialRewardState = {
+      ...current,
+      unlockedEvaluationId: evaluationId
+    };
+    if (typeof window !== 'undefined') {
+      try {
+        localStorage.setItem(TESTIMONIAL_REWARD_KEY, JSON.stringify(updated));
+      } catch (e) {
+        console.warn('Could not bind evaluation reward:', e);
+      }
+    }
+    return updated;
+  }
+  return current;
+}
+
+export function getLocalTestimonials(): UserTestimonial[] {
+  if (typeof window === 'undefined') return [];
+  try {
+    const raw = localStorage.getItem(LOCAL_TESTIMONIALS_KEY);
+    if (!raw) return [];
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
+}
+
+export async function submitRealTestimonial(
+  testimonial: Omit<UserTestimonial, 'id' | 'createdAt' | 'userId'>,
+  targetEvaluationId?: string | null
+): Promise<UserTestimonial> {
+  const currentUserId = auth.currentUser?.uid || 'guest_local_user';
+  const newReview: UserTestimonial = {
+    id: `rev_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
+    userId: currentUserId,
+    authorName: testimonial.authorName.trim(),
+    authorRole: testimonial.authorRole.trim(),
+    rating: Math.min(5, Math.max(1, Number(testimonial.rating) || 5)),
+    comment: testimonial.comment.trim(),
+    ...(targetEvaluationId ? { rewardEvalId: targetEvaluationId } : {}),
+    createdAt: new Date().toISOString()
+  };
+
+  // Always save locally so the user sees their review immediately even if guest
+  if (typeof window !== 'undefined') {
+    try {
+      const existing = getLocalTestimonials();
+      const updated = [newReview, ...existing.filter((r) => r.id !== newReview.id)];
+      localStorage.setItem(LOCAL_TESTIMONIALS_KEY, JSON.stringify(updated));
+    } catch (e) {
+      console.warn('Could not store local testimonial:', e);
+    }
+  }
+
+  // Grant the 50% unlock reward strictly for 1 evaluation
+  grantTestimonialSingleEvalReward(targetEvaluationId, newReview.id);
+
+  // Sync to Firestore if signed in with Firebase Auth
+  if (auth.currentUser) {
+    const path = `testimonials/${newReview.id}`;
+    try {
+      const reviewRef = doc(db, 'testimonials', newReview.id);
+      await setDoc(reviewRef, newReview);
+    } catch (error) {
+      handleFirestoreError(error, OperationType.CREATE, path);
+    }
+  }
+
+  if (typeof window !== 'undefined') {
+    window.dispatchEvent(new CustomEvent('coachstrike_testimonial_updated'));
+  }
+
+  return newReview;
+}
+
+export function subscribeToRealTestimonials(
+  onUpdate: (testimonials: UserTestimonial[]) => void
+) {
+  const mergeAndEmit = (cloudList: UserTestimonial[]) => {
+    const localList = getLocalTestimonials();
+    const byId = new Map<string, UserTestimonial>();
+    for (const item of [...cloudList, ...localList]) {
+      if (item && item.id && item.comment) {
+        byId.set(item.id, item);
+      }
+    }
+    const merged = Array.from(byId.values()).sort(
+      (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+    );
+    onUpdate(merged);
+  };
+
+  // Initial local emit
+  mergeAndEmit([]);
+
+  let latestCloud: UserTestimonial[] = [];
+  const handleLocalEvent = () => mergeAndEmit(latestCloud);
+  if (typeof window !== 'undefined') {
+    window.addEventListener('coachstrike_testimonial_updated', handleLocalEvent);
+  }
+
+  let unsubFirestore = () => {};
+  try {
+    const testimonialsRef = collection(db, 'testimonials');
+    unsubFirestore = onSnapshot(
+      testimonialsRef,
+      (snapshot) => {
+        const list: UserTestimonial[] = [];
+        snapshot.forEach((docSnap) => {
+          const d = docSnap.data();
+          if (d && d.id && d.comment) {
+            list.push({
+              id: d.id,
+              userId: d.userId,
+              authorName: d.authorName,
+              authorRole: d.authorRole,
+              rating: Number(d.rating) || 5,
+              comment: d.comment,
+              rewardEvalId: d.rewardEvalId,
+              createdAt: d.createdAt
+            });
+          }
+        });
+        latestCloud = list;
+        mergeAndEmit(latestCloud);
+      },
+      (error) => {
+        console.warn('Testimonials listener notice:', error);
+        mergeAndEmit([]);
+      }
+    );
+  } catch {
+    mergeAndEmit([]);
+  }
+
+  return () => {
+    unsubFirestore();
+    if (typeof window !== 'undefined') {
+      window.removeEventListener('coachstrike_testimonial_updated', handleLocalEvent);
+    }
+  };
+}
+
+// ============================================================================
+// ACADEMY PUBLIC SELF-ASSESSMENT / QR TRYOUT AUTO-INGESTION
+// ============================================================================
+
+export function inferCategoryFromInviteCode(code: string, fallbackAge = 16): AcademyStudent['category'] {
+  const upper = (code || '').toUpperCase();
+  if (upper.includes('SUB-12') || upper.includes('SUB12') || upper.includes('U12')) return 'Sub-12';
+  if (upper.includes('SUB-14') || upper.includes('SUB14') || upper.includes('U14')) return 'Sub-14';
+  if (upper.includes('SUB-16') || upper.includes('SUB16') || upper.includes('U16')) return 'Sub-16';
+  if (upper.includes('SUB-18') || upper.includes('SUB18') || upper.includes('U18')) return 'Sub-18';
+  if (upper.includes('SENIOR') || upper.includes('PRO') || upper.includes('1ER')) return 'Senior';
+  if (fallbackAge <= 12) return 'Sub-12';
+  if (fallbackAge <= 14) return 'Sub-14';
+  if (fallbackAge <= 16) return 'Sub-16';
+  if (fallbackAge <= 18) return 'Sub-18';
+  return 'Senior';
+}
+
+export async function publishAcademyTryoutSubmission(student: AcademyStudent): Promise<void> {
+  if (!student.classCode) return;
+  const submissionId = student.id.replace(/[^a-zA-Z0-9_-]/g, '_');
+  const payload = {
+    id: submissionId,
+    inviteCode: student.classCode.trim().toUpperCase(),
+    playerName: student.name.trim(),
+    category: student.category || 'Sub-16',
+    dorsal: Number(student.dorsal) || 10,
+    age: Number(student.age) || 16,
+    preferredFoot: student.preferredFoot || 'Diestro',
+    primaryPosition: student.primaryPosition,
+    ...(student.secondaryPosition ? { secondaryPosition: student.secondaryPosition } : {}),
+    matchPercentage: Number(student.matchPercentage) || 85,
+    skillsJson: JSON.stringify(student.skills),
+    ...(student.assessmentResultId ? { assessmentResultId: student.assessmentResultId } : {}),
+    createdAt: student.createdAt || new Date().toISOString()
+  };
+
+  try {
+    const subRef = doc(db, 'academy_tryout_submissions', submissionId);
+    await setDoc(subRef, payload, { merge: true });
+  } catch (err) {
+    console.warn('Notice publishing academy tryout submission to cloud:', err);
+  }
+}
+
+export function subscribeToAcademyTryoutSubmissions(
+  activeInviteCodes: string[],
+  onNewStudents: (incoming: AcademyStudent[]) => void
+) {
+  const normalizedCodes = new Set(
+    (activeInviteCodes || []).map((c) => c.trim().toUpperCase()).filter(Boolean)
+  );
+  if (normalizedCodes.size === 0) return () => {};
+
+  try {
+    const submissionsRef = collection(db, 'academy_tryout_submissions');
+    return onSnapshot(
+      submissionsRef,
+      (snapshot) => {
+        const matched: AcademyStudent[] = [];
+        snapshot.forEach((docSnap) => {
+          const d = docSnap.data();
+          const code = String(d?.inviteCode || '').trim().toUpperCase();
+          if (d && d.id && code && normalizedCodes.has(code)) {
+            let parsedSkills = {
+              speed: 75,
+              technique: 75,
+              finishing: 72,
+              passing: 75,
+              defending: 70,
+              physical: 75,
+              tacticalIQ: 78,
+              mental: 78
+            };
+            try {
+              if (d.skillsJson) {
+                parsedSkills = JSON.parse(d.skillsJson);
+              }
+            } catch {}
+
+            const todayStr = (d.createdAt || new Date().toISOString()).slice(0, 10);
+            matched.push({
+              id: d.id,
+              name: d.playerName,
+              age: Number(d.age) || 16,
+              category: (d.category as AcademyStudent['category']) || 'Sub-16',
+              dorsal: Number(d.dorsal) || 10,
+              preferredFoot: (d.preferredFoot as AcademyStudent['preferredFoot']) || 'Diestro',
+              primaryPosition: d.primaryPosition,
+              secondaryPosition: d.secondaryPosition,
+              matchPercentage: Number(d.matchPercentage) || 85,
+              skills: parsedSkills,
+              classCode: code,
+              lastExamDate: todayStr,
+              assessmentResultId: d.assessmentResultId,
+              pinCode: '1010',
+              skillHistory: [
+                {
+                  id: `snap-tryout-${d.id}`,
+                  date: todayStr,
+                  label: 'Auto-Diagnóstico QR',
+                  skills: parsedSkills,
+                  matchPercentage: Number(d.matchPercentage) || 85,
+                  primaryPosition: d.primaryPosition
+                }
+              ],
+              coachNotes: `Incorporado automáticamente vía Enlace/Código de Invitación (${code}).`,
+              createdAt: d.createdAt || new Date().toISOString()
+            });
+          }
+        });
+        if (matched.length > 0) {
+          onNewStudents(matched);
+        }
+      },
+      (err) => {
+        console.warn('Tryout submissions listener notice:', err);
+      }
+    );
+  } catch {
+    return () => {};
+  }
+}
+
+

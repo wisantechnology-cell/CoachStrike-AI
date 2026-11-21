@@ -1,27 +1,44 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { ArrowRight, ArrowLeft, CheckCircle2, User, Footprints, Zap, Sparkles, ShieldCheck } from 'lucide-react';
+import {
+  ArrowRight,
+  ArrowLeft,
+  CheckCircle2,
+  User,
+  Footprints,
+  Zap,
+  ShieldCheck,
+  GraduationCap,
+  Hash,
+  Calendar
+} from 'lucide-react';
 import { getLocalizedQuestions } from '../data/questions';
-import { AssessmentResult, AcademyStudent } from '../types';
+import { AssessmentResult, AcademyStudent, AcademyTryoutMeta } from '../types';
 import { calculateAssessment } from '../utils/evaluator';
 import { useLanguage } from '../context/LanguageContext';
+import { inferCategoryFromInviteCode } from '../lib/firebase';
 
 interface QuestionnaireProps {
-  onComplete: (result: AssessmentResult) => void;
+  onComplete: (result: AssessmentResult, tryoutMeta?: AcademyTryoutMeta) => void;
   onCancel: () => void;
   studentContext?: AcademyStudent | null;
+  initialInviteCode?: string | null;
 }
 
 export const Questionnaire: React.FC<QuestionnaireProps> = ({ 
   onComplete, 
   onCancel,
-  studentContext 
+  studentContext,
+  initialInviteCode
 }) => {
   const { t, lang } = useLanguage();
   const [playerName, setPlayerName] = useState(studentContext ? studentContext.name : '');
   const [preferredFoot, setPreferredFoot] = useState<'Diestro' | 'Zurdo' | 'Ambidestro'>(
     studentContext ? studentContext.preferredFoot : 'Diestro'
   );
+  const [inviteCode, setInviteCode] = useState<string>(initialInviteCode || '');
+  const [dorsal, setDorsal] = useState<number>(studentContext ? studentContext.dorsal : 10);
+  const [playerAge, setPlayerAge] = useState<number>(studentContext ? studentContext.age : 16);
   const [step, setStep] = useState<number>(0); // 0 = Player setup, 1..10 = questions
   const [answers, setAnswers] = useState<Record<number, string>>({});
 
@@ -29,8 +46,16 @@ export const Questionnaire: React.FC<QuestionnaireProps> = ({
     if (studentContext) {
       setPlayerName(studentContext.name);
       setPreferredFoot(studentContext.preferredFoot);
+      setDorsal(studentContext.dorsal);
+      setPlayerAge(studentContext.age);
     }
   }, [studentContext]);
+
+  useEffect(() => {
+    if (initialInviteCode) {
+      setInviteCode(initialInviteCode.toUpperCase());
+    }
+  }, [initialInviteCode]);
 
   const questions = getLocalizedQuestions(lang);
   const totalQuestions = questions.length;
@@ -45,8 +70,21 @@ export const Questionnaire: React.FC<QuestionnaireProps> = ({
     } else if (step < totalQuestions) {
       setStep(step + 1);
     } else {
-      const result = calculateAssessment(playerName, preferredFoot, answers, lang);
-      onComplete(result);
+      const finalName =
+        playerName.trim() ||
+        (lang === 'en' ? 'Strike AI Player' : lang === 'pt' ? 'Jogador Strike AI' : 'Jugador CoachStrike');
+      const result = calculateAssessment(finalName, preferredFoot, answers, lang);
+      const cleanCode = inviteCode.trim().toUpperCase();
+      if (cleanCode && !studentContext) {
+        onComplete(result, {
+          inviteCode: cleanCode,
+          dorsal: Number(dorsal) || 10,
+          age: Number(playerAge) || 16,
+          category: inferCategoryFromInviteCode(cleanCode, Number(playerAge) || 16)
+        });
+      } else {
+        onComplete(result);
+      }
     }
   };
 
@@ -72,6 +110,46 @@ export const Questionnaire: React.FC<QuestionnaireProps> = ({
   };
 
   const progressPercentage = step === 0 ? 5 : Math.round((step / totalQuestions) * 100);
+  const hasActiveInviteCode = Boolean(inviteCode.trim());
+
+  const tryoutLabels = {
+    es: {
+      inviteBannerBadge: 'AUTODIAGNÓSTICO DE CANTERA VINCULADO',
+      inviteBannerText:
+        'Al finalizar este test, tu ficha completa de ADN táctico se enviará automáticamente a la plantilla de tu entrenador.',
+      codeLabel: 'Código de Invitación de Academia / Club (Opcional)',
+      codePlaceholder: 'Ej: CS-SUB16-4821 (Dejar vacío si es test libre)',
+      codeHint:
+        'Si tu entrenador te compartió un enlace QR o código de clase, tu resultado se sincronizará directo con la plantilla del club.',
+      dorsalLabel: 'Tu Dorsal (#)',
+      ageLabel: 'Tu Edad',
+      detectedCat: 'Categoría detectada:'
+    },
+    en: {
+      inviteBannerBadge: 'LINKED ACADEMY TRYOUT ASSESSMENT',
+      inviteBannerText:
+        'Upon completing this test, your full tactical DNA card will automatically sync to your coach’s squad roster.',
+      codeLabel: 'Academy / Club Invite Code (Optional)',
+      codePlaceholder: 'E.g. CS-SUB16-4821 (Leave blank for individual test)',
+      codeHint:
+        'If your coach shared a QR link or classroom code, your evaluation will automatically sync into the club roster.',
+      dorsalLabel: 'Jersey Number (#)',
+      ageLabel: 'Your Age',
+      detectedCat: 'Detected Category:'
+    },
+    pt: {
+      inviteBannerBadge: 'AUTO-DIAGNÓSTICO DE ACADEMIA VINCULADO',
+      inviteBannerText:
+        'Ao concluir este teste, a sua ficha completa de ADN tático será enviada automaticamente para o plantel do seu treinador.',
+      codeLabel: 'Código de Convite da Academia / Clube (Opcional)',
+      codePlaceholder: 'Ex: CS-SUB16-4821 (Deixar vazio para teste livre)',
+      codeHint:
+        'Se o seu treinador partilhou um link QR ou código de turma, o seu resultado será sincronizado diretamente no plantel.',
+      dorsalLabel: 'O Teu Dorsal (#)',
+      ageLabel: 'A Tua Idade',
+      detectedCat: 'Escalão detetado:'
+    }
+  }[lang];
 
   return (
     <div className="max-w-3xl mx-auto py-8 px-4">
@@ -121,6 +199,16 @@ export const Questionnaire: React.FC<QuestionnaireProps> = ({
                         ? `A avaliar Aluno da Academia: #${studentContext.dorsal} ${studentContext.name} (${studentContext.category})`
                         : `Evaluando Alumno Cantera: #${studentContext.dorsal} ${studentContext.name} (${studentContext.category})`}
                     </span>
+                  </div>
+                ) : hasActiveInviteCode ? (
+                  <div className="p-3 rounded-xl bg-emerald-500/15 border border-emerald-500/40 text-emerald-300 space-y-1">
+                    <div className="flex items-center gap-2 text-[11px] font-mono font-black uppercase text-emerald-400">
+                      <GraduationCap className="w-4 h-4 shrink-0" />
+                      <span>
+                        {tryoutLabels.inviteBannerBadge} • {inviteCode.trim().toUpperCase()}
+                      </span>
+                    </div>
+                    <p className="text-xs text-slate-200">{tryoutLabels.inviteBannerText}</p>
                   </div>
                 ) : (
                   <span className="px-3 py-1 rounded-full bg-volt-10 text-volt text-xs font-bold font-mono-code uppercase tracking-widest border border-volt-30">
@@ -179,6 +267,74 @@ export const Questionnaire: React.FC<QuestionnaireProps> = ({
                   })}
                 </div>
               </div>
+
+              {/* Academy Invite Code / QR Tryout Self-Registration Section */}
+              {!studentContext && (
+                <div className="p-4 rounded-2xl bg-black/40 border border-emerald-500/25 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <label className="text-xs font-bold uppercase text-emerald-400 tracking-wider flex items-center gap-1.5">
+                      <GraduationCap className="w-4 h-4" />
+                      <span>{tryoutLabels.codeLabel}</span>
+                    </label>
+                    {hasActiveInviteCode && (
+                      <span className="px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 font-mono text-[10px] font-bold">
+                        {tryoutLabels.detectedCat}{' '}
+                        {inferCategoryFromInviteCode(inviteCode, playerAge)}
+                      </span>
+                    )}
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    <div className="sm:col-span-1">
+                      <input
+                        type="text"
+                        value={inviteCode}
+                        onChange={(e) => setInviteCode(e.target.value.toUpperCase())}
+                        placeholder={tryoutLabels.codePlaceholder}
+                        className="w-full bg-black/70 border border-white/15 focus:border-emerald-400 rounded-xl px-3.5 py-2.5 text-xs font-mono text-volt uppercase outline-hidden"
+                      />
+                    </div>
+
+                    {hasActiveInviteCode && (
+                      <>
+                        <div className="flex items-center gap-2 bg-black/70 border border-white/15 rounded-xl px-3 py-2">
+                          <Hash className="w-4 h-4 text-slate-400 shrink-0" />
+                          <span className="text-[11px] text-slate-400 font-bold whitespace-nowrap">
+                            {tryoutLabels.dorsalLabel}
+                          </span>
+                          <input
+                            type="number"
+                            min={1}
+                            max={99}
+                            value={dorsal}
+                            onChange={(e) => setDorsal(Number(e.target.value) || 10)}
+                            className="w-full bg-transparent text-white font-mono font-bold text-xs text-right focus:outline-none"
+                          />
+                        </div>
+
+                        <div className="flex items-center gap-2 bg-black/70 border border-white/15 rounded-xl px-3 py-2">
+                          <Calendar className="w-4 h-4 text-slate-400 shrink-0" />
+                          <span className="text-[11px] text-slate-400 font-bold whitespace-nowrap">
+                            {tryoutLabels.ageLabel}
+                          </span>
+                          <input
+                            type="number"
+                            min={6}
+                            max={50}
+                            value={playerAge}
+                            onChange={(e) => setPlayerAge(Number(e.target.value) || 16)}
+                            className="w-full bg-transparent text-white font-mono font-bold text-xs text-right focus:outline-none"
+                          />
+                        </div>
+                      </>
+                    )}
+                  </div>
+
+                  <p className="text-[11px] text-slate-400 leading-relaxed">
+                    {tryoutLabels.codeHint}
+                  </p>
+                </div>
+              )}
             </motion.div>
           ) : (
             /* QUESTIONS STEPS 1..10 */

@@ -111,6 +111,62 @@ service cloud.firestore {
         (!('updatedAt' in data) || (data.updatedAt is string && data.updatedAt.size() <= 50));
     }
 
+    function isValidAcademyClass(data) {
+      return data.keys().hasAll(['id', 'userId', 'name', 'category', 'inviteCode']) &&
+        data.id is string && isValidId(data.id) &&
+        data.userId is string && data.userId == request.auth.uid &&
+        data.name is string && data.name.size() >= 1 && data.name.size() <= 120 &&
+        data.category is string && data.category.size() <= 40 &&
+        data.inviteCode is string && data.inviteCode.size() <= 40 &&
+        (!('studentCount' in data) || (data.studentCount is number && data.studentCount >= 0 && data.studentCount <= 5000)) &&
+        (!('createdAt' in data) || (data.createdAt is string && data.createdAt.size() <= 50)) &&
+        (!('updatedAt' in data) || (data.updatedAt is string && data.updatedAt.size() <= 50));
+    }
+
+    function isValidTestimonial(data) {
+      return data.keys().hasAll(['id', 'userId', 'authorName', 'authorRole', 'rating', 'comment', 'createdAt']) &&
+        data.id is string && isValidId(data.id) &&
+        data.userId is string && data.userId == request.auth.uid &&
+        data.authorName is string && data.authorName.size() >= 1 && data.authorName.size() <= 100 &&
+        data.authorRole is string && data.authorRole.size() >= 1 && data.authorRole.size() <= 120 &&
+        data.rating is number && data.rating >= 1 && data.rating <= 5 &&
+        data.comment is string && data.comment.size() >= 5 && data.comment.size() <= 1200 &&
+        (!('rewardEvalId' in data) || (data.rewardEvalId is string && data.rewardEvalId.size() <= 120)) &&
+        data.createdAt is string && data.createdAt.size() <= 50;
+    }
+
+    // Real Community Testimonials
+    match /testimonials/{testimonialId} {
+      allow get, list: if true;
+      allow create: if isSignedIn() && isValidId(testimonialId) && isValidTestimonial(request.resource.data);
+      allow update: if isSignedIn() && isValidId(testimonialId) && resource.data.userId == request.auth.uid && isValidTestimonial(request.resource.data);
+      allow delete: if isSignedIn() && isValidId(testimonialId) && resource.data.userId == request.auth.uid;
+    }
+
+    function isValidTryoutSubmission(data) {
+      return data.keys().hasAll(['id', 'inviteCode', 'playerName', 'category', 'dorsal', 'age', 'preferredFoot', 'primaryPosition', 'matchPercentage', 'skillsJson', 'createdAt']) &&
+        data.id is string && isValidId(data.id) &&
+        data.inviteCode is string && data.inviteCode.size() >= 2 && data.inviteCode.size() <= 40 &&
+        data.playerName is string && data.playerName.size() >= 1 && data.playerName.size() <= 100 &&
+        data.category is string && data.category.size() <= 40 &&
+        data.dorsal is number && data.dorsal >= 0 && data.dorsal <= 999 &&
+        data.age is number && data.age >= 4 && data.age <= 75 &&
+        data.preferredFoot is string && data.preferredFoot.size() <= 30 &&
+        data.primaryPosition is string && data.primaryPosition.size() <= 20 &&
+        data.matchPercentage is number && data.matchPercentage >= 0 && data.matchPercentage <= 100 &&
+        data.skillsJson is string && data.skillsJson.size() <= 5000 &&
+        (!('secondaryPosition' in data) || (data.secondaryPosition is string && data.secondaryPosition.size() <= 20)) &&
+        (!('assessmentResultId' in data) || (data.assessmentResultId is string && data.assessmentResultId.size() <= 120)) &&
+        data.createdAt is string && data.createdAt.size() <= 50;
+    }
+
+    // Academy Tryout / Invite Code Self-Assessments
+    match /academy_tryout_submissions/{submissionId} {
+      allow get, list: if true;
+      allow create: if isValidId(submissionId) && isValidTryoutSubmission(request.resource.data);
+      allow update, delete: if isSignedIn();
+    }
+
     // User Profile
     match /users/{userId} {
       allow get: if isSignedIn() && request.auth.uid == userId;
@@ -162,6 +218,14 @@ service cloud.firestore {
         allow get, list: if isSignedIn() && request.auth.uid == userId;
         allow create, update: if isSignedIn() && request.auth.uid == userId && isValidId(brandId) && isValidBranding(request.resource.data);
         allow delete: if isSignedIn() && request.auth.uid == userId && isValidId(brandId);
+      }
+
+      // User's Academy Classes (Classroom)
+      match /academy_classes/{classId} {
+        allow get, list: if isSignedIn() && request.auth.uid == userId;
+        allow create: if isSignedIn() && request.auth.uid == userId && isValidId(classId) && isValidAcademyClass(request.resource.data);
+        allow update: if isSignedIn() && request.auth.uid == userId && isValidId(classId) && isValidAcademyClass(request.resource.data) && request.resource.data.userId == resource.data.userId;
+        allow delete: if isSignedIn() && request.auth.uid == userId && isValidId(classId);
       }
     }
   }

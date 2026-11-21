@@ -171,6 +171,24 @@ export interface ClubBrandConfig {
   enableWhiteLabelPdf?: boolean;
 }
 
+export interface SkillSnapshot {
+  id: string;
+  date: string;
+  label?: string;
+  skills: SkillScores;
+  matchPercentage: number;
+  primaryPosition: PositionCategory;
+}
+
+export interface AcademyClass {
+  id: string;
+  name: string;
+  category: string;
+  inviteCode: string;
+  studentCount: number;
+  createdAt?: string;
+}
+
 export interface AcademyStudent {
   id: string;
   name: string;
@@ -187,6 +205,8 @@ export interface AcademyStudent {
   assessmentResultId?: string;
   tasks?: AcademyTask[];
   attendance?: AttendanceRecord[];
+  skillHistory?: SkillSnapshot[];
+  classCode?: string;
   avatarUrl?: string;
   pinCode?: string;
   phoneOrParentContact?: string;
@@ -241,3 +261,23 @@ export interface TacticalBoardPlan {
   notes?: string;
   updatedAt: string;
 }
+
+export interface UserTestimonial {
+  id: string;
+  userId: string;
+  authorName: string;
+  authorRole: string; // e.g., "Jugador • Mediocampista Sub-18" or "Entrenador • Academia Juvenil"
+  rating: number; // 1 to 5
+  comment: string;
+  rewardEvalId?: string;
+  createdAt: string;
+}
+
+export interface AcademyTryoutMeta {
+  inviteCode: string;
+  dorsal: number;
+  age: number;
+  category?: AcademyStudent['category'];
+}
+
+

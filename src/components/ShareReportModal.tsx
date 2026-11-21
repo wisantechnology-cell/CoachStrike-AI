@@ -40,8 +40,21 @@ export const ShareReportModal: React.FC<ShareReportModalProps> = ({
   const [copiedLink, setCopiedLink] = useState(false);
   const [copiedText, setCopiedText] = useState(false);
   const [isExportingImage, setIsExportingImage] = useState(false);
+  const [cardFormat, setCardFormat] = useState<'classic' | 'story'>('story');
 
   if (!isOpen) return null;
+
+  const rarityByPos: Record<string, string> = {
+    POR: '6.8%',
+    DEC: '14.2%',
+    LAT: '13.5%',
+    MCD: '11.4%',
+    MC: '16.0%',
+    MPO: '8.4%',
+    EXT: '15.1%',
+    DC: '14.6%'
+  };
+  const rarityPct = rarityByPos[result.primaryPosition.code] || '9.5%';
 
   const t = {
     en: {
@@ -281,10 +294,39 @@ export const ShareReportModal: React.FC<ShareReportModalProps> = ({
             </div>
           </div>
 
+          {/* Format Toggle: Stories 9:16 vs Classic */}
+          <div className="flex items-center justify-between gap-2">
+            <span className="text-[11px] font-mono font-bold text-slate-400 uppercase">
+              {lang === 'en' ? 'Card Format:' : lang === 'pt' ? 'Formato do Cartão:' : 'Formato de Tarjeta:'}
+            </span>
+            <div className="flex items-center gap-1.5 bg-black/50 p-1 rounded-xl border border-white/10">
+              <button
+                type="button"
+                onClick={() => setCardFormat('story')}
+                className={`px-3 py-1 rounded-lg text-[11px] font-bold uppercase transition-all cursor-pointer ${
+                  cardFormat === 'story' ? 'bg-volt text-black font-black' : 'text-slate-400 hover:text-white'
+                }`}
+              >
+                📱 Stories (9:16)
+              </button>
+              <button
+                type="button"
+                onClick={() => setCardFormat('classic')}
+                className={`px-3 py-1 rounded-lg text-[11px] font-bold uppercase transition-all cursor-pointer ${
+                  cardFormat === 'classic' ? 'bg-volt text-black font-black' : 'text-slate-400 hover:text-white'
+                }`}
+              >
+                🖼️ Post Clásico
+              </button>
+            </div>
+          </div>
+
           {/* Printable / Capturable 16Personalities-Style Tactical Card */}
           <div
             ref={cardRef}
-            className="rounded-2xl bg-gradient-to-br from-[#0c1324] via-[#080d1a] to-[#04070d] border-2 border-volt/40 p-6 shadow-2xl relative overflow-hidden"
+            className={`rounded-2xl bg-gradient-to-br from-[#0c1324] via-[#080d1a] to-[#04070d] border-2 border-volt/40 p-6 shadow-2xl relative overflow-hidden mx-auto transition-all ${
+              cardFormat === 'story' ? 'max-w-[380px] py-8' : 'w-full'
+            }`}
           >
             {/* Background Aesthetic Watermark */}
             <div className="absolute top-0 right-0 p-3 opacity-5 text-7xl font-black italic font-display text-volt pointer-events-none select-none -rotate-12">
@@ -299,9 +341,14 @@ export const ShareReportModal: React.FC<ShareReportModalProps> = ({
                   {t.dnaBadge}
                 </span>
               </div>
-              <span className="text-[10px] font-mono-code font-bold text-slate-400 bg-white/5 px-2 py-0.5 rounded">
-                #STK-{result.id.slice(-4).toUpperCase()}
-              </span>
+              <div className="flex items-center gap-1.5">
+                <span className="text-[10px] font-mono-code font-bold text-emerald-400 bg-emerald-500/10 border border-emerald-500/30 px-2 py-0.5 rounded">
+                  {lang === 'en' ? `RARITY: ${rarityPct}` : lang === 'pt' ? `RARIDADE: ${rarityPct}` : `RAREZA: ${rarityPct}`}
+                </span>
+                <span className="text-[10px] font-mono-code font-bold text-slate-400 bg-white/5 px-2 py-0.5 rounded">
+                  #STK-{result.id.slice(-4).toUpperCase()}
+                </span>
+              </div>
             </div>
 
             {/* Persona Hero Section */}

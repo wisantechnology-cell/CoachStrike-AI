@@ -12,11 +12,18 @@ import { AcademyDashboard, INITIAL_STUDENTS } from './components/AcademyDashboar
 import { PlayerPortal } from './components/PlayerPortal';
 import { PricingCheckoutModal } from './components/PricingCheckoutModal';
 import { PrivacyPolicyModal } from './components/PrivacyPolicyModal';
-import { AssessmentResult, PlanType, AcademyStudent, ClubBrandConfig } from './types';
+import { AssessmentResult, PlanType, AcademyStudent, ClubBrandConfig, AcademyTryoutMeta } from './types';
 import { LanguageProvider, useLanguage } from './context/LanguageContext';
 import { ThemeProvider } from './context/ThemeContext';
 import { AuthProvider, useAuth } from './context/AuthContext';
-import { saveEvaluationToCloud, deleteEvaluationFromCloud, subscribeToUserEvaluations, saveStudentToCloud } from './lib/firebase';
+import {
+  saveEvaluationToCloud,
+  deleteEvaluationFromCloud,
+  subscribeToUserEvaluations,
+  saveStudentToCloud,
+  publishAcademyTryoutSubmission,
+  inferCategoryFromInviteCode
+} from './lib/firebase';
 import { decodeReportFromUrl } from './utils/shareLink';
 
 function AppContent() {
@@ -29,6 +36,8 @@ function AppContent() {
   const [isPrivacyModalOpen, setIsPrivacyModalOpen] = useState<boolean>(false);
   const [pricingInitialPlan, setPricingInitialPlan] = useState<PlanType>('pro');
   const [evaluatingStudent, setEvaluatingStudent] = useState<AcademyStudent | null>(null);
+  const [initialInviteCode, setInitialInviteCode] = useState<string | null>(null);
+  const [lastSyncedInviteCode, setLastSyncedInviteCode] = useState<string | null>(null);
   const [isSharedLinkView, setIsSharedLinkView] = useState<boolean>(false);
   const [portalStudentId, setPortalStudentId] = useState<string | null>(null);
   const [tacticalPromptForAI, setTacticalPromptForAI] = useState<string | null>(null);
@@ -84,6 +93,14 @@ function AppContent() {
           setPortalStudentId(playerPortalParam);
           setActiveTab('portal');
           setIsSharedLinkView(true);
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        const inviteParam = params.get('invite') || params.get('tryout') || params.get('classCode');
+        if (inviteParam) {
+          setInitialInviteCode(inviteParam.trim().toUpperCase());
+          setEvaluatingStudent(null);
+          setActiveTab('test');
           window.scrollTo({ top: 0, behavior: 'smooth' });
         }
       }
@@ -173,11 +190,36 @@ function AppContent() {
     }
   };
 
-  const handleCompleteTest = (result: AssessmentResult) => {
+  const handleCompleteTest = (result: AssessmentResult, tryoutMeta?: AcademyTryoutMeta) => {
     setCurrentResult(result);
     setIsSharedLinkView(false);
+    setLastSyncedInviteCode(null);
+
+    const todayIso = new Date().toISOString().split('T')[0];
 
     if (evaluatingStudent) {
+      const existingHistory = evaluatingStudent.skillHistory && evaluatingStudent.skillHistory.length > 0
+        ? evaluatingStudent.skillHistory
+        : [
+            {
+              id: `snap-base-${evaluatingStudent.id}`,
+              date: evaluatingStudent.createdAt?.slice(0, 10) || '2026-09-01',
+              label: 'Initial',
+              skills: evaluatingStudent.skills,
+              matchPercentage: evaluatingStudent.matchPercentage,
+              primaryPosition: evaluatingStudent.primaryPosition
+            }
+          ];
+
+      const newSnapshot = {
+        id: `snap-${Date.now()}`,
+        date: todayIso,
+        label: 'Evaluation',
+        skills: result.skills,
+        matchPercentage: result.primaryPosition.matchPercentage,
+        primaryPosition: result.primaryPosition.code
+      };
+
       const updatedStudent: AcademyStudent = {
         ...evaluatingStudent,
         preferredFoot: result.preferredFoot,
@@ -185,8 +227,9 @@ function AppContent() {
         secondaryPosition: result.secondaryPositions?.[0]?.code || evaluatingStudent.secondaryPosition,
         matchPercentage: result.primaryPosition.matchPercentage,
         skills: result.skills,
-        lastExamDate: new Date().toISOString().split('T')[0],
-        assessmentResultId: result.id
+        lastExamDate: todayIso,
+        assessmentResultId: result.id,
+        skillHistory: [...existingHistory, newSnapshot]
       };
 
       setEvaluatingStudent(updatedStudent);
@@ -204,6 +247,97 @@ function AppContent() {
         saveStudentToCloud(user.uid, updatedStudent).catch((e) =>
           console.error('Error syncing evaluated student to Firestore:', e)
         );
+      }
+    } else if (tryoutMeta && tryoutMeta.inviteCode.trim()) {
+      // Auto-ingest player from Public QR / Invite Code directly into Academy Roster
+      const cleanCode = tryoutMeta.inviteCode.trim().toUpperCase();
+      setLastSyncedInviteCode(cleanCode);
+
+      // Look up matching category from local classes if available, otherwise infer from code
+      let resolvedCategory: AcademyStudent['category'] =
+        tryoutMeta.category || inferCategoryFromInviteCode(cleanCode, tryoutMeta.age);
+      try {
+        const rawClasses = localStorage.getItem('coachstrike_academy_classes');
+        if (rawClasses) {
+          const parsedClasses = JSON.parse(rawClasses);
+          if (Array.isArray(parsedClasses)) {
+            const matchedClass = parsedClasses.find(
+              (c: any) => String(c.inviteCode || '').toUpperCase() === cleanCode
+            );
+            if (matchedClass && matchedClass.category) {
+              resolvedCategory = matchedClass.category;
+            }
+            // Increment student count on matched class
+            const updatedClasses = parsedClasses.map((c: any) =>
+              String(c.inviteCode || '').toUpperCase() === cleanCode
+                ? { ...c, studentCount: (Number(c.studentCount) || 0) + 1 }
+                : c
+            );
+            localStorage.setItem('coachstrike_academy_classes', JSON.stringify(updatedClasses));
+          }
+        }
+      } catch {}
+
+      const newTryoutStudent: AcademyStudent = {
+        id: `std-tryout-${Date.now()}`,
+        name: result.playerName,
+        age: Number(tryoutMeta.age) || 16,
+        category: resolvedCategory,
+        dorsal: Number(tryoutMeta.dorsal) || 10,
+        preferredFoot: result.preferredFoot,
+        primaryPosition: result.primaryPosition.code,
+        secondaryPosition: result.secondaryPositions?.[0]?.code,
+        matchPercentage: result.primaryPosition.matchPercentage,
+        skills: result.skills,
+        classCode: cleanCode,
+        lastExamDate: todayIso,
+        assessmentResultId: result.id,
+        pinCode: '1010',
+        skillHistory: [
+          {
+            id: `snap-tryout-${Date.now()}`,
+            date: todayIso,
+            label: 'Auto-Diagnóstico QR',
+            skills: result.skills,
+            matchPercentage: result.primaryPosition.matchPercentage,
+            primaryPosition: result.primaryPosition.code
+          }
+        ],
+        coachNotes: `Auto-diagnóstico vinculado por Código/QR (${cleanCode}). Posición detectada: ${result.primaryPosition.title} (${result.primaryPosition.matchPercentage}%).`,
+        createdAt: new Date().toISOString()
+      };
+
+      setAcademyStudents((prev) => {
+        const existingIdx = prev.findIndex(
+          (s) =>
+            s.name.trim().toLowerCase() === newTryoutStudent.name.trim().toLowerCase() &&
+            (s.classCode === cleanCode || s.category === resolvedCategory)
+        );
+        let nextList: AcademyStudent[];
+        if (existingIdx >= 0) {
+          const existing = prev[existingIdx];
+          const mergedStudent: AcademyStudent = {
+            ...existing,
+            ...newTryoutStudent,
+            id: existing.id,
+            skillHistory: [...(existing.skillHistory || []), ...(newTryoutStudent.skillHistory || [])]
+          };
+          nextList = prev.map((s, idx) => (idx === existingIdx ? mergedStudent : s));
+        } else {
+          nextList = [newTryoutStudent, ...prev];
+        }
+        try {
+          localStorage.setItem('coachstrike_academy_students', JSON.stringify(nextList));
+          window.dispatchEvent(new CustomEvent('coachstrike_academy_roster_updated'));
+        } catch {}
+        return nextList;
+      });
+
+      // Publish to cloud tryout submissions (works for both signed-in and guest players)
+      publishAcademyTryoutSubmission(newTryoutStudent).catch(() => {});
+
+      if (user) {
+        saveStudentToCloud(user.uid, newTryoutStudent).catch(() => {});
       }
     }
 
@@ -267,6 +401,7 @@ function AppContent() {
             >
               <Questionnaire
                 studentContext={evaluatingStudent}
+                initialInviteCode={initialInviteCode}
                 onComplete={handleCompleteTest}
                 onCancel={() => {
                   if (evaluatingStudent) {
@@ -286,6 +421,42 @@ function AppContent() {
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -15 }}
             >
+              {lastSyncedInviteCode && (
+                <div className="max-w-5xl mx-auto px-4 pt-6">
+                  <div className="p-4 rounded-2xl bg-emerald-500/15 border border-emerald-500/40 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-lg">
+                    <div className="text-xs text-emerald-200">
+                      <strong className="text-emerald-400 font-mono uppercase block mb-0.5">
+                        {lang === 'en'
+                          ? `✅ AUTOMATICALLY SYNCED TO ACADEMY ROSTER (${lastSyncedInviteCode})`
+                          : lang === 'pt'
+                          ? `✅ SINCRONIZADO AUTOMATICAMENTE NO PLANTEL DA ACADEMIA (${lastSyncedInviteCode})`
+                          : `✅ FICHA SINCRONIZADA AUTOMÁTICAMENTE EN LA PLANTILLA DE ACADEMIA (${lastSyncedInviteCode})`}
+                      </strong>
+                      <span>
+                        {lang === 'en'
+                          ? 'Your full Tactical DNA profile, radar metrics, and position fit have been added to your coach’s squad.'
+                          : lang === 'pt'
+                          ? 'O seu perfil de ADN Tático, métricas de radar e posição ideal foram adicionados diretamente ao plantel do treinador.'
+                          : 'Tu perfil completo de ADN Táctico, radar de 8 métricas y posición ideal ya aparecen en la plantilla del entrenador.'}
+                      </span>
+                    </div>
+                    <button
+                      onClick={() => {
+                        setAcademySubTab('roster');
+                        setActiveTab('academy');
+                        window.scrollTo({ top: 0, behavior: 'smooth' });
+                      }}
+                      className="px-4 py-2 rounded-xl bg-emerald-400 hover:bg-white text-black font-black uppercase italic text-xs tracking-wider cursor-pointer shrink-0 transition-all"
+                    >
+                      {lang === 'en'
+                        ? 'View in Academy Roster'
+                        : lang === 'pt'
+                        ? 'Ver no Plantel da Academia'
+                        : 'Ver en Plantilla de Academia'}
+                    </button>
+                  </div>
+                </div>
+              )}
               <EvaluationResult
                 result={currentResult}
                 onRepeatTest={() => {

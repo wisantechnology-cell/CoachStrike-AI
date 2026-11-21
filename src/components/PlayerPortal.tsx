@@ -22,9 +22,12 @@ import {
   BookOpen,
   Check,
   Building2,
-  ExternalLink
+  ExternalLink,
+  TrendingUp,
+  MessageCircle,
+  ArrowRight
 } from 'lucide-react';
-import { AcademyStudent, AcademyTask, AttendanceRecord, ClubBrandConfig, AssessmentResult } from '../types';
+import { AcademyStudent, AcademyTask, AttendanceRecord, ClubBrandConfig, AssessmentResult, SkillScores } from '../types';
 import { useLanguage } from '../context/LanguageContext';
 import { generatePdfReport } from '../utils/pdfGenerator';
 import { getLocalizedDrills } from '../data/drills';
@@ -36,6 +39,7 @@ interface PlayerPortalProps {
   isDirectSharedLink?: boolean;
   onBackToAcademy?: () => void;
   onUpdateStudentTask?: (studentId: string, taskId: string, completed: boolean) => void;
+  onJoinClassByCode?: (studentId: string, inviteCode: string) => void;
 }
 
 export const PlayerPortal: React.FC<PlayerPortalProps> = ({
@@ -44,7 +48,8 @@ export const PlayerPortal: React.FC<PlayerPortalProps> = ({
   clubBrand,
   isDirectSharedLink = false,
   onBackToAcademy,
-  onUpdateStudentTask
+  onUpdateStudentTask,
+  onJoinClassByCode
 }) => {
   const { lang } = useLanguage();
 
@@ -60,6 +65,8 @@ export const PlayerPortal: React.FC<PlayerPortalProps> = ({
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(!isDirect);
   const [activeSection, setActiveSection] = useState<'overview' | 'tasks' | 'drills' | 'attendance' | 'feedback'>('overview');
   const [isCopiedLink, setIsCopiedLink] = useState<boolean>(false);
+  const [portalClassCodeInput, setPortalClassCodeInput] = useState<string>('');
+  const [portalClassLinkedToast, setPortalClassLinkedToast] = useState<string | null>(null);
 
   // Load from URL search params on mount
   useEffect(() => {
@@ -622,7 +629,7 @@ export const PlayerPortal: React.FC<PlayerPortalProps> = ({
             </div>
           </div>
 
-          {/* Action Buttons: Download PDF & Copy Private Link */}
+          {/* Action Buttons: Download PDF, WhatsApp Monthly Report & Copy Private Link */}
           <div className="flex flex-row flex-wrap items-center gap-2.5 w-full md:w-auto">
             <button
               onClick={handleDownloadPdf}
@@ -631,6 +638,46 @@ export const PlayerPortal: React.FC<PlayerPortalProps> = ({
               <FileDown className="w-4 h-4 text-black" />
               <span>{t.downloadPdf}</span>
             </button>
+
+            <a
+              href={(() => {
+                const history = student.skillHistory || [];
+                const baseSkills: SkillScores =
+                  history.length > 0
+                    ? history[0].skills
+                    : {
+                        speed: Math.max(45, student.skills.speed - 6),
+                        technique: Math.max(45, student.skills.technique - 7),
+                        finishing: Math.max(45, student.skills.finishing - 5),
+                        passing: Math.max(45, student.skills.passing - 6),
+                        defending: Math.max(45, student.skills.defending - 4),
+                        physical: Math.max(45, student.skills.physical - 5),
+                        tacticalIQ: Math.max(45, student.skills.tacticalIQ - 8),
+                        mental: Math.max(45, student.skills.mental - 6)
+                      };
+                const avgBase = Math.round((Object.values(baseSkills) as number[]).reduce((a, b) => a + b, 0) / 8);
+                const avgCurr = Math.round((Object.values(student.skills) as number[]).reduce((a, b) => a + b, 0) / 8);
+                const delta = avgCurr - avgBase;
+                const doneTasks = (student.tasks || []).filter((tk) => tk.status === 'completed').length;
+                const totalTasks = (student.tasks || []).length;
+                const portalUrl = `${window.location.origin}${window.location.pathname}?player=${student.id}`;
+                const clubTitle = clubBrand?.clubName || 'ACADEMIA STRIKE PRO';
+
+                const msg =
+                  lang === 'en'
+                    ? `⚽ *OFFICIAL MONTHLY REPORT • ${clubTitle.toUpperCase()}*\n👤 *Player:* ${student.name} (#${student.dorsal} • ${student.category})\n🎯 *Role:* ${student.primaryPosition} (${student.matchPercentage}% Fit)\n📅 *Attendance:* ${attendanceRate}%\n📈 *Evolution:* ${avgBase} ➡️ *${avgCurr} OVR* (+${delta} pts)\n✅ *Homework:* ${doneTasks}/${totalTasks}\n📝 *Coach Notes:* "${student.coachNotes}"\n🔐 *Portal:* ${portalUrl}`
+                    : lang === 'pt'
+                    ? `⚽ *BOLETIM MENSAL OFICIAL • ${clubTitle.toUpperCase()}*\n👤 *Atleta:* ${student.name} (#${student.dorsal} • ${student.category})\n🎯 *Posição:* ${student.primaryPosition} (${student.matchPercentage}% Afinidade)\n📅 *Assiduidade:* ${attendanceRate}%\n📈 *Evolução:* ${avgBase} ➡️ *${avgCurr} OVR* (+${delta} pts)\n✅ *Tarefas:* ${doneTasks}/${totalTasks}\n📝 *Notas:* "${student.coachNotes}"\n🔐 *Portal:* ${portalUrl}`
+                    : `⚽ *BOLETÍN MENSUAL OFICIAL • ${clubTitle.toUpperCase()}*\n👤 *Jugador:* ${student.name} (#${student.dorsal} • ${student.category})\n🎯 *Posición:* ${student.primaryPosition} (${student.matchPercentage}% Afinidad)\n📅 *Asistencia:* ${attendanceRate}%\n📈 *Evolución ("Antes vs. Ahora"):* ${avgBase} ➡️ *${avgCurr} OVR* (+${delta} pts)\n✅ *Deberes:* ${doneTasks}/${totalTasks}\n📝 *Míster:* "${student.coachNotes}"\n🔐 *Portal:* ${portalUrl}`;
+                return `https://wa.me/?text=${encodeURIComponent(msg)}`;
+              })()}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex-1 sm:flex-none px-3.5 py-2.5 rounded-xl bg-emerald-500/20 hover:bg-emerald-500 border border-emerald-500/40 text-emerald-300 hover:text-black font-black text-xs uppercase tracking-wider flex items-center justify-center gap-2 transition-all cursor-pointer whitespace-nowrap"
+            >
+              <MessageCircle className="w-4 h-4" />
+              <span>{lang === 'en' ? 'WhatsApp Report' : lang === 'pt' ? 'Boletim WhatsApp' : 'Boletín WhatsApp'}</span>
+            </a>
 
             <button
               onClick={handleCopyPortalLink}
@@ -719,10 +766,10 @@ export const PlayerPortal: React.FC<PlayerPortalProps> = ({
             <div className="flex items-center justify-between border-b border-white/10 pb-4">
               <div>
                 <span className="text-[10px] font-mono-code font-bold uppercase tracking-widest text-volt block">
-                  {lang === 'en' ? 'TACTICAL ATTRIBUTES RADAR' : 'RADAR DE ATRIBUTOS TÁCTICOS'}
+                  {lang === 'en' ? 'TACTICAL ATTRIBUTES RADAR' : lang === 'pt' ? 'RADAR DE ATRIBUTOS TÁTICOS' : 'RADAR DE ATRIBUTOS TÁCTICOS'}
                 </span>
                 <h3 className="text-xl font-black italic uppercase text-white font-display">
-                  {lang === 'en' ? 'Athlete Core Performance' : 'Rendimiento Base del Deportista'}
+                  {lang === 'en' ? 'Athlete Core Performance' : lang === 'pt' ? 'Rendimento Base do Atleta' : 'Rendimiento Base del Deportista'}
                 </h3>
               </div>
               <span className="px-3 py-1 rounded bg-volt text-black font-mono font-bold text-xs">
@@ -760,13 +807,194 @@ export const PlayerPortal: React.FC<PlayerPortalProps> = ({
             </div>
           </div>
 
+          {/* EVOLUTION HISTORY ("ANTES VS. AHORA") COMPARISON CARD */}
+          {(() => {
+            const history = student.skillHistory || [];
+            const baseSkills: SkillScores =
+              history.length > 0
+                ? history[0].skills
+                : {
+                    speed: Math.max(45, student.skills.speed - 6),
+                    technique: Math.max(45, student.skills.technique - 7),
+                    finishing: Math.max(45, student.skills.finishing - 5),
+                    passing: Math.max(45, student.skills.passing - 6),
+                    defending: Math.max(45, student.skills.defending - 4),
+                    physical: Math.max(45, student.skills.physical - 5),
+                    tacticalIQ: Math.max(45, student.skills.tacticalIQ - 8),
+                    mental: Math.max(45, student.skills.mental - 6)
+                  };
+            const avgBase = Math.round((Object.values(baseSkills) as number[]).reduce((a, b) => a + b, 0) / 8);
+            const avgCurr = Math.round((Object.values(student.skills) as number[]).reduce((a, b) => a + b, 0) / 8);
+            const totalDelta = avgCurr - avgBase;
+
+            const labelMap: Record<keyof SkillScores, string> = {
+              speed: lang === 'en' ? 'Speed' : lang === 'pt' ? 'Velocidade' : 'Velocidad',
+              technique: lang === 'en' ? 'Technique' : lang === 'pt' ? 'Técnica' : 'Técnica',
+              finishing: lang === 'en' ? 'Finishing' : lang === 'pt' ? 'Finalização' : 'Definición',
+              passing: lang === 'en' ? 'Passing' : lang === 'pt' ? 'Passe' : 'Pase',
+              defending: lang === 'en' ? 'Defending' : lang === 'pt' ? 'Defesa' : 'Defensa',
+              physical: lang === 'en' ? 'Physical' : lang === 'pt' ? 'Físico' : 'Físico',
+              tacticalIQ: lang === 'en' ? 'Tactical IQ' : lang === 'pt' ? 'QI Tático' : 'IQ Táctico',
+              mental: lang === 'en' ? 'Mental' : lang === 'pt' ? 'Mental' : 'Mental'
+            };
+
+            return (
+              <div className="bg-slate-900/60 border border-sky-500/30 rounded-3xl p-6 sm:p-8 space-y-5">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-white/10 pb-4">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-sky-500/15 border border-sky-500/30 flex items-center justify-center text-sky-400">
+                      <TrendingUp className="w-5 h-5" />
+                    </div>
+                    <div>
+                      <span className="text-[10px] font-mono font-bold uppercase tracking-widest text-sky-400 block">
+                        {lang === 'en'
+                          ? 'SEASON PROGRESSION ("BEFORE VS. NOW")'
+                          : lang === 'pt'
+                          ? 'EVOLUÇÃO DA ÉPOCA ("ANTES VS. AGORA")'
+                          : 'HISTORIAL DE EVOLUCIÓN ("ANTES VS. AHORA")'}
+                      </span>
+                      <h3 className="text-lg sm:text-xl font-black italic uppercase text-white font-display">
+                        {lang === 'en'
+                          ? 'Initial Baseline vs. Current Performance'
+                          : lang === 'pt'
+                          ? 'Diagnóstico Inicial vs. Rendimento Atual'
+                          : 'Diagnóstico Inicial vs. Rendimiento Actual'}
+                      </h3>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-3 bg-black/50 px-4 py-2 rounded-2xl border border-white/10">
+                    <div className="text-center">
+                      <span className="text-[9px] font-mono text-slate-400 uppercase block">
+                        {lang === 'en' ? 'BEFORE' : lang === 'pt' ? 'ANTES' : 'ANTES'}
+                      </span>
+                      <span className="text-sm font-mono font-bold text-slate-300">{avgBase}</span>
+                    </div>
+                    <ArrowRight className="w-4 h-4 text-slate-500" />
+                    <div className="text-center">
+                      <span className="text-[9px] font-mono text-sky-400 uppercase block">
+                        {lang === 'en' ? 'NOW' : lang === 'pt' ? 'AGORA' : 'AHORA'}
+                      </span>
+                      <span className="text-sm font-mono font-black text-volt">{avgCurr}</span>
+                    </div>
+                    <span className="px-2 py-0.5 rounded bg-emerald-500/20 border border-emerald-500/30 text-emerald-400 font-mono font-black text-xs">
+                      {totalDelta >= 0 ? `+${totalDelta}` : totalDelta} OVR
+                    </span>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
+                  {(Object.keys(labelMap) as Array<keyof SkillScores>).map((k) => {
+                    const beforeVal = baseSkills[k] || 70;
+                    const nowVal = student.skills[k] || 75;
+                    const diff = nowVal - beforeVal;
+                    return (
+                      <div key={k} className="p-3 rounded-2xl bg-black/40 border border-white/5 space-y-2">
+                        <div className="flex items-center justify-between text-xs">
+                          <span className="font-bold text-slate-300">{labelMap[k]}</span>
+                          <div className="flex items-center gap-1 font-mono text-[11px]">
+                            <span className="text-slate-500">{beforeVal}</span>
+                            <span>→</span>
+                            <span className="text-white font-black">{nowVal}</span>
+                            <span className="text-emerald-400 font-bold">
+                              ({diff >= 0 ? `+${diff}` : diff})
+                            </span>
+                          </div>
+                        </div>
+                        <div className="relative h-1.5 w-full bg-slate-950 rounded-full overflow-hidden">
+                          <div
+                            style={{ width: `${Math.min(100, beforeVal)}%` }}
+                            className="absolute inset-y-0 left-0 bg-slate-600/60 rounded-full"
+                          />
+                          <div
+                            style={{ width: `${Math.min(100, nowVal)}%` }}
+                            className="absolute inset-y-0 left-0 bg-gradient-to-r from-sky-400 to-volt rounded-full"
+                          />
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            );
+          })()}
+
+          {/* CLASSROOM INVITE CODE LINKER BOX */}
+          <div className="p-5 rounded-2xl bg-slate-900/70 border border-white/10 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div>
+              <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-emerald-400 block">
+                {lang === 'en'
+                  ? 'OFFICIAL CLASSROOM & SQUAD LINK'
+                  : lang === 'pt'
+                  ? 'VINCULAÇÃO OFICIAL DE TURMA & ESCALÃO'
+                  : 'VINCULACIÓN OFICIAL DE AULA & CATEGORÍA (CLASSROOM)'}
+              </span>
+              <p className="text-xs text-slate-300 mt-0.5">
+                {student.classCode
+                  ? (lang === 'en'
+                      ? `Currently linked to official classroom code: ${student.classCode}`
+                      : lang === 'pt'
+                      ? `Atualmente vinculado ao código de turma oficial: ${student.classCode}`
+                      : `Vinculado actualmente al código de clase oficial: ${student.classCode}`)
+                  : (lang === 'en'
+                      ? 'Have an invite code from your coach (e.g. CS-SUB16-9921)? Enter it below to link your profile.'
+                      : lang === 'pt'
+                      ? 'Tem um código de convite do treinador (ex: CS-SUB16-9921)? Insira abaixo para vincular.'
+                      : '¿Tienes un código de invitación de tu entrenador (ej. CS-SUB16-9921)? Introdúcelo para vincular tu ficha.')}
+              </p>
+            </div>
+
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                const code = portalClassCodeInput.trim().toUpperCase();
+                if (!code) return;
+                if (onJoinClassByCode) {
+                  onJoinClassByCode(student.id, code);
+                }
+                setPortalClassCodeInput('');
+                setPortalClassLinkedToast(code);
+                setTimeout(() => setPortalClassLinkedToast(null), 3500);
+              }}
+              className="flex items-center gap-2 shrink-0"
+            >
+              <input
+                type="text"
+                value={portalClassCodeInput}
+                onChange={(e) => setPortalClassCodeInput(e.target.value)}
+                placeholder={student.classCode || 'CS-SUB16-9921'}
+                className="bg-black/60 border border-white/15 focus:border-volt rounded-xl px-3 py-2 text-xs font-mono text-volt uppercase outline-none w-36"
+              />
+              <button
+                type="submit"
+                className="px-3.5 py-2 rounded-xl bg-volt hover:bg-white text-black font-black uppercase italic text-xs tracking-wider cursor-pointer transition-all whitespace-nowrap"
+              >
+                {lang === 'en' ? 'Link Code' : lang === 'pt' ? 'Vincular' : 'Vincular'}
+              </button>
+            </form>
+          </div>
+
+          {portalClassLinkedToast && (
+            <div className="p-3 rounded-xl bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 text-xs font-mono text-center">
+              {lang === 'en'
+                ? `✅ Classroom code ${portalClassLinkedToast} linked to ${student.name}!`
+                : lang === 'pt'
+                ? `✅ Código de turma ${portalClassLinkedToast} vinculado a ${student.name}!`
+                : `✅ ¡Código de clase ${portalClassLinkedToast} vinculado a ${student.name}!`}
+            </div>
+          )}
+
           {/* Coach Quick Advice Banner */}
           {student.coachNotes && (
             <div className="p-5 rounded-2xl bg-gradient-to-r from-volt/10 via-emerald-500/10 to-transparent border border-volt/20 flex items-start gap-4">
               <Award className="w-6 h-6 text-volt shrink-0 mt-0.5" />
               <div>
                 <span className="text-[10px] font-mono-code font-bold uppercase tracking-wider text-volt block mb-1">
-                  {lang === 'en' ? 'COACH PRIORITY DIRECTIVE:' : 'DIRECTRIZ PRIORITARIA DEL CUERPO TÉCNICO:'}
+                  {lang === 'en'
+                    ? 'COACH PRIORITY DIRECTIVE:'
+                    : lang === 'pt'
+                    ? 'DIRETIVA PRIORITÁRIA DA EQUIPA TÉCNICA:'
+                    : 'DIRECTRIZ PRIORITARIA DEL CUERPO TÉCNICO:'}
                 </span>
                 <p className="text-xs text-slate-200 leading-relaxed font-medium">
                   "{student.coachNotes}"

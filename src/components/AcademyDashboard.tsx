@@ -38,7 +38,9 @@ import {
   PlanType,
   AttendanceStatus,
   AttendanceRecord,
-  ClubBrandConfig
+  ClubBrandConfig,
+  SkillSnapshot,
+  AcademyClass
 } from '../types';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
@@ -60,7 +62,13 @@ import {
   Check,
   GraduationCap,
   FileSpreadsheet,
-  Download
+  Download,
+  Upload,
+  TrendingUp,
+  MessageCircle,
+  Copy,
+  QrCode,
+  Link2
 } from 'lucide-react';
 import { 
   saveStudentToCloud, 
@@ -69,7 +77,11 @@ import {
   saveLineupToCloud,
   subscribeToAcademyLineup,
   saveClubBrandToCloud,
-  subscribeToClubBrand
+  subscribeToClubBrand,
+  saveAcademyClassToCloud,
+  deleteAcademyClassFromCloud,
+  subscribeToAcademyClasses,
+  subscribeToAcademyTryoutSubmissions
 } from '../lib/firebase';
 
 interface FormationSlotTemplate {
@@ -540,10 +552,20 @@ export const AcademyDashboard: React.FC<AcademyDashboardProps> = ({
   };
 
   // Classroom system states
-  const [classesList, setClassesList] = useState<Array<{ id: string; name: string; category: string; inviteCode: string; studentCount: number }>>([
-    { id: 'cls-1', name: 'Sub-16 A Táctica Principal', category: 'Sub-16', inviteCode: 'CS-SUB16-9921', studentCount: 11 },
-    { id: 'cls-2', name: 'Juvenil Élite Avanzado', category: 'Sub-18', inviteCode: 'CS-ELITE-7784', studentCount: 10 }
-  ]);
+  const DEFAULT_CLASSES: AcademyClass[] = [
+    { id: 'cls-1', name: 'Sub-16 A Táctica Principal', category: 'Sub-16', inviteCode: 'CS-SUB16-9921', studentCount: 11, createdAt: '2026-08-01T10:00:00.000Z' },
+    { id: 'cls-2', name: 'Juvenil Élite Avanzado', category: 'Sub-18', inviteCode: 'CS-ELITE-7784', studentCount: 10, createdAt: '2026-08-02T10:00:00.000Z' }
+  ];
+  const [classesList, setClassesList] = useState<AcademyClass[]>(() => {
+    try {
+      const stored = localStorage.getItem('coachstrike_academy_classes');
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      }
+    } catch {}
+    return DEFAULT_CLASSES;
+  });
   const [newClassName, setNewClassName] = useState('');
   const [newClassCategory, setNewClassCategory] = useState<'Sub-12' | 'Sub-14' | 'Sub-16' | 'Sub-18' | 'Senior'>('Sub-16');
   const [copiedClassId, setCopiedClassId] = useState<string | null>(null);
@@ -557,6 +579,19 @@ export const AcademyDashboard: React.FC<AcademyDashboardProps> = ({
     } catch {}
     return 0;
   });
+
+  // Block 2: Student Classroom Join Code, CSV Import, Parent Report & Evolution Before/Now states
+  const [studentJoinCodeInput, setStudentJoinCodeInput] = useState('');
+  const [studentJoinTargetId, setStudentJoinTargetId] = useState<string>(() => students[0]?.id || 'std-1');
+  const [studentJoinNotice, setStudentJoinNotice] = useState<{ type: 'ok' | 'err'; msg: string } | null>(null);
+  const csvFileInputRef = useRef<HTMLInputElement | null>(null);
+  const [csvImportBanner, setCsvImportBanner] = useState<string | null>(null);
+  const [parentReportStudent, setParentReportStudent] = useState<AcademyStudent | null>(null);
+  const [copiedParentReport, setCopiedParentReport] = useState<boolean>(false);
+  const [evolutionStudent, setEvolutionStudent] = useState<AcademyStudent | null>(null);
+  const [snapshotSavedToast, setSnapshotSavedToast] = useState<boolean>(false);
+  const [qrTryoutClass, setQrTryoutClass] = useState<AcademyClass | null>(null);
+  const [copiedTryoutLinkClassId, setCopiedTryoutLinkClassId] = useState<string | null>(null);
 
   const baseLimit = isAcademyElite ? 200 : 30;
   const currentLimit = baseLimit + elitePlusPacks * 20;
@@ -599,7 +634,7 @@ export const AcademyDashboard: React.FC<AcademyDashboardProps> = ({
     { slotId: 'pos-ext-der', posCode: 'EXT', label: 'ED', studentId: 'std-2' }
   ]);
 
-  // Real-time Firestore sync for Academy Students & Lineup
+  // Real-time Firestore sync for Academy Students, Lineup, Brand & Classes
   useEffect(() => {
     if (!user) {
       setCloudSyncStatus('local');
@@ -645,19 +680,179 @@ export const AcademyDashboard: React.FC<AcademyDashboardProps> = ({
       }
     });
 
+    const unsubscribeClasses = subscribeToAcademyClasses(user.uid, (cloudClasses) => {
+      if (cloudClasses && cloudClasses.length > 0) {
+        setClassesList(cloudClasses);
+        try {
+          localStorage.setItem('coachstrike_academy_classes', JSON.stringify(cloudClasses));
+        } catch {}
+      } else {
+        DEFAULT_CLASSES.forEach((cls) => {
+          saveAcademyClassToCloud(user.uid, cls).catch(() => {});
+        });
+      }
+    });
+
     return () => {
       unsubscribeStudents();
       unsubscribeLineup();
       unsubscribeBrand();
+      unsubscribeClasses();
     };
   }, [user]);
 
-  // Persist students in local storage as backup cache
+  // Persist students and classes in local storage as backup cache
   useEffect(() => {
     try {
       localStorage.setItem('coachstrike_academy_students', JSON.stringify(students));
     } catch {}
   }, [students]);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem('coachstrike_academy_classes', JSON.stringify(classesList));
+    } catch {}
+  }, [classesList]);
+
+  // Listen for local & cloud tryout self-assessments submitted via Public QR / Invite Link
+  useEffect(() => {
+    const syncLocalRoster = () => {
+      try {
+        const raw = localStorage.getItem('coachstrike_academy_students');
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            setStudents(parsed);
+          }
+        }
+      } catch {}
+    };
+
+    if (typeof window !== 'undefined') {
+      window.addEventListener('coachstrike_academy_roster_updated', syncLocalRoster);
+    }
+
+    const activeCodes = classesList.map((c) => c.inviteCode);
+    const unsubTryouts = subscribeToAcademyTryoutSubmissions(activeCodes, (incomingStudents) => {
+      setStudents((prev) => {
+        let changed = false;
+        const nextList = [...prev];
+        for (const inc of incomingStudents) {
+          const exists = nextList.some(
+            (s) =>
+              s.id === inc.id ||
+              (s.name.trim().toLowerCase() === inc.name.trim().toLowerCase() &&
+                s.classCode === inc.classCode)
+          );
+          if (!exists) {
+            nextList.unshift(inc);
+            changed = true;
+            if (user) {
+              saveStudentToCloud(user.uid, inc).catch(() => {});
+            }
+          }
+        }
+        if (changed) {
+          try {
+            localStorage.setItem('coachstrike_academy_students', JSON.stringify(nextList));
+          } catch {}
+          return nextList;
+        }
+        return prev;
+      });
+    });
+
+    return () => {
+      unsubTryouts();
+      if (typeof window !== 'undefined') {
+        window.removeEventListener('coachstrike_academy_roster_updated', syncLocalRoster);
+      }
+    };
+  }, [classesList, user]);
+
+  // Create Classroom & sync to Firestore
+  const handleCreateClass = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newClassName.trim()) return;
+    const newClass: AcademyClass = {
+      id: `cls-${Date.now()}`,
+      name: newClassName.trim(),
+      category: newClassCategory,
+      inviteCode: `CS-${newClassCategory.toUpperCase()}-${Math.floor(1000 + Math.random() * 9000)}`,
+      studentCount: students.filter((s) => s.category === newClassCategory).length,
+      createdAt: new Date().toISOString()
+    };
+    const nextClasses = [newClass, ...classesList];
+    setClassesList(nextClasses);
+    setNewClassName('');
+    setCreatedClassBanner(newClass.inviteCode);
+    setTimeout(() => setCreatedClassBanner(null), 4500);
+    if (user) {
+      try {
+        await saveAcademyClassToCloud(user.uid, newClass);
+      } catch (err) {
+        console.error('Error saving class to Firestore:', err);
+      }
+    }
+  };
+
+  // Delete Classroom & sync to Firestore
+  const handleDeleteClass = async (classId: string) => {
+    setClassesList((prev) => prev.filter((c) => c.id !== classId));
+    if (user) {
+      try {
+        await deleteAcademyClassFromCloud(user.uid, classId);
+      } catch (err) {
+        console.error('Error deleting class from Firestore:', err);
+      }
+    }
+  };
+
+  // Student joins a classroom via invite code
+  const handleJoinClassByCode = async (studentId: string, rawCode: string) => {
+    const cleanCode = rawCode.trim().toUpperCase();
+    if (!cleanCode) return;
+
+    const matchedClass = classesList.find((c) => c.inviteCode.toUpperCase() === cleanCode);
+    const targetStudent = students.find((s) => s.id === studentId) || students[0];
+    if (!targetStudent) return;
+
+    const assignedCode = matchedClass ? matchedClass.inviteCode : cleanCode;
+    const updatedStudent: AcademyStudent = {
+      ...targetStudent,
+      classCode: assignedCode,
+      category: (matchedClass?.category as any) || targetStudent.category
+    };
+
+    setStudents((prev) => prev.map((s) => (s.id === targetStudent.id ? updatedStudent : s)));
+
+    if (matchedClass) {
+      const updatedClass: AcademyClass = {
+        ...matchedClass,
+        studentCount: matchedClass.studentCount + 1
+      };
+      setClassesList((prev) => prev.map((c) => (c.id === matchedClass.id ? updatedClass : c)));
+      if (user) {
+        saveAcademyClassToCloud(user.uid, updatedClass).catch(() => {});
+      }
+    }
+
+    if (user) {
+      saveStudentToCloud(user.uid, updatedStudent).catch(() => {});
+    }
+
+    setStudentJoinCodeInput('');
+    setStudentJoinNotice({
+      type: 'ok',
+      msg:
+        lang === 'en'
+          ? `Player ${updatedStudent.name} successfully linked to classroom ${assignedCode}!`
+          : lang === 'pt'
+          ? `Jogador ${updatedStudent.name} vinculado com sucesso à turma ${assignedCode}!`
+          : `¡Jugador ${updatedStudent.name} vinculado con éxito al aula ${assignedCode}!`
+    });
+    setTimeout(() => setStudentJoinNotice(null), 4000);
+  };
 
   // Save Club Brand
   const handleSaveBrand = async () => {
@@ -719,6 +914,282 @@ export const AcademyDashboard: React.FC<AcademyDashboardProps> = ({
     link.click();
     document.body.removeChild(link);
     URL.revokeObjectURL(url);
+  };
+
+  // Fast Squad Roster CSV Import (Excel / CSV compatible)
+  const handleImportRosterCSV = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = async (event) => {
+      try {
+        const text = String(event.target?.result || '').replace(/^\uFEFF/, '');
+        const lines = text.split(/\r?\n/).map((l) => l.trim()).filter(Boolean);
+        if (lines.length < 2) return;
+
+        const validPositions: PositionCategory[] = ['POR', 'DEC', 'LAT', 'MCD', 'MC', 'MPO', 'EXT', 'DC'];
+        const importedStudents: AcademyStudent[] = [];
+
+        for (let i = 1; i < lines.length; i++) {
+          if (students.length + importedStudents.length >= currentLimit) break;
+          // Parse CSV line respecting quoted strings
+          const cols = lines[i]
+            .split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/)
+            .map((c) => c.replace(/^"|"$/g, '').replace(/""/g, '"').trim());
+
+          const dorsalNum = Number(cols[0]) || (10 + i);
+          const nameStr = cols[1] || `Jugador #${dorsalNum}`;
+          const rawCat = cols[2] || 'Sub-16';
+          const categoryVal: AcademyStudent['category'] =
+            (['Sub-12', 'Sub-14', 'Sub-16', 'Sub-18', 'Reserva', 'Primer Equipo', 'Senior'].includes(rawCat)
+              ? rawCat
+              : 'Sub-16') as AcademyStudent['category'];
+          const ageNum = Number(cols[3]) || 16;
+          const rawFoot = (cols[4] || 'Diestro').toLowerCase();
+          const preferredFootVal: AcademyStudent['preferredFoot'] =
+            rawFoot.includes('zur') || rawFoot.includes('left') || rawFoot.includes('canh')
+              ? 'Zurdo'
+              : rawFoot.includes('ambi') || rawFoot.includes('both')
+              ? 'Ambidestro'
+              : 'Diestro';
+          const rawPos = (cols[5] || 'MC').toUpperCase() as PositionCategory;
+          const posVal: PositionCategory = validPositions.includes(rawPos) ? rawPos : 'MC';
+          const matchNum = Number(String(cols[6] || '86').replace(/[^0-9]/g, '')) || 86;
+          const notesStr = cols[9] || cols[7] || (
+            lang === 'en'
+              ? 'Player imported via Official Academy CSV.'
+              : lang === 'pt'
+              ? 'Jogador importado via CSV Oficial da Academia.'
+              : 'Jugador importado mediante plantilla CSV oficial.'
+          );
+
+          const baseSkills: SkillScores = {
+            speed: 74,
+            technique: 75,
+            finishing: 70,
+            passing: 75,
+            defending: 70,
+            physical: 74,
+            tacticalIQ: 76,
+            mental: 78
+          };
+          const currentSkills: SkillScores = {
+            speed: 79,
+            technique: 81,
+            finishing: 75,
+            passing: 80,
+            defending: 74,
+            physical: 78,
+            tacticalIQ: 82,
+            mental: 84
+          };
+
+          const newStd: AcademyStudent = {
+            id: `std-csv-${Date.now()}-${i}`,
+            name: nameStr,
+            age: ageNum,
+            category: categoryVal,
+            dorsal: dorsalNum,
+            preferredFoot: preferredFootVal,
+            primaryPosition: posVal,
+            matchPercentage: Math.min(99, Math.max(60, matchNum)),
+            skills: currentSkills,
+            skillHistory: [
+              {
+                id: `snap-base-${Date.now()}-${i}`,
+                date: '2026-08-01',
+                label: lang === 'en' ? 'Initial Baseline' : lang === 'pt' ? 'Avaliação Inicial' : 'Evaluación Inicial',
+                skills: baseSkills,
+                matchPercentage: Math.max(60, matchNum - 6),
+                primaryPosition: posVal
+              },
+              {
+                id: `snap-curr-${Date.now()}-${i}`,
+                date: new Date().toISOString().split('T')[0],
+                label: lang === 'en' ? 'Current Import' : lang === 'pt' ? 'Registo Atual' : 'Registro Actual',
+                skills: currentSkills,
+                matchPercentage: Math.min(99, Math.max(60, matchNum)),
+                primaryPosition: posVal
+              }
+            ],
+            coachNotes: notesStr,
+            createdAt: new Date().toISOString()
+          };
+          importedStudents.push(newStd);
+        }
+
+        if (importedStudents.length > 0) {
+          setStudents((prev) => [...importedStudents, ...prev]);
+          if (user) {
+            for (const st of importedStudents) {
+              saveStudentToCloud(user.uid, st).catch(() => {});
+            }
+          }
+          setCsvImportBanner(
+            lang === 'en'
+              ? `✅ ${importedStudents.length} players imported from CSV!`
+              : lang === 'pt'
+              ? `✅ ${importedStudents.length} jogadores importados via CSV!`
+              : `✅ ¡${importedStudents.length} jugadores importados desde CSV!`
+          );
+          setTimeout(() => setCsvImportBanner(null), 4500);
+        }
+      } catch (err) {
+        console.error('Error importing CSV:', err);
+      } finally {
+        if (csvFileInputRef.current) {
+          csvFileInputRef.current.value = '';
+        }
+      }
+    };
+    reader.readAsText(file);
+  };
+
+  // Helper: Get Baseline vs Current skills for any student ("Antes vs. Ahora")
+  const getStudentEvolutionData = (std: AcademyStudent) => {
+    const history = std.skillHistory || [];
+    const baselineSkills: SkillScores =
+      history.length > 0
+        ? history[0].skills
+        : {
+            speed: Math.max(45, std.skills.speed - 6),
+            technique: Math.max(45, std.skills.technique - 7),
+            finishing: Math.max(45, std.skills.finishing - 5),
+            passing: Math.max(45, std.skills.passing - 6),
+            defending: Math.max(45, std.skills.defending - 4),
+            physical: Math.max(45, std.skills.physical - 5),
+            tacticalIQ: Math.max(45, std.skills.tacticalIQ - 8),
+            mental: Math.max(45, std.skills.mental - 6)
+          };
+    const baselineDate = history.length > 0 ? history[0].date : '2026-08-01';
+    const baselineLabel =
+      history.length > 0
+        ? history[0].label || (lang === 'en' ? 'Initial Baseline' : lang === 'pt' ? 'Avaliação Inicial' : 'Diagnóstico Inicial')
+        : (lang === 'en' ? 'Season Start Baseline' : lang === 'pt' ? 'Início da Época' : 'Inicio de Temporada');
+    const currentSkills = std.skills;
+
+    const avgBase = Math.round(
+      (Object.values(baselineSkills) as number[]).reduce((a, b) => a + b, 0) / 8
+    );
+    const avgCurr = Math.round(
+      (Object.values(currentSkills) as number[]).reduce((a, b) => a + b, 0) / 8
+    );
+    const totalDelta = avgCurr - avgBase;
+
+    return {
+      baselineSkills,
+      baselineDate,
+      baselineLabel,
+      currentSkills,
+      avgBase,
+      avgCurr,
+      totalDelta,
+      snapshotsCount: Math.max(2, history.length)
+    };
+  };
+
+  // Save a new manual progress checkpoint snapshot for a student
+  const handleRecordSkillCheckpoint = async (std: AcademyStudent) => {
+    const evo = getStudentEvolutionData(std);
+    const existingHistory: SkillSnapshot[] =
+      std.skillHistory && std.skillHistory.length > 0
+        ? std.skillHistory
+        : [
+            {
+              id: `snap-base-${std.id}`,
+              date: evo.baselineDate,
+              label: evo.baselineLabel,
+              skills: evo.baselineSkills,
+              matchPercentage: Math.max(60, std.matchPercentage - 6),
+              primaryPosition: std.primaryPosition
+            }
+          ];
+    const newSnapshot: SkillSnapshot = {
+      id: `snap-${Date.now()}`,
+      date: new Date().toISOString().split('T')[0],
+      label:
+        lang === 'en'
+          ? `Coach Checkpoint #${existingHistory.length + 1}`
+          : lang === 'pt'
+          ? `Controlo Técnico #${existingHistory.length + 1}`
+          : `Corte Metodológico #${existingHistory.length + 1}`,
+      skills: { ...std.skills },
+      matchPercentage: std.matchPercentage,
+      primaryPosition: std.primaryPosition
+    };
+
+    const updatedStudent: AcademyStudent = {
+      ...std,
+      skillHistory: [...existingHistory, newSnapshot]
+    };
+
+    setStudents((prev) => prev.map((s) => (s.id === std.id ? updatedStudent : s)));
+    setEvolutionStudent(updatedStudent);
+    setSnapshotSavedToast(true);
+    setTimeout(() => setSnapshotSavedToast(false), 3000);
+
+    if (user) {
+      saveStudentToCloud(user.uid, updatedStudent).catch(console.error);
+    }
+  };
+
+  // Build Official Monthly Parent Report Text (Localized in ES, EN, PT)
+  const buildMonthlyParentReportText = (std: AcademyStudent) => {
+    const attList = std.attendance || [];
+    const presentCount = attList.filter((a) => a.status === 'present').length;
+    const lateCount = attList.filter((a) => a.status === 'late').length;
+    const totalAtt = attList.length;
+    const attRate = totalAtt > 0 ? Math.round(((presentCount + lateCount * 0.5) / totalAtt) * 100) : 100;
+
+    const tasks = std.tasks || [];
+    const doneTasks = tasks.filter((t) => t.status === 'completed').length;
+    const evo = getStudentEvolutionData(std);
+    const portalUrl = `${window.location.origin}${window.location.pathname}?player=${std.id}`;
+    const clubTitle = clubBrand?.clubName || 'ACADEMIA STRIKE PRO';
+    const coachTitle = clubBrand?.directorName
+      ? `${clubBrand.directorName} (${clubBrand.directorTitle || 'Director'})`
+      : 'Cuerpo Técnico Strike Pro';
+
+    if (lang === 'en') {
+      return [
+        `⚽ *OFFICIAL MONTHLY REPORT • ${clubTitle.toUpperCase()}*`,
+        `👤 *Player:* ${std.name} (#${std.dorsal} • ${std.category})`,
+        `🎯 *Tactical Role:* ${std.primaryPosition} (${std.matchPercentage}% Tactical Fit)`,
+        `📅 *Training Attendance:* ${attRate}% (${presentCount} on-time / ${Math.max(1, totalAtt)} sessions)`,
+        `📈 *Performance Evolution:* ${evo.avgBase} ➡️ *${evo.avgCurr} OVR* (${evo.totalDelta >= 0 ? `+${evo.totalDelta}` : evo.totalDelta} pts progression)`,
+        `✅ *Assigned Homework (IDP):* ${doneTasks}/${tasks.length} completed`,
+        `📝 *Coach Evaluation:* "${std.coachNotes}"`,
+        `🔐 *Private Family Portal (PIN ${std.pinCode || '1010'}):* ${portalUrl}`,
+        `— _Validated by ${coachTitle}_`
+      ].join('\n');
+    }
+
+    if (lang === 'pt') {
+      return [
+        `⚽ *BOLETIM MENSAL OFICIAL • ${clubTitle.toUpperCase()}*`,
+        `👤 *Atleta:* ${std.name} (#${std.dorsal} • ${std.category})`,
+        `🎯 *Função Tática:* ${std.primaryPosition} (${std.matchPercentage}% Afinidade)`,
+        `📅 *Assiduidade aos Treinos:* ${attRate}% (${presentCount} presenças / ${Math.max(1, totalAtt)} sessões)`,
+        `📈 *Evolução de Rendimento:* ${evo.avgBase} ➡️ *${evo.avgCurr} OVR* (${evo.totalDelta >= 0 ? `+${evo.totalDelta}` : evo.totalDelta} pts de evolução)`,
+        `✅ *Tarefas Individuais (PDI):* ${doneTasks}/${tasks.length} concluídas`,
+        `📝 *Avaliação do Treinador:* "${std.coachNotes}"`,
+        `🔐 *Portal Privado da Família (PIN ${std.pinCode || '1010'}):* ${portalUrl}`,
+        `— _Validado por ${coachTitle}_`
+      ].join('\n');
+    }
+
+    return [
+      `⚽ *BOLETÍN MENSUAL OFICIAL • ${clubTitle.toUpperCase()}*`,
+      `👤 *Jugador:* ${std.name} (#${std.dorsal} • ${std.category})`,
+      `🎯 *Rol Táctico:* ${std.primaryPosition} (${std.matchPercentage}% Afinidad Táctica)`,
+      `📅 *Asistencia a Entrenamientos:* ${attRate}% (${presentCount} asistencias / ${Math.max(1, totalAtt)} sesiones)`,
+      `📈 *Evolución ("Antes vs. Ahora"):* ${evo.avgBase} ➡️ *${evo.avgCurr} OVR* (${evo.totalDelta >= 0 ? `+${evo.totalDelta}` : evo.totalDelta} pts de mejora)`,
+      `✅ *Deberes Tácticos (IDP):* ${doneTasks}/${tasks.length} completados`,
+      `📝 *Informe del Míster:* "${std.coachNotes}"`,
+      `🔐 *Portal Privado Familia (PIN ${std.pinCode || '1010'}):* ${portalUrl}`,
+      `— _Validado por ${coachTitle}_`
+    ].join('\n');
   };
 
   // Export Full Academy Backup JSON
@@ -1498,7 +1969,24 @@ export const AcademyDashboard: React.FC<AcademyDashboardProps> = ({
           </button>
 
           {activeSubTab === 'roster' && (
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 flex-wrap">
+              <input
+                ref={csvFileInputRef}
+                type="file"
+                accept=".csv,text/csv"
+                onChange={handleImportRosterCSV}
+                className="hidden"
+              />
+              <button
+                type="button"
+                onClick={() => csvFileInputRef.current?.click()}
+                className="px-2.5 py-1.5 rounded-xl bg-emerald-500/15 hover:bg-emerald-500 border border-emerald-500/30 text-emerald-300 hover:text-black text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer shadow-sm"
+                title={lang === 'en' ? 'Bulk Import Squad Roster from CSV/Excel' : lang === 'pt' ? 'Importar Plantel via CSV/Excel' : 'Importar Plantilla desde CSV/Excel'}
+              >
+                <Upload className="w-3.5 h-3.5" />
+                <span className="hidden md:inline">{lang === 'en' ? 'Import CSV' : lang === 'pt' ? 'Importar CSV' : 'Importar CSV'}</span>
+              </button>
+
               <button
                 onClick={handleExportRosterCSV}
                 className="px-2.5 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 border border-white/10 text-white text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer shadow-sm hover:border-emerald-500/40"
@@ -1531,8 +2019,6 @@ export const AcademyDashboard: React.FC<AcademyDashboardProps> = ({
                   if (isLimitReached) {
                     if (!isAcademyElite) {
                       onOpenPricing('academy_elite');
-                    } else {
-                      alert(`Has alcanzado el límite máximo de ${currentLimit} alumnos para tu cuenta.`);
                     }
                     return;
                   }
@@ -1564,6 +2050,15 @@ export const AcademyDashboard: React.FC<AcademyDashboardProps> = ({
           )}
         </div>
       </div>
+
+      {csvImportBanner && (
+        <div className="bg-emerald-500/15 border border-emerald-500/40 rounded-xl px-4 py-2.5 text-emerald-300 text-xs font-mono font-bold flex items-center justify-between">
+          <span>{csvImportBanner}</span>
+          <button onClick={() => setCsvImportBanner(null)} className="text-emerald-300 hover:text-white cursor-pointer">
+            <X className="w-3.5 h-3.5" />
+          </button>
+        </div>
+      )}
 
       {/* Category / Squad Selector Filter Bar */}
       {activeSubTab !== 'portal' && (
@@ -1654,6 +2149,67 @@ export const AcademyDashboard: React.FC<AcademyDashboardProps> = ({
             </div>
           </div>
 
+          {/* Institutional Student Join Classroom Box */}
+          {accountRole === 'institutional_student' && (
+            <div className="bg-gradient-to-r from-volt/10 via-slate-900 to-black border border-volt/30 rounded-2xl p-6 shadow-xl space-y-4">
+              <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                <div>
+                  <span className="px-2.5 py-0.5 rounded bg-volt/20 text-volt border border-volt/40 text-[10px] font-mono font-bold uppercase">
+                    {lang === 'en' ? 'INSTITUTIONAL STUDENT ACCESS' : lang === 'pt' ? 'ACESSO ALUNO INSTITUCIONAL' : 'VINCULACIÓN DE ALUMNO INSTITUCIONAL'}
+                  </span>
+                  <h4 className="text-base font-black text-white uppercase italic font-display mt-1.5">
+                    {lang === 'en' ? 'Join Classroom via Official Coach Code' : lang === 'pt' ? 'Vincular Turma com Código do Treinador' : 'Unirse a una Clase con Código del Entrenador'}
+                  </h4>
+                  <p className="text-xs text-slate-300 mt-0.5">
+                    {lang === 'en'
+                      ? 'Select your player profile and enter the invite code (e.g. CS-SUB16-9921) to sync with your squad.'
+                      : lang === 'pt'
+                      ? 'Selecione o seu perfil de jogador e insira o código de convite (ex: CS-SUB16-9921) para sincronizar.'
+                      : 'Selecciona tu perfil de jugador e introduce el código de invitación (ej. CS-SUB16-9921) para sincronizarte con tu categoría.'}
+                  </p>
+                </div>
+
+                <form
+                  onSubmit={(e) => {
+                    e.preventDefault();
+                    handleJoinClassByCode(studentJoinTargetId, studentJoinCodeInput);
+                  }}
+                  className="flex flex-wrap sm:flex-nowrap items-center gap-2"
+                >
+                  <select
+                    value={studentJoinTargetId}
+                    onChange={(e) => setStudentJoinTargetId(e.target.value)}
+                    className="bg-black/70 border border-white/15 rounded-xl px-3 py-2 text-xs text-white font-bold focus:outline-none focus:border-volt"
+                  >
+                    {students.map((s) => (
+                      <option key={s.id} value={s.id}>
+                        #{s.dorsal} {s.name} ({s.classCode || s.category})
+                      </option>
+                    ))}
+                  </select>
+                  <input
+                    type="text"
+                    value={studentJoinCodeInput}
+                    onChange={(e) => setStudentJoinCodeInput(e.target.value)}
+                    placeholder="CS-SUB16-9921"
+                    className="bg-black/70 border border-white/20 focus:border-volt rounded-xl px-3.5 py-2 text-xs font-mono text-volt uppercase outline-none w-40"
+                  />
+                  <button
+                    type="submit"
+                    className="px-4 py-2 rounded-xl bg-volt hover:bg-white text-black font-black uppercase italic text-xs tracking-wider cursor-pointer transition-all whitespace-nowrap shadow-md"
+                  >
+                    {lang === 'en' ? 'Link Classroom' : lang === 'pt' ? 'Vincular Turma' : 'Vincular Clase'}
+                  </button>
+                </form>
+              </div>
+              {studentJoinNotice && (
+                <div className="p-2.5 rounded-xl bg-emerald-500/15 border border-emerald-500/40 text-emerald-300 text-xs font-mono">
+                  ✅ {studentJoinNotice.msg}
+                </div>
+              )}
+            </div>
+          )}
+
           {/* Elite Academy Plus Packs Section */}
           <div className="bg-gradient-to-r from-amber-950/40 via-slate-900 to-black border border-amber-500/30 rounded-2xl p-6 shadow-xl">
             <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
@@ -1683,7 +2239,7 @@ export const AcademyDashboard: React.FC<AcademyDashboardProps> = ({
                   className="px-4 py-2 rounded-xl bg-amber-400 hover:bg-white text-black font-black uppercase italic text-xs tracking-wider shadow-lg shadow-amber-400/20 transition-all cursor-pointer flex items-center gap-1.5"
                 >
                   <Sparkles className="w-4 h-4 fill-black" />
-                  <span>{elitePlusToast ? '¡+20 Cupos Activados!' : tAcad.plusBtn}</span>
+                  <span>{elitePlusToast ? (lang === 'en' ? '+20 Slots Activated!' : lang === 'pt' ? '+20 Vagas Ativadas!' : '¡+20 Cupos Activados!') : tAcad.plusBtn}</span>
                 </button>
               </div>
             </div>
@@ -1698,21 +2254,7 @@ export const AcademyDashboard: React.FC<AcademyDashboardProps> = ({
                 {tAcad.createClassTitle}
               </h4>
               <form
-                onSubmit={(e) => {
-                  e.preventDefault();
-                  if (!newClassName.trim()) return;
-                  const newClass = {
-                    id: `cls-${Date.now()}`,
-                    name: newClassName.trim(),
-                    category: newClassCategory,
-                    inviteCode: `CS-${newClassCategory.toUpperCase()}-${Math.floor(1000 + Math.random() * 9000)}`,
-                    studentCount: 0
-                  };
-                  setClassesList((prev) => [newClass, ...prev]);
-                  setNewClassName('');
-                  setCreatedClassBanner(newClass.inviteCode);
-                  setTimeout(() => setCreatedClassBanner(null), 4000);
-                }}
+                onSubmit={handleCreateClass}
                 className="space-y-3"
               >
                 <div>
@@ -1747,7 +2289,8 @@ export const AcademyDashboard: React.FC<AcademyDashboardProps> = ({
                 </button>
                 {createdClassBanner && (
                   <div className="p-2.5 rounded-xl bg-emerald-500/15 border border-emerald-500/40 text-emerald-300 text-xs font-mono text-center">
-                    ¡Clase creada! Código: <strong className="text-volt">{createdClassBanner}</strong>
+                    {lang === 'en' ? 'Class created & synced! Code:' : lang === 'pt' ? 'Turma criada na nuvem! Código:' : '¡Clase creada en la nube! Código:'}{' '}
+                    <strong className="text-volt">{createdClassBanner}</strong>
                   </div>
                 )}
               </form>
@@ -1769,7 +2312,19 @@ export const AcademyDashboard: React.FC<AcademyDashboardProps> = ({
                         </span>
                         <h5 className="font-bold text-white text-sm mt-1">{cls.name}</h5>
                       </div>
-                      <span className="text-xs text-slate-400 font-mono">{cls.studentCount} {tAcad.studentsCount}</span>
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs text-slate-400 font-mono">{cls.studentCount} {tAcad.studentsCount}</span>
+                        {classesList.length > 1 && (
+                          <button
+                            type="button"
+                            onClick={() => handleDeleteClass(cls.id)}
+                            className="p-1 rounded bg-black/40 hover:bg-rose-500/20 text-slate-500 hover:text-rose-400 transition-colors cursor-pointer"
+                            title={tAcad.btnDelete}
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        )}
+                      </div>
                     </div>
 
                     <div className="bg-black/50 p-3 rounded-lg border border-white/5 flex items-center justify-between">
@@ -1779,7 +2334,7 @@ export const AcademyDashboard: React.FC<AcademyDashboardProps> = ({
                       </div>
                       <button
                         onClick={() => {
-                          navigator.clipboard.writeText(`https://coachstrike.ai/join/${cls.inviteCode}`);
+                          navigator.clipboard.writeText(cls.inviteCode);
                           setCopiedClassId(cls.id);
                           setTimeout(() => setCopiedClassId(null), 2500);
                         }}
@@ -1789,7 +2344,50 @@ export const AcademyDashboard: React.FC<AcademyDashboardProps> = ({
                             : 'bg-white/10 hover:bg-white/20 text-white'
                         }`}
                       >
-                        {copiedClassId === cls.id ? '¡Copiado!' : tAcad.copyLinkBtn}
+                        {copiedClassId === cls.id
+                          ? (lang === 'en' ? 'Copied!' : lang === 'pt' ? 'Copiado!' : '¡Copiado!')
+                          : tAcad.copyLinkBtn}
+                      </button>
+                    </div>
+
+                    {/* Public Tryout Self-Assessment Link & QR Code Actions */}
+                    <div className="grid grid-cols-2 gap-2 pt-1">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const tryoutUrl = `${window.location.origin}${window.location.pathname}?invite=${encodeURIComponent(cls.inviteCode)}`;
+                          navigator.clipboard.writeText(tryoutUrl);
+                          setCopiedTryoutLinkClassId(cls.id);
+                          setTimeout(() => setCopiedTryoutLinkClassId(null), 3000);
+                        }}
+                        className="py-2 px-2.5 rounded-lg bg-emerald-500/15 hover:bg-emerald-400 text-emerald-300 hover:text-black border border-emerald-500/30 text-[10px] font-black uppercase tracking-wider transition-all cursor-pointer flex items-center justify-center gap-1.5"
+                      >
+                        {copiedTryoutLinkClassId === cls.id ? (
+                          <>
+                            <Check className="w-3.5 h-3.5" />
+                            <span>
+                              {lang === 'en' ? 'Tryout URL Copied!' : lang === 'pt' ? 'Link Copiado!' : '¡Link Test Copiado!'}
+                            </span>
+                          </>
+                        ) : (
+                          <>
+                            <Link2 className="w-3.5 h-3.5" />
+                            <span>
+                              {lang === 'en' ? 'Copy Auto-Test URL' : lang === 'pt' ? 'Copiar Link Auto-Teste' : 'Link Auto-Test'}
+                            </span>
+                          </>
+                        )}
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => setQrTryoutClass(cls)}
+                        className="py-2 px-2.5 rounded-lg bg-volt/15 hover:bg-volt text-volt hover:text-black border border-volt/30 text-[10px] font-black uppercase tracking-wider transition-all cursor-pointer flex items-center justify-center gap-1.5"
+                      >
+                        <QrCode className="w-3.5 h-3.5" />
+                        <span>
+                          {lang === 'en' ? 'Show Pitch QR Code' : lang === 'pt' ? 'Mostrar QR de Campo' : 'Ver QR de Cancha'}
+                        </span>
                       </button>
                     </div>
                   </div>
@@ -1797,6 +2395,134 @@ export const AcademyDashboard: React.FC<AcademyDashboardProps> = ({
               </div>
             </div>
           </div>
+
+          {/* QR CODE & PUBLIC TRYOUT MODAL FOR MASS SQUAD CAPTURE */}
+          <AnimatePresence>
+            {qrTryoutClass && (
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4"
+                onClick={() => setQrTryoutClass(null)}
+              >
+                <motion.div
+                  initial={{ scale: 0.95, opacity: 0 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                  exit={{ scale: 0.95, opacity: 0 }}
+                  onClick={(e) => e.stopPropagation()}
+                  className="bg-slate-900 border-2 border-volt/40 rounded-3xl max-w-md w-full p-6 space-y-5 shadow-2xl text-center relative"
+                >
+                  <button
+                    type="button"
+                    onClick={() => setQrTryoutClass(null)}
+                    className="absolute top-4 right-4 p-2 rounded-xl bg-white/5 hover:bg-white/15 text-slate-400 hover:text-white cursor-pointer"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+
+                  <div className="space-y-1.5">
+                    <span className="px-3 py-1 rounded-full bg-volt/15 border border-volt/40 text-volt text-[10px] font-mono font-bold uppercase inline-flex items-center gap-1.5">
+                      <QrCode className="w-3.5 h-3.5" />
+                      {lang === 'en'
+                        ? 'PITCH QR • AUTO-ROSTER CAPTURE'
+                        : lang === 'pt'
+                        ? 'QR DE CAMPO • CAPTAÇÃO AUTOMÁTICA'
+                        : 'QR DE CANCHA • CAPTACIÓN AUTOMÁTICA DE PLANTILLA'}
+                    </span>
+                    <h3 className="text-xl font-black italic uppercase text-white font-display">
+                      {qrTryoutClass.name} ({qrTryoutClass.category})
+                    </h3>
+                    <p className="text-xs text-slate-300 leading-relaxed">
+                      {lang === 'en'
+                        ? 'Have your players scan this QR code or open the link on their phones. Once they finish the 10-question DNA test, their full tactical card will automatically appear in your squad roster!'
+                        : lang === 'pt'
+                        ? 'Peça aos atletas para lerem este código QR ou abrirem o link no telemóvel. Assim que concluírem o teste de ADN, a ficha completa aparecerá automaticamente no seu plantel!'
+                        : 'Pide a tus jugadores que escaneen este QR o abran el enlace en su celular. ¡En cuanto terminen el test de ADN de 10 preguntas, su ficha completa aparecerá automáticamente en tu plantilla!'}
+                    </p>
+                  </div>
+
+                  {/* Dynamic QR Image */}
+                  {(() => {
+                    const tryoutUrl = `${window.location.origin}${window.location.pathname}?invite=${encodeURIComponent(qrTryoutClass.inviteCode)}`;
+                    const qrImgUrl = `https://api.qrserver.com/v1/create-qr-code/?size=240x240&margin=12&data=${encodeURIComponent(tryoutUrl)}`;
+                    const waText =
+                      lang === 'en'
+                        ? `⚽ *${clubBrand?.clubName || 'Academy'} - Official Tactical DNA Assessment (${qrTryoutClass.name})*\nComplete your 2-minute player evaluation here so your profile syncs to the squad:\n👉 ${tryoutUrl}\n🔑 Classroom Code: *${qrTryoutClass.inviteCode}*`
+                        : lang === 'pt'
+                        ? `⚽ *${clubBrand?.clubName || 'Academia'} - Diagnóstico Oficial de ADN Tático (${qrTryoutClass.name})*\nConclua a sua avaliação de 2 minutos aqui para sincronizar a sua ficha no plantel:\n👉 ${tryoutUrl}\n🔑 Código da Turma: *${qrTryoutClass.inviteCode}*`
+                        : `⚽ *${clubBrand?.clubName || 'Academia'} - Diagnóstico Oficial de ADN Táctico (${qrTryoutClass.name})*\nCompleta tu evaluación de 2 minutos en este enlace para que tu ficha aparezca automáticamente en la plantilla del equipo:\n👉 ${tryoutUrl}\n🔑 Código de Clase: *${qrTryoutClass.inviteCode}*`;
+
+                    return (
+                      <>
+                        <div className="bg-white p-4 rounded-2xl inline-block mx-auto shadow-xl border-4 border-volt">
+                          <img
+                            src={qrImgUrl}
+                            alt={`QR ${qrTryoutClass.inviteCode}`}
+                            className="w-48 h-48 mx-auto rounded-lg"
+                          />
+                        </div>
+
+                        <div className="bg-black/60 border border-white/10 rounded-xl p-3 space-y-1">
+                          <span className="text-[10px] font-mono uppercase text-slate-400 block">
+                            {lang === 'en' ? 'OFFICIAL CLASSROOM INVITE CODE' : lang === 'pt' ? 'CÓDIGO OFICIAL DA TURMA' : 'CÓDIGO OFICIAL DE VINCULACIÓN'}
+                          </span>
+                          <span className="text-lg font-mono font-black text-volt tracking-wider">
+                            {qrTryoutClass.inviteCode}
+                          </span>
+                        </div>
+
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 pt-1">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              navigator.clipboard.writeText(tryoutUrl);
+                              setCopiedTryoutLinkClassId(qrTryoutClass.id);
+                              setTimeout(() => setCopiedTryoutLinkClassId(null), 3000);
+                            }}
+                            className="py-3 px-4 rounded-xl bg-volt hover:bg-white text-black font-black uppercase italic text-xs tracking-wider cursor-pointer flex items-center justify-center gap-2 transition-all"
+                          >
+                            <Copy className="w-4 h-4" />
+                            <span>
+                              {copiedTryoutLinkClassId === qrTryoutClass.id
+                                ? lang === 'en'
+                                  ? 'Link Copied!'
+                                  : lang === 'pt'
+                                  ? 'Link Copiado!'
+                                  : '¡Enlace Copiado!'
+                                : lang === 'en'
+                                ? 'Copy Direct Link'
+                                : lang === 'pt'
+                                ? 'Copiar Link Direto'
+                                : 'Copiar Enlace Directo'}
+                            </span>
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const waUrl = `https://api.whatsapp.com/send?text=${encodeURIComponent(waText)}`;
+                              window.open(waUrl, '_blank', 'noopener,noreferrer');
+                            }}
+                            className="py-3 px-4 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-black font-black uppercase italic text-xs tracking-wider cursor-pointer flex items-center justify-center gap-2 transition-all"
+                          >
+                            <MessageCircle className="w-4 h-4" />
+                            <span>
+                              {lang === 'en'
+                                ? 'Send to Squad WhatsApp'
+                                : lang === 'pt'
+                                ? 'Enviar no WhatsApp'
+                                : 'Enviar al Grupo WhatsApp'}
+                            </span>
+                          </button>
+                        </div>
+                      </>
+                    );
+                  })()}
+                </motion.div>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
       )}
 
@@ -1809,6 +2535,7 @@ export const AcademyDashboard: React.FC<AcademyDashboardProps> = ({
             const presentCount = attList.filter((a) => a.status === 'present').length;
             const totalAtt = attList.length;
             const attRate = totalAtt > 0 ? Math.round((presentCount / totalAtt) * 100) : 100;
+            const evoData = getStudentEvolutionData(student);
 
             return (
               <div
@@ -1824,12 +2551,17 @@ export const AcademyDashboard: React.FC<AcademyDashboardProps> = ({
                       <h3 className="font-bold text-white text-sm flex items-center gap-1.5">
                         {student.name}
                       </h3>
-                      <div className="flex items-center gap-1.5 text-[11px] text-slate-400">
+                      <div className="flex items-center gap-1.5 text-[11px] text-slate-400 flex-wrap">
                         <span>{student.category}</span>
                         <span>•</span>
                         <span>{student.age} {tAcad.yearsOld}</span>
                         <span>•</span>
                         <span className="text-volt font-mono">{formatFoot(student.preferredFoot)}</span>
+                        {student.classCode && (
+                          <span className="px-1.5 py-0.2 rounded bg-volt/10 border border-volt/30 text-volt font-mono text-[9px]">
+                            {student.classCode}
+                          </span>
+                        )}
                       </div>
                     </div>
                   </div>
@@ -1837,6 +2569,9 @@ export const AcademyDashboard: React.FC<AcademyDashboardProps> = ({
                   <div className="text-right">
                     <span className="px-2 py-0.5 rounded bg-black/50 text-emerald-400 border border-emerald-500/30 text-[10px] font-mono font-bold block mb-1">
                       {student.primaryPosition} ({student.matchPercentage}%)
+                    </span>
+                    <span className="text-[10px] font-mono text-volt font-bold">
+                      {evoData.totalDelta >= 0 ? `+${evoData.totalDelta}` : evoData.totalDelta} OVR
                     </span>
                   </div>
                 </div>
@@ -1877,7 +2612,13 @@ export const AcademyDashboard: React.FC<AcademyDashboardProps> = ({
                       <span>{tAcad.attendanceRate}</span> <strong className="text-emerald-400 font-bold">{attRate}%</strong>
                     </span>
                     <span className="text-[9px] font-mono text-slate-500">
-                      {todayRecord ? (todayRecord.status === 'present' ? '✅ Asistió' : todayRecord.status === 'late' ? '⏱ Tardanza' : '❌ Ausente') : 'Pendiente hoy'}
+                      {todayRecord
+                        ? todayRecord.status === 'present'
+                          ? (lang === 'en' ? '✅ Present' : lang === 'pt' ? '✅ Presente' : '✅ Asistió')
+                          : todayRecord.status === 'late'
+                          ? (lang === 'en' ? '⏱ Late' : lang === 'pt' ? '⏱ Atraso' : '⏱ Tardanza')
+                          : (lang === 'en' ? '❌ Absent' : lang === 'pt' ? '❌ Ausente' : '❌ Ausente')
+                        : (lang === 'en' ? 'Pending today' : lang === 'pt' ? 'Pendente hoje' : 'Pendiente hoy')}
                     </span>
                   </div>
 
@@ -1890,7 +2631,6 @@ export const AcademyDashboard: React.FC<AcademyDashboardProps> = ({
                           ? 'bg-emerald-500 text-black font-black shadow-sm'
                           : 'bg-emerald-500/10 text-emerald-300 hover:bg-emerald-500/20 border border-emerald-500/30'
                       }`}
-                      title="Marcar Asistió a clases"
                     >
                       <CheckSquare className="w-3 h-3" />
                       <span>{tAcad.attendancePresent}</span>
@@ -1904,7 +2644,6 @@ export const AcademyDashboard: React.FC<AcademyDashboardProps> = ({
                           ? 'bg-amber-400 text-black font-black shadow-sm'
                           : 'bg-amber-400/10 text-amber-300 hover:bg-amber-400/20 border border-amber-400/30'
                       }`}
-                      title="Marcar Llegó Tarde"
                     >
                       <Clock className="w-3 h-3" />
                       <span>{tAcad.attendanceLate}</span>
@@ -1918,12 +2657,32 @@ export const AcademyDashboard: React.FC<AcademyDashboardProps> = ({
                           ? 'bg-rose-500 text-white font-black shadow-sm'
                           : 'bg-rose-500/10 text-rose-300 hover:bg-rose-500/20 border border-rose-500/30'
                       }`}
-                      title="Marcar No Asistió / Ausente"
                     >
                       <UserX className="w-3 h-3" />
                       <span>{tAcad.attendanceAbsent}</span>
                     </button>
                   </div>
+                </div>
+
+                {/* Block 2 Quick Value Row: Monthly Parent Report (WhatsApp) + Before vs Now Evolution */}
+                <div className="grid grid-cols-2 gap-1.5 pt-1">
+                  <button
+                    type="button"
+                    onClick={() => setParentReportStudent(student)}
+                    className="py-1.5 px-2 rounded-lg bg-emerald-500/15 hover:bg-emerald-500 text-emerald-300 hover:text-black border border-emerald-500/30 text-[10px] font-black uppercase tracking-wider transition-all cursor-pointer flex items-center justify-center gap-1"
+                  >
+                    <MessageCircle className="w-3 h-3" />
+                    <span>{lang === 'en' ? 'Parent Report' : lang === 'pt' ? 'Boletim Pais' : 'Boletín Padres'}</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setEvolutionStudent(student)}
+                    className="py-1.5 px-2 rounded-lg bg-sky-500/15 hover:bg-sky-400 text-sky-300 hover:text-black border border-sky-500/30 text-[10px] font-black uppercase tracking-wider transition-all cursor-pointer flex items-center justify-center gap-1"
+                  >
+                    <TrendingUp className="w-3 h-3" />
+                    <span>{lang === 'en' ? 'Before vs. Now' : lang === 'pt' ? 'Antes vs. Agora' : 'Antes vs. Ahora'}</span>
+                  </button>
                 </div>
 
                 {/* Actions Footer */}
@@ -2720,6 +3479,7 @@ export const AcademyDashboard: React.FC<AcademyDashboardProps> = ({
           isDirectSharedLink={false}
           onBackToAcademy={() => setActiveSubTab('roster')}
           onUpdateStudentTask={handleToggleStudentTask}
+          onJoinClassByCode={handleJoinClassByCode}
         />
       )}
 
@@ -3117,6 +3877,264 @@ export const AcademyDashboard: React.FC<AcademyDashboardProps> = ({
           </motion.div>
         </div>
       )}
+
+      {/* MODAL: MONTHLY PARENT REPORT (1-CLICK WHATSAPP / COPY REPORT) */}
+      {parentReportStudent && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-sm overflow-y-auto">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="bg-slate-900 border border-emerald-500/30 rounded-3xl p-6 sm:p-7 max-w-lg w-full shadow-2xl space-y-5 my-auto"
+          >
+            <div className="flex items-center justify-between pb-3 border-b border-white/10">
+              <div className="flex items-center gap-2.5">
+                <div className="w-10 h-10 rounded-xl bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center text-emerald-400">
+                  <MessageCircle className="w-5 h-5" />
+                </div>
+                <div>
+                  <span className="text-[10px] font-mono font-bold text-emerald-400 uppercase tracking-wider block">
+                    {lang === 'en'
+                      ? 'OFFICIAL FAMILY COMMUNICATION'
+                      : lang === 'pt'
+                      ? 'COMUNICAÇÃO OFICIAL COM A FAMÍLIA'
+                      : 'COMUNICACIÓN OFICIAL CON PADRES & TUTORES'}
+                  </span>
+                  <h3 className="text-base sm:text-lg font-black text-white uppercase italic font-display">
+                    {lang === 'en'
+                      ? `Monthly Parent Report • #${parentReportStudent.dorsal} ${parentReportStudent.name}`
+                      : lang === 'pt'
+                      ? `Boletim Mensal para Pais • #${parentReportStudent.dorsal} ${parentReportStudent.name}`
+                      : `Boletín Mensual para Padres • #${parentReportStudent.dorsal} ${parentReportStudent.name}`}
+                  </h3>
+                </div>
+              </div>
+              <button
+                onClick={() => setParentReportStudent(null)}
+                className="text-slate-400 hover:text-white cursor-pointer p-1.5 rounded-lg hover:bg-white/5"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <p className="text-xs text-slate-300 leading-relaxed">
+              {lang === 'en'
+                ? 'Ready-to-send official academy summary including attendance percentage, tactical evolution delta, completed homework, and private portal PIN access.'
+                : lang === 'pt'
+                ? 'Resumo oficial da academia pronto a enviar com taxa de assiduidade, evolução tática, tarefas concluídas e acesso PIN ao portal.'
+                : 'Resumen ejecutivo oficial listo para enviar por WhatsApp a los padres del jugador con su % de asistencia, evolución táctica, tareas completadas y enlace con PIN a su portal privado.'}
+            </p>
+
+            {/* Preview Box */}
+            <div className="p-4 rounded-2xl bg-black/70 border border-emerald-500/20 text-xs text-slate-200 font-mono whitespace-pre-wrap leading-relaxed max-h-64 overflow-y-auto">
+              {buildMonthlyParentReportText(parentReportStudent)}
+            </div>
+
+            {/* Action Buttons */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+              <button
+                type="button"
+                onClick={() => {
+                  const text = buildMonthlyParentReportText(parentReportStudent);
+                  navigator.clipboard.writeText(text);
+                  setCopiedParentReport(true);
+                  setTimeout(() => setCopiedParentReport(false), 2500);
+                }}
+                className="py-3 px-4 rounded-xl bg-white/10 hover:bg-white/15 border border-white/15 text-white font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-2 transition-all cursor-pointer"
+              >
+                {copiedParentReport ? <Check className="w-4 h-4 text-emerald-400" /> : <Copy className="w-4 h-4 text-volt" />}
+                <span>
+                  {copiedParentReport
+                    ? (lang === 'en' ? 'Report Copied!' : lang === 'pt' ? 'Boletim Copiado!' : '¡Boletín Copiado!')
+                    : (lang === 'en' ? 'Copy Official Text' : lang === 'pt' ? 'Copiar Texto Oficial' : 'Copiar Texto Oficial')}
+                </span>
+              </button>
+
+              <a
+                href={`https://wa.me/?text=${encodeURIComponent(buildMonthlyParentReportText(parentReportStudent))}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="py-3 px-4 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-black font-black uppercase italic text-xs tracking-wider flex items-center justify-center gap-2 shadow-lg shadow-emerald-500/20 transition-all cursor-pointer"
+              >
+                <MessageCircle className="w-4 h-4 fill-black" />
+                <span>
+                  {lang === 'en' ? 'Send via WhatsApp' : lang === 'pt' ? 'Enviar por WhatsApp' : 'Enviar por WhatsApp'}
+                </span>
+              </a>
+            </div>
+          </motion.div>
+        </div>
+      )}
+
+      {/* MODAL: EVOLUTION HISTORY ("ANTES VS. AHORA") */}
+      {evolutionStudent && (() => {
+        const evo = getStudentEvolutionData(evolutionStudent);
+        const skillLabels: Record<keyof SkillScores, string> = {
+          speed: lang === 'en' ? 'Speed & Pace' : lang === 'pt' ? 'Velocidade' : 'Velocidad',
+          technique: lang === 'en' ? 'Ball Technique' : lang === 'pt' ? 'Técnica Individual' : 'Técnica Individual',
+          finishing: lang === 'en' ? 'Finishing' : lang === 'pt' ? 'Finalização' : 'Definición / Gol',
+          passing: lang === 'en' ? 'Passing & Vision' : lang === 'pt' ? 'Passe & Visão' : 'Pase Asociativo',
+          defending: lang === 'en' ? 'Defending' : lang === 'pt' ? 'Rigor Defensivo' : 'Rigor Defensivo',
+          physical: lang === 'en' ? 'Physicality' : lang === 'pt' ? 'Potência Física' : 'Potencia Física',
+          tacticalIQ: lang === 'en' ? 'Tactical IQ' : lang === 'pt' ? 'QI Tático' : 'IQ Táctico',
+          mental: lang === 'en' ? 'Competitive Mindset' : lang === 'pt' ? 'Mentalidade' : 'Mentalidad Competitiva'
+        };
+
+        return (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-sm overflow-y-auto">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className="bg-slate-900 border border-sky-500/30 rounded-3xl p-6 sm:p-7 max-w-2xl w-full shadow-2xl space-y-5 my-auto"
+            >
+              <div className="flex items-center justify-between pb-3 border-b border-white/10">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-sky-500/15 border border-sky-500/30 flex items-center justify-center text-sky-400">
+                    <TrendingUp className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <span className="text-[10px] font-mono font-bold text-sky-400 uppercase tracking-wider block">
+                      {lang === 'en'
+                        ? 'LONGITUDINAL DEVELOPMENT TRACKING'
+                        : lang === 'pt'
+                        ? 'ACOMPANHAMENTO EVOLUTIVO DA FORMAÇÃO'
+                        : 'HISTORIAL EVOLUTIVO DE RENDIMIENTO ("ANTES VS. AHORA")'}
+                    </span>
+                    <h3 className="text-base sm:text-lg font-black text-white uppercase italic font-display">
+                      #{evolutionStudent.dorsal} {evolutionStudent.name} • {evolutionStudent.category} ({evolutionStudent.primaryPosition})
+                    </h3>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setEvolutionStudent(null)}
+                  className="text-slate-400 hover:text-white cursor-pointer p-1.5 rounded-lg hover:bg-white/5"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              {/* Overall OVR Before vs Now Banner */}
+              <div className="grid grid-cols-3 gap-3 bg-black/50 border border-white/10 rounded-2xl p-4 text-center">
+                <div>
+                  <span className="text-[10px] font-mono text-slate-400 uppercase block">
+                    {lang === 'en' ? 'BEFORE (BASELINE)' : lang === 'pt' ? 'ANTES (INÍCIO)' : 'ANTES (INICIAL)'}
+                  </span>
+                  <span className="text-2xl font-black text-slate-300 font-mono">{evo.avgBase}</span>
+                  <span className="text-[10px] text-slate-500 font-mono block">{evo.baselineDate}</span>
+                </div>
+
+                <div className="border-x border-white/10 flex flex-col items-center justify-center">
+                  <span className="text-[10px] font-mono text-volt uppercase block">
+                    {lang === 'en' ? 'NET PROGRESSION' : lang === 'pt' ? 'PROGRESSÃO LÍQUIDA' : 'PROGRESIÓN NETA'}
+                  </span>
+                  <span className="text-2xl font-black text-emerald-400 font-mono">
+                    {evo.totalDelta >= 0 ? `+${evo.totalDelta}` : evo.totalDelta} PTS
+                  </span>
+                  <span className="text-[10px] text-emerald-400/80 font-mono">
+                    {evo.snapshotsCount} {lang === 'en' ? 'evaluations' : lang === 'pt' ? 'registos' : 'cortes registrados'}
+                  </span>
+                </div>
+
+                <div>
+                  <span className="text-[10px] font-mono text-sky-400 uppercase block">
+                    {lang === 'en' ? 'NOW (CURRENT)' : lang === 'pt' ? 'AGORA (ATUAL)' : 'AHORA (ACTUAL)'}
+                  </span>
+                  <span className="text-2xl font-black text-volt font-mono">{evo.avgCurr}</span>
+                  <span className="text-[10px] text-slate-400 font-mono block">
+                    {evolutionStudent.lastExamDate || (lang === 'en' ? 'Active Season' : lang === 'pt' ? 'Época Atual' : 'Temporada Activa')}
+                  </span>
+                </div>
+              </div>
+
+              {/* 8 Attributes Before vs Now Comparison Grid */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {(Object.keys(skillLabels) as Array<keyof SkillScores>).map((k) => {
+                  const beforeVal = evo.baselineSkills[k] || 70;
+                  const nowVal = evo.currentSkills[k] || 75;
+                  const diff = nowVal - beforeVal;
+                  return (
+                    <div key={k} className="bg-black/40 border border-white/10 rounded-xl p-3 space-y-2">
+                      <div className="flex items-center justify-between text-xs">
+                        <span className="font-bold text-white">{skillLabels[k]}</span>
+                        <div className="flex items-center gap-1.5 font-mono">
+                          <span className="text-slate-400 text-[11px]">{beforeVal}</span>
+                          <ArrowRight className="w-3 h-3 text-slate-500" />
+                          <span className="text-volt font-black">{nowVal}</span>
+                          <span className={`px-1.5 py-0.2 rounded text-[10px] font-bold ${
+                            diff > 0
+                              ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
+                              : diff < 0
+                              ? 'bg-rose-500/20 text-rose-400 border border-rose-500/30'
+                              : 'bg-white/10 text-slate-400'
+                          }`}>
+                            {diff > 0 ? `+${diff}` : diff}
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Dual Progress Bar */}
+                      <div className="relative h-2 w-full bg-slate-950 rounded-full overflow-hidden">
+                        <div
+                          style={{ width: `${Math.min(100, beforeVal)}%` }}
+                          className="absolute inset-y-0 left-0 bg-slate-600/60 rounded-full"
+                        />
+                        <div
+                          style={{ width: `${Math.min(100, nowVal)}%` }}
+                          className="absolute inset-y-0 left-0 bg-gradient-to-r from-sky-400 to-volt rounded-full opacity-90"
+                        />
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+
+              {snapshotSavedToast && (
+                <div className="p-2.5 rounded-xl bg-emerald-500/15 border border-emerald-500/40 text-emerald-300 text-xs font-mono text-center">
+                  {lang === 'en'
+                    ? '✅ New performance checkpoint saved to player history!'
+                    : lang === 'pt'
+                    ? '✅ Novo ponto de controlo guardado no histórico do atleta!'
+                    : '✅ ¡Nuevo corte metodológico guardado en el historial evolutivo del jugador!'}
+                </div>
+              )}
+
+              {/* Footer Actions */}
+              <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-white/10">
+                <button
+                  type="button"
+                  onClick={() => handleRecordSkillCheckpoint(evolutionStudent)}
+                  className="px-4 py-2.5 rounded-xl bg-white/10 hover:bg-white/15 border border-white/15 text-white text-xs font-bold flex items-center gap-2 cursor-pointer transition-all"
+                >
+                  <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+                  <span>
+                    {lang === 'en'
+                      ? 'Save Current Checkpoint'
+                      : lang === 'pt'
+                      ? 'Guardar Controlo Atual'
+                      : 'Guardar Corte Metodológico Actual'}
+                  </span>
+                </button>
+
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const target = evolutionStudent;
+                      setEvolutionStudent(null);
+                      onStartStudentExam(target);
+                    }}
+                    className="px-4 py-2.5 rounded-xl bg-volt hover:bg-white text-black font-black uppercase italic text-xs tracking-wider flex items-center gap-1.5 cursor-pointer transition-all"
+                  >
+                    <Play className="w-3.5 h-3.5 fill-black" />
+                    <span>
+                      {lang === 'en' ? 'New Tactical Exam' : lang === 'pt' ? 'Nova Avaliação ADN' : 'Nueva Evaluación ADN'}
+                    </span>
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          </div>
+        );
+      })()}
     </div>
   );
 };
